@@ -1,0 +1,6 @@
+# Excluded for now — not ready to push
+/Original Code/
+/Persistent Memory Chats Storage/
+
+# OS
+.DS_Store
