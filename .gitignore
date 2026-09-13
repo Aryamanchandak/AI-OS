@@ -2,5 +2,22 @@
 /Original Code/
 /Persistent Memory Chats Storage/
 
+# Own git repos / not part of this migration — see migration/baseline/
+/Database/
+/AI Agent/
+/Project plan/
+/To Do/
+/shell/
+
 # OS
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/

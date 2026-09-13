@@ -1,0 +1,2317 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI OS Gateway",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/ingestion/run": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Get Run",
+        "operationId": "get_run_api_ingestion_run_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSnapshotBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/run/start": {
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Start Run",
+        "operationId": "start_run_api_ingestion_run_start_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSnapshotBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/run/decision": {
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Submit Decision",
+        "operationId": "submit_decision_api_ingestion_run_decision_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSnapshotBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/run/retry": {
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Retry Run",
+        "operationId": "retry_run_api_ingestion_run_retry_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSnapshotBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/run/{run_id}/report": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Report",
+        "operationId": "report_api_ingestion_run__run_id__report_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunReportBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/evidence/{run_id}/{item_id}": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Evidence",
+        "operationId": "evidence_api_ingestion_evidence__run_id___item_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/cleanup/mappings": {
+      "get": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "List Mappings",
+        "operationId": "list_mappings_api_ingestion_cleanup_mappings_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Query"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingListBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Create Mapping",
+        "operationId": "create_mapping_api_ingestion_cleanup_mappings_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingCreateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ingestion/cleanup/mappings/{mapping_id}": {
+      "patch": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Update Mapping",
+        "operationId": "update_mapping_api_ingestion_cleanup_mappings__mapping_id__patch",
+        "parameters": [
+          {
+            "name": "mapping_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mapping Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MappingUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MappingBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ingestion"
+        ],
+        "summary": "Delete Mapping",
+        "operationId": "delete_mapping_api_ingestion_cleanup_mappings__mapping_id__delete",
+        "parameters": [
+          {
+            "name": "mapping_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Mapping Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BookIdentityPayload": {
+        "properties": {
+          "proposed_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Title"
+          },
+          "proposed_author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Author"
+          },
+          "proposed_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Year"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "meta_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta Source"
+          },
+          "photo_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Photo Count"
+          },
+          "resolved_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved Slug"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "photo_count"
+        ],
+        "title": "BookIdentityPayload"
+      },
+      "BookIdentityPending": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "item_type": {
+            "type": "string",
+            "title": "Item Type"
+          },
+          "gate": {
+            "type": "string",
+            "title": "Gate"
+          },
+          "allowed_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Actions"
+          },
+          "blocking_reason": {
+            "type": "string",
+            "title": "Blocking Reason"
+          },
+          "adapter": {
+            "type": "string",
+            "const": "book_identity",
+            "title": "Adapter"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/BookIdentityPayload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_type",
+          "gate",
+          "allowed_actions",
+          "blocking_reason",
+          "adapter",
+          "payload"
+        ],
+        "title": "BookIdentityPending"
+      },
+      "CleanupOccurrenceBody": {
+        "properties": {
+          "occurrence_id": {
+            "type": "string",
+            "title": "Occurrence Id"
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Ordinal"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Total"
+          },
+          "passage_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Passage Index"
+          },
+          "base_start": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Base Start"
+          },
+          "base_end": {
+            "type": "integer",
+            "title": "Base End"
+          },
+          "current_start": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Current Start"
+          },
+          "current_end": {
+            "type": "integer",
+            "title": "Current End"
+          },
+          "original_text": {
+            "type": "string",
+            "title": "Original Text"
+          },
+          "proposed_text": {
+            "type": "string",
+            "title": "Proposed Text"
+          },
+          "context_before": {
+            "type": "string",
+            "title": "Context Before"
+          },
+          "context_after": {
+            "type": "string",
+            "title": "Context After"
+          },
+          "before_sentence": {
+            "type": "string",
+            "title": "Before Sentence"
+          },
+          "after_sentence": {
+            "type": "string",
+            "title": "After Sentence"
+          },
+          "current_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Decision"
+          },
+          "mapping_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mapping Id"
+          },
+          "proposal_source": {
+            "type": "string",
+            "title": "Proposal Source"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "occurrence_id",
+          "ordinal",
+          "total",
+          "base_start",
+          "base_end",
+          "current_start",
+          "current_end",
+          "original_text",
+          "proposed_text",
+          "context_before",
+          "context_after",
+          "before_sentence",
+          "after_sentence",
+          "proposal_source"
+        ],
+        "title": "CleanupOccurrenceBody"
+      },
+      "CleanupPending": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "item_type": {
+            "type": "string",
+            "title": "Item Type"
+          },
+          "gate": {
+            "type": "string",
+            "title": "Gate"
+          },
+          "allowed_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Actions"
+          },
+          "blocking_reason": {
+            "type": "string",
+            "title": "Blocking Reason"
+          },
+          "adapter": {
+            "type": "string",
+            "const": "cleanup",
+            "title": "Adapter"
+          },
+          "payload": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/CleanupReviewPayload"
+              },
+              {
+                "$ref": "#/components/schemas/CleanupUnavailablePayload"
+              }
+            ],
+            "title": "Payload",
+            "discriminator": {
+              "propertyName": "state",
+              "mapping": {
+                "review": "#/components/schemas/CleanupReviewPayload",
+                "unavailable": "#/components/schemas/CleanupUnavailablePayload"
+              }
+            }
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_type",
+          "gate",
+          "allowed_actions",
+          "blocking_reason",
+          "adapter",
+          "payload"
+        ],
+        "title": "CleanupPending"
+      },
+      "CleanupReviewPayload": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "const": "review",
+            "title": "State"
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "text_file",
+              "typed_highlight"
+            ],
+            "title": "Source Kind"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "abbreviation",
+              "spelling"
+            ],
+            "title": "Phase"
+          },
+          "interaction_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Interaction Revision"
+          },
+          "working_draft_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Working Draft Revision"
+          },
+          "occurrence": {
+            "$ref": "#/components/schemas/CleanupOccurrenceBody"
+          },
+          "authoritative_sentence": {
+            "type": "string",
+            "title": "Authoritative Sentence"
+          },
+          "authoritative_working_text": {
+            "type": "string",
+            "title": "Authoritative Working Text"
+          },
+          "can_continue": {
+            "type": "boolean",
+            "title": "Can Continue"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "state",
+          "source_kind",
+          "phase",
+          "interaction_revision",
+          "working_draft_revision",
+          "occurrence",
+          "authoritative_sentence",
+          "authoritative_working_text",
+          "can_continue"
+        ],
+        "title": "CleanupReviewPayload"
+      },
+      "CleanupUnavailablePayload": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "const": "unavailable",
+            "title": "State"
+          },
+          "source_kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "text_file",
+              "typed_highlight"
+            ],
+            "title": "Source Kind"
+          },
+          "phase": {
+            "type": "string",
+            "const": "spelling",
+            "title": "Phase"
+          },
+          "interaction_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Interaction Revision"
+          },
+          "working_draft_revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Working Draft Revision"
+          },
+          "error": {
+            "type": "string",
+            "title": "Error"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "state",
+          "source_kind",
+          "phase",
+          "interaction_revision",
+          "working_draft_revision",
+          "error"
+        ],
+        "title": "CleanupUnavailablePayload"
+      },
+      "DecisionBody": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Run Id"
+          },
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "gate": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Gate"
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Action"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "resolver": {
+            "type": "string",
+            "title": "Resolver",
+            "default": ""
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          },
+          "expected_revision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "run_id",
+          "item_id",
+          "gate",
+          "action"
+        ],
+        "title": "DecisionBody"
+      },
+      "ErrorBody": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stage",
+          "message",
+          "retryable"
+        ],
+        "title": "ErrorBody"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ImageOcrPayload": {
+        "properties": {
+          "photo_path": {
+            "type": "string",
+            "title": "Photo Path"
+          },
+          "page_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Number"
+          },
+          "passages": {
+            "items": {
+              "$ref": "#/components/schemas/ImagePassageBody"
+            },
+            "type": "array",
+            "title": "Passages"
+          },
+          "conf_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conf Ratio"
+          },
+          "blur_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blur Score"
+          },
+          "glare_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Glare Score"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "photo_path",
+          "passages"
+        ],
+        "title": "ImageOcrPayload"
+      },
+      "ImageOcrPending": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "item_type": {
+            "type": "string",
+            "title": "Item Type"
+          },
+          "gate": {
+            "type": "string",
+            "title": "Gate"
+          },
+          "allowed_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Actions"
+          },
+          "blocking_reason": {
+            "type": "string",
+            "title": "Blocking Reason"
+          },
+          "adapter": {
+            "type": "string",
+            "const": "image_ocr",
+            "title": "Adapter"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ImageOcrPayload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_type",
+          "gate",
+          "allowed_actions",
+          "blocking_reason",
+          "adapter",
+          "payload"
+        ],
+        "title": "ImageOcrPending"
+      },
+      "ImagePassageBody": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Index"
+          },
+          "ocr_text": {
+            "type": "string",
+            "title": "Ocr Text"
+          },
+          "edited_text": {
+            "type": "string",
+            "title": "Edited Text"
+          },
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox"
+          },
+          "min_conf": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Conf"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "index",
+          "ocr_text",
+          "edited_text"
+        ],
+        "title": "ImagePassageBody"
+      },
+      "KnowledgeEnvelopePayload": {
+        "properties": {
+          "envelope_level": {
+            "type": "boolean",
+            "const": true,
+            "title": "Envelope Level"
+          },
+          "review_signals": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewSignalBody"
+            },
+            "type": "array",
+            "title": "Review Signals"
+          },
+          "source_record_id": {
+            "type": "string",
+            "title": "Source Record Id"
+          },
+          "highlight_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlight Index"
+          },
+          "highlight_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlight Text"
+          },
+          "model_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Confidence"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "envelope_level",
+          "review_signals",
+          "source_record_id"
+        ],
+        "title": "KnowledgeEnvelopePayload"
+      },
+      "KnowledgeProposalPayload": {
+        "properties": {
+          "envelope_id": {
+            "type": "string",
+            "title": "Envelope Id"
+          },
+          "proposal_id": {
+            "type": "string",
+            "title": "Proposal Id"
+          },
+          "proposal_type": {
+            "type": "string",
+            "title": "Proposal Type"
+          },
+          "proposal": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Proposal"
+          },
+          "source_note_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Note Path"
+          },
+          "origin_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Kind"
+          },
+          "highlight_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlight Index"
+          },
+          "highlight_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Highlight Text"
+          },
+          "evidence_quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Quote"
+          },
+          "evidence_start_char": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Start Char"
+          },
+          "evidence_end_char": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence End Char"
+          },
+          "proposal_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Confidence"
+          },
+          "envelope_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Envelope Confidence"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewSignalBody"
+            },
+            "type": "array",
+            "title": "Signals"
+          },
+          "sibling_proposals": {
+            "items": {
+              "$ref": "#/components/schemas/SiblingProposalBody"
+            },
+            "type": "array",
+            "title": "Sibling Proposals"
+          },
+          "photo_page_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Page Id"
+          },
+          "photo_page_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Page Number"
+          },
+          "photo_passages": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoPassageBody"
+            },
+            "type": "array",
+            "title": "Photo Passages"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "envelope_id",
+          "proposal_id",
+          "proposal_type",
+          "proposal",
+          "signals",
+          "sibling_proposals"
+        ],
+        "title": "KnowledgeProposalPayload"
+      },
+      "KnowledgeProposalPending": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "item_type": {
+            "type": "string",
+            "title": "Item Type"
+          },
+          "gate": {
+            "type": "string",
+            "title": "Gate"
+          },
+          "allowed_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Actions"
+          },
+          "blocking_reason": {
+            "type": "string",
+            "title": "Blocking Reason"
+          },
+          "adapter": {
+            "type": "string",
+            "const": "knowledge_proposal",
+            "title": "Adapter"
+          },
+          "payload": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KnowledgeEnvelopePayload"
+              },
+              {
+                "$ref": "#/components/schemas/KnowledgeProposalPayload"
+              }
+            ],
+            "title": "Payload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_type",
+          "gate",
+          "allowed_actions",
+          "blocking_reason",
+          "adapter",
+          "payload"
+        ],
+        "title": "KnowledgeProposalPending"
+      },
+      "MappingBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "shorthand": {
+            "type": "string",
+            "title": "Shorthand"
+          },
+          "expansion": {
+            "type": "string",
+            "title": "Expansion"
+          },
+          "case_sensitive": {
+            "type": "boolean",
+            "title": "Case Sensitive"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "shorthand",
+          "expansion",
+          "case_sensitive",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MappingBody"
+      },
+      "MappingCreateBody": {
+        "properties": {
+          "shorthand": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Shorthand"
+          },
+          "expansion": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Expansion"
+          },
+          "case_sensitive": {
+            "type": "boolean",
+            "title": "Case Sensitive",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "shorthand",
+          "expansion"
+        ],
+        "title": "MappingCreateBody"
+      },
+      "MappingListBody": {
+        "properties": {
+          "mappings": {
+            "items": {
+              "$ref": "#/components/schemas/MappingBody"
+            },
+            "type": "array",
+            "title": "Mappings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mappings"
+        ],
+        "title": "MappingListBody"
+      },
+      "MappingUpdateBody": {
+        "properties": {
+          "expansion": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Expansion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expansion"
+        ],
+        "title": "MappingUpdateBody"
+      },
+      "OperationBody": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Revision"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "state",
+          "name",
+          "error",
+          "revision"
+        ],
+        "title": "OperationBody"
+      },
+      "PhaseHandoffPayload": {
+        "properties": {
+          "discovered": {
+            "type": "integer",
+            "title": "Discovered"
+          },
+          "published": {
+            "type": "integer",
+            "title": "Published"
+          },
+          "discarded": {
+            "type": "integer",
+            "title": "Discarded"
+          },
+          "retake": {
+            "type": "integer",
+            "title": "Retake"
+          },
+          "duplicate": {
+            "type": "integer",
+            "title": "Duplicate"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "note_paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Note Paths"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "discovered",
+          "published",
+          "discarded",
+          "retake",
+          "duplicate",
+          "failed",
+          "note_paths"
+        ],
+        "title": "PhaseHandoffPayload"
+      },
+      "PhaseHandoffPending": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "item_type": {
+            "type": "string",
+            "title": "Item Type"
+          },
+          "gate": {
+            "type": "string",
+            "title": "Gate"
+          },
+          "allowed_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Actions"
+          },
+          "blocking_reason": {
+            "type": "string",
+            "title": "Blocking Reason"
+          },
+          "adapter": {
+            "type": "string",
+            "const": "phase_handoff",
+            "title": "Adapter"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/PhaseHandoffPayload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_type",
+          "gate",
+          "allowed_actions",
+          "blocking_reason",
+          "adapter",
+          "payload"
+        ],
+        "title": "PhaseHandoffPending"
+      },
+      "PhotoPassageBody": {
+        "properties": {
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox"
+          },
+          "ocr_text": {
+            "type": "string",
+            "title": "Ocr Text",
+            "default": ""
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "PhotoPassageBody",
+        "description": "One OCR'd passage box on the source page, for the read-only overlay\nshown alongside a proposal review. The pipeline does not track which\nspecific passage backs a given proposal's evidence quote, so every\npassage on the page is offered -- a reviewer locates their highlight\namong them visually, the same way ImageReview.tsx already does."
+      },
+      "ProgressBody": {
+        "properties": {
+          "intake_total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Intake Total"
+          },
+          "intake_resolved": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Intake Resolved"
+          },
+          "envelopes_flagged": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Envelopes Flagged"
+          },
+          "envelopes_resolved": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Envelopes Resolved"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "intake_total",
+          "intake_resolved",
+          "envelopes_flagged",
+          "envelopes_resolved"
+        ],
+        "title": "ProgressBody"
+      },
+      "ReportCaptureCountsBody": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          },
+          "new": {
+            "type": "integer",
+            "title": "New",
+            "default": 0
+          },
+          "duplicate": {
+            "type": "integer",
+            "title": "Duplicate",
+            "default": 0
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ReportCaptureCountsBody"
+      },
+      "ReportErrorBody": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable",
+            "default": true
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "stage",
+          "message"
+        ],
+        "title": "ReportErrorBody"
+      },
+      "ReportIntakeBody": {
+        "properties": {
+          "discovered": {
+            "type": "integer",
+            "title": "Discovered",
+            "default": 0
+          },
+          "published": {
+            "type": "integer",
+            "title": "Published",
+            "default": 0
+          },
+          "discarded": {
+            "type": "integer",
+            "title": "Discarded",
+            "default": 0
+          },
+          "retake": {
+            "type": "integer",
+            "title": "Retake",
+            "default": 0
+          },
+          "duplicate": {
+            "type": "integer",
+            "title": "Duplicate",
+            "default": 0
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed",
+            "default": 0
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "gates": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Gates"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ReportIntakeBody"
+      },
+      "ReportProgressBody": {
+        "properties": {
+          "intake_total": {
+            "type": "integer",
+            "title": "Intake Total",
+            "default": 0
+          },
+          "intake_resolved": {
+            "type": "integer",
+            "title": "Intake Resolved",
+            "default": 0
+          },
+          "envelopes_flagged": {
+            "type": "integer",
+            "title": "Envelopes Flagged",
+            "default": 0
+          },
+          "envelopes_resolved": {
+            "type": "integer",
+            "title": "Envelopes Resolved",
+            "default": 0
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ReportProgressBody"
+      },
+      "ReportReviewCountsBody": {
+        "properties": {
+          "approve": {
+            "type": "integer",
+            "title": "Approve",
+            "default": 0
+          },
+          "edit": {
+            "type": "integer",
+            "title": "Edit",
+            "default": 0
+          },
+          "reject": {
+            "type": "integer",
+            "title": "Reject",
+            "default": 0
+          },
+          "still_blocked": {
+            "type": "integer",
+            "title": "Still Blocked",
+            "default": 0
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "ReportReviewCountsBody"
+      },
+      "ReportStageBody": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "stage",
+          "status"
+        ],
+        "title": "ReportStageBody"
+      },
+      "ReviewSignalBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "detail": {
+            "title": "Detail"
+          },
+          "proposal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposal Id"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "code",
+          "scope"
+        ],
+        "title": "ReviewSignalBody"
+      },
+      "RunReportBody": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "terminal_result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminal Result"
+          },
+          "failed_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed From"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportErrorBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/ReportStageBody"
+            },
+            "type": "array",
+            "title": "Stages"
+          },
+          "intake": {
+            "$ref": "#/components/schemas/ReportIntakeBody"
+          },
+          "vault_notes_written": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Vault Notes Written"
+          },
+          "capture": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Capture"
+          },
+          "capture_counts": {
+            "$ref": "#/components/schemas/ReportCaptureCountsBody"
+          },
+          "processing": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Processing"
+          },
+          "processing_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Processing Counts"
+          },
+          "review": {
+            "$ref": "#/components/schemas/ReportReviewCountsBody"
+          },
+          "dispatch_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Dispatch Counts"
+          },
+          "retryable_failures": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Retryable Failures"
+          },
+          "discrepancies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Discrepancies"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/ReportProgressBody"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "run_id"
+        ],
+        "title": "RunReportBody",
+        "description": "The durable record a finished run leaves behind.\n\nThis is the report's own ``data`` mapping. The on-disk path is deliberately\nnot exposed: it is a server filesystem detail, not a fact about the run."
+      },
+      "RunSnapshotBody": {
+        "properties": {
+          "contract_version": {
+            "type": "string",
+            "title": "Contract Version"
+          },
+          "view": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ViewBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reviewer": {
+            "type": "string",
+            "title": "Reviewer"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/OperationBody"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "contract_version",
+          "view",
+          "reviewer",
+          "operation"
+        ],
+        "title": "RunSnapshotBody"
+      },
+      "SiblingProposalBody": {
+        "properties": {
+          "proposal_id": {
+            "type": "string",
+            "title": "Proposal Id"
+          },
+          "proposal_type": {
+            "type": "string",
+            "title": "Proposal Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "proposal_id",
+          "proposal_type",
+          "status",
+          "summary"
+        ],
+        "title": "SiblingProposalBody",
+        "description": "A read-only preview of another proposal from the same envelope.\n\nLets the shell show every proposal derived from one highlight on a single\nscreen without re-fetching or re-rendering the shared highlight/evidence\ncontext per proposal. Each sibling is still decided through its own\n`/run/decision` call once it becomes the active `proposal_id` -- this is\na display aid, not a bulk-decision channel."
+      },
+      "StageBody": {
+        "properties": {
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stage",
+          "status",
+          "detail"
+        ],
+        "title": "StageBody"
+      },
+      "TextFilePayload": {
+        "properties": {
+          "source_path": {
+            "type": "string",
+            "title": "Source Path"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "extraction_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Method"
+          },
+          "approval_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Reason"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "markdown_text": {
+            "type": "string",
+            "title": "Markdown Text"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "source_path",
+          "markdown_text"
+        ],
+        "title": "TextFilePayload"
+      },
+      "TextFilePending": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "item_type": {
+            "type": "string",
+            "title": "Item Type"
+          },
+          "gate": {
+            "type": "string",
+            "title": "Gate"
+          },
+          "allowed_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Allowed Actions"
+          },
+          "blocking_reason": {
+            "type": "string",
+            "title": "Blocking Reason"
+          },
+          "adapter": {
+            "type": "string",
+            "const": "text_file",
+            "title": "Adapter"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/TextFilePayload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "item_type",
+          "gate",
+          "allowed_actions",
+          "blocking_reason",
+          "adapter",
+          "payload"
+        ],
+        "title": "TextFilePending"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ViewBody": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage"
+          },
+          "stage_status": {
+            "type": "string",
+            "title": "Stage Status"
+          },
+          "stages": {
+            "items": {
+              "$ref": "#/components/schemas/StageBody"
+            },
+            "type": "array",
+            "title": "Stages"
+          },
+          "pending": {
+            "anyOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/BookIdentityPending"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ImageOcrPending"
+                  },
+                  {
+                    "$ref": "#/components/schemas/TextFilePending"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PhaseHandoffPending"
+                  },
+                  {
+                    "$ref": "#/components/schemas/KnowledgeProposalPending"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CleanupPending"
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "adapter",
+                  "mapping": {
+                    "book_identity": "#/components/schemas/BookIdentityPending",
+                    "cleanup": "#/components/schemas/CleanupPending",
+                    "image_ocr": "#/components/schemas/ImageOcrPending",
+                    "knowledge_proposal": "#/components/schemas/KnowledgeProposalPending",
+                    "phase_handoff": "#/components/schemas/PhaseHandoffPending",
+                    "text_file": "#/components/schemas/TextFilePending"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/ProgressBody"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "terminal_result": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminal Result"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "run_id",
+          "stage",
+          "stage_status",
+          "stages",
+          "pending",
+          "progress",
+          "last_error",
+          "terminal_result"
+        ],
+        "title": "ViewBody"
+      }
+    }
+  }
+}
