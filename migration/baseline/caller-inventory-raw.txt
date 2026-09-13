@@ -1,0 +1,263 @@
+===== PORT 8111 =====
+./Project plan/SYSTEM_ARCHITECTURE.md:68:Yes. `gateway` owns the one public port; `glc_v5` becomes internal-only, reachable only from `gateway`. Today `glc_v5` listens on its own port (8111) and a separate piece (S16) on 8113 — for a unified backend, `gateway` should own the single external address, with `glc_v5` and everything else behind it.
+./Project plan/SYSTEM_ARCHITECTURE.md:107:6. 🔲 **Two backends in practice.** `glc_v5` (8111) and S16 (8113) both currently answer directly. Needs collapsing behind `gateway`'s single port (Q4).
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:5:The active application is `merged-ingestion`, and its repository coordinator drives intake, immutable capture, segmentation, semantic extraction, review, and projection into Neo4j, Chroma, and SQLite. Model work is deliberately behind one synchronous client object shared across segmentation, extraction, OCR cleanup, spelling review, and embeddings. The wire contract already matches `glc_v5`; the current blocker is that ingestion installs and imports the older `llm_gateway` client, whose documented endpoint is port 8107, while GLC v5 ships `glc.client.LLM` and defaults to port 8111.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:43:2. In `src/ingestion/runner.py:_shared_gateway_client` (`runner.py:74`), dynamically import `glc.client`, not `llm_gateway.client`. Update the error text and docstrings at `runner.py:75` and `runner.py:223` to name GLC v5 and its default port 8111. No downstream constructor needs to change because `glc.client.LLM` satisfies the existing `GatewayClient`/`ChatClient` call shapes.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:49:5. Run GLC v5 separately with `uv run glc serve`; it binds `127.0.0.1:8111` by default (`../glc_v5/glc/main.py:59`, `../glc_v5/glc/client.py:14`). If it runs elsewhere, export `GLC_BASE_URL` in the ingestion process before `glc.client` is imported. Do not retain the old hard-coded 8107 assumption.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:58:11. Change `scripts/t57_live_check.py:12` to `from glc.client import LLM`, and change/remove its explicit `http://127.0.0.1:8107` at line 38 so it uses `GLC_BASE_URL`/8111.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:108:    K -->|glc.client.LLM → :8111| L[GLC v5 /v1/chat]
+./ingestion-pipeline/docs/INGESTION_PIPELINE_ASSESSMENT.md:55:| Default HTTP endpoint | `localhost:8107` | `127.0.0.1:8111` |
+./ingestion-pipeline/docs/INGESTION_PIPELINE_ASSESSMENT.md:62:the old endpoint (8107) nor GLC v5 (8111) was serving locally.
+./ingestion-pipeline/docs/INGESTION_PIPELINE_ASSESSMENT.md:69:its base URL from configuration, defaulting to GLC v5's `127.0.0.1:8111`.
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:15:  -> GLC v5 :8111
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:126:- update failure messages and docstrings to name GLC v5 and port 8111;
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:260:- use port 8111 and `GLC_BASE_URL`;
+./ingestion-pipeline/merged-ingestion/README.md:37:`glc.client.LLM`, pointed at GLC v5 (default `http://127.0.0.1:8111`,
+./ingestion-pipeline/merged-ingestion/build/lib/ingestion/runner.py:80:    ``http://127.0.0.1:8111``, overridable with ``GLC_BASE_URL``). GLC owns
+./ingestion-pipeline/merged-ingestion/src/ingestion/runner.py:80:    ``http://127.0.0.1:8111``, overridable with ``GLC_BASE_URL``). GLC owns
+./glc_v5/tests/test_ssrf_guard.py:23:        "http://localhost:8111/v1/control/kill",
+./glc_v5/docs/VOICE_GUIDE.md:46:curl http://localhost:8111/v1/cost/by_agent
+./glc_v5/README.md:17:Open `http://127.0.0.1:8111/channels` and enter the installation control token
+./glc_v5/README.md:53:The gateway listens on `http://127.0.0.1:8111` by default.
+./glc_v5/README.md:55:- Dashboard: `http://127.0.0.1:8111/`
+./glc_v5/README.md:56:- Help: `http://127.0.0.1:8111/help`
+./glc_v5/README.md:57:- OpenAPI: `http://127.0.0.1:8111/docs`
+./glc_v5/README.md:58:- Health: `http://127.0.0.1:8111/healthz`
+./glc_v5/README.md:77:curl -s http://127.0.0.1:8111/v1/chat \
+./glc_v5/README.md:100:GLC_BASE_URL=http://127.0.0.1:8111
+./glc_v5/README.md:171:curl -s -X POST http://127.0.0.1:8111/v1/budget \
+./glc_v5/README.md:176:curl -s -X POST http://127.0.0.1:8111/v1/chat \
+./glc_v5/daemon/install.sh:84:echo "Gateway will boot on http://localhost:8111"
+./glc_v5/glc/client.py:14:DEFAULT_URL = os.getenv("GLC_BASE_URL", "http://127.0.0.1:8111")
+./glc_v5/glc/cli.py:16:    p_serve.add_argument("--port", type=int, default=int(os.getenv("GLC_PORT", "8111")))
+./glc_v5/glc/voice/tts/providers/kokoro/README.md:89:curl -s -X POST http://localhost:8111/v1/speak \
+./glc_v5/glc/voice/stt/providers/gemini_live/SETUP.md:22:uv run glc serve        # starts on http://localhost:8111
+./glc_v5/glc/voice/stt/providers/gemini_live/SETUP.md:25:Wait until you see `Uvicorn running on http://0.0.0.0:8111`.
+./glc_v5/glc/voice/stt/providers/gemini_live/SETUP.md:62:    "http://localhost:8111/v1/transcribe",
+./glc_v5/glc/main.py:1:"""FastAPI app for glc_v5. Port 8111 by default. Compatibility routes are
+./glc_v5/glc/main.py:59:PORT = int(os.getenv("GLC_PORT", "8111"))
+./glc_v5/glc/channels/catalogue/discord/tests/run_discord_bridge.py:120:    glc_port = os.environ.get("GLC_PORT", "8111")
+./glc_v5/glc/channels/catalogue/twilio_sms/server.py:5:      --WS--> GLC gateway (:8111) --echo--> ChannelReply --adapter.send--> Twilio --> Phone
+./glc_v5/glc/channels/catalogue/twilio_sms/server.py:9:    # terminal A:  uv run glc serve                       (the gateway, :8111)
+./glc_v5/glc/channels/catalogue/twilio_sms/server.py:20:    GLC_GATEWAY_HOST/PORT    gateway location (default localhost:8111)
+./glc_v5/glc/channels/catalogue/twilio_sms/server.py:77:        "gw_port": int(os.environ.get("GLC_GATEWAY_PORT", "8111")),
+./glc_v5/glc/channels/catalogue/twilio_sms/webhook.py:75:    port: int = 8111,
+./glc_v5/glc/channels/catalogue/twilio_voice/adapter.py:47:DEFAULT_STREAM_URL = "wss://localhost:8111/v1/channels/twilio_voice/media"
+./glc_v5/glc/channels/catalogue/telegram/dev/live_poll.py:5:  - A running GLC gateway (uv run glc serve) on port 8111.
+./glc_v5/glc/channels/catalogue/telegram/dev/live_poll.py:49:    gateway_port = int(os.getenv("GLC_PORT", "8111"))
+./glc_v5/glc/channels/catalogue/whatsapp/demo_webhook_server.py:11:Listens on port 8111 by default — same as `glc serve`'s default GLC_PORT,
+./glc_v5/glc/channels/catalogue/whatsapp/demo_webhook_server.py:51:PORT = int(os.environ.get("WEBHOOK_PORT", "8111"))
+./To Do/UNIFIED UI/UNIFIED_UI_PLAN.md:35:`VITE_GLC_BASE_URL`, default `http://127.0.0.1:8111/` for local dev) rather
+./To Do/UNIFIED UI/UNIFIED_UI_PLAN.md:70:2. With GLC running standalone (`cd glc_v5 && uv run glc serve`, port 8111),
+./To Do/Gateway to do/GLC and ingestion gateway migration/06-ingestion-domain-migration.md:147:- Ingestion has no `glc-v5`, `glc.client`, or port-8111 dependency.
+./To Do/Gateway to do/GLC and ingestion gateway migration/01-baseline-and-ownership-decisions.md:84:  - Port 8111.
+./To Do/Gateway to do/GLC and ingestion gateway migration/00-program-roadmap.md:138:- GLC currently runs as a separate FastAPI service on port 8111.
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:168:8111 is likewise hard-coded wherever it's started (see `00-program-roadmap.md`
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:256:  one that already exists for 8111.)*
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:331:- Changing port 8111.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:20:### 2. Port 8111 transition
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:26:- [ ] Remove 8111 on a fixed release/date.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:27:- [ ] Keep 8111 permanently as an alias.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:50:- Remove copied production literals for port 8111.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:79:- Remove the 8111 listener after its approved exit condition.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:94:  package, `glc.main`, or copied port 8111.
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:56:- Port `8111` appears throughout implementation, scripts, examples, service
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:581:- [ ] Keep a temporary listener or proxy on 8111 only if a caller still needs
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:589:ports fail startup, and no production code relies on a copied literal `8111`.
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:653:### Risk: hidden callers depend on port 8111
+./AI Agent/data/state/memory.json:151:      -0.5811131000518799,
+./AI Agent/data/state/memory.json:1434:      -0.29811182618141174,
+./AI Agent/data/state/memory.json:1724:      -0.5811131000518799,
+./AI Agent/data/state/memory.json:2509:      -0.5811131000518799,
+./AI Agent/data/state/memory.json:4240:      0.3811194896697998,
+./AI Agent/data/state/memory.json:5498:      -0.6002581119537354,
+./AI Agent/data/state/memory.json:7221:      1.8111588954925537,
+./AI Agent/data/state/memory.json:8519:      0.8111584782600403,
+./AI Agent/data/state/memory.json:8755:      -0.7740268111228943,
+./AI Agent/data/state/memory.json:8898:      -0.7170190811157227,
+./AI Agent/data/state/memory.json:9630:      -0.5811131000518799,
+./AI Agent/data/state/memory.json:10574:      -0.2936092019081116,
+./AI Agent/data/state/memory.json:11458:      0.2238973081111908,
+./AI Agent/data/state/memory.json:12122:      1.3086388111114502,
+
+===== GLC_* env vars (outside glc_v5 itself) =====
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:130:GLC_BASE_URL
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:148:GLC_BASE_URL
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:176:GLC_PROFILE
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:260:GLC_BASE_URL
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:49:GLC_BASE_URL
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:51:GLC_PROFILES_YAML
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:58:GLC_BASE_URL
+./ingestion-pipeline/merged-ingestion/build/lib/ingestion/runner.py:80:GLC_BASE_URL
+./ingestion-pipeline/merged-ingestion/README.md:38:GLC_BASE_URL
+./ingestion-pipeline/merged-ingestion/src/ingestion/consumers/vector_consumer.py:106:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/src/ingestion/consumers/vector_consumer.py:15:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/src/ingestion/coordinator/preflight.py:19:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/src/ingestion/coordinator/preflight.py:213:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/src/ingestion/runner.py:80:GLC_BASE_URL
+./ingestion-pipeline/merged-ingestion/src/ingestion/vector/vector_store.py:26:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/src/ingestion/vector/vector_store.py:277:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:167:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:169:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:23:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:93:GLC_CONFIG_DIR
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:94:GLC_AUDIT_DB
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:95:GLC_PAIRING_DB
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:96:GLC_GATEWAY_DB
+./ingestion-pipeline/merged-ingestion/tests/test_glc_policy.py:13:GLC_PROFILES_PATH
+./ingestion-pipeline/merged-ingestion/tests/test_glc_policy.py:188:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_glc_policy.py:190:GLC_PROFILES_PATH
+./ingestion-pipeline/merged-ingestion/tests/test_glc_policy.py:203:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_glc_policy.py:211:GLC_PROFILES_PATH
+./ingestion-pipeline/merged-ingestion/tests/test_vector_consumer.py:13:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_vector_consumer.py:99:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_vector_store.py:184:GLC_PROFILE
+./ingestion-pipeline/merged-ingestion/tests/test_vector_store.py:9:GLC_PROFILE
+./To Do/Gateway to do/GLC and ingestion gateway migration/00-program-roadmap.md:145:GLC_GATEWAY_DB
+./To Do/Gateway to do/GLC and ingestion gateway migration/00-program-roadmap.md:146:GLC_AUDIT_DB
+./To Do/Gateway to do/GLC and ingestion gateway migration/01-baseline-and-ownership-decisions.md:85:GLC_BASE_URL
+./To Do/UNIFIED UI/UNIFIED_UI_PLAN.md:29:GLC_BASE_URL
+./To Do/UNIFIED UI/UNIFIED_UI_PLAN.md:34:GLC_BASE_URL
+./To Do/UNIFIED UI/UNIFIED_UI_PLAN.md:35:GLC_BASE_URL
+
+===== imports from glc.* (outside glc_v5 itself) =====
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:19:from glc.client import LLM, GatewayError
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:20:from glc.embedders import EmbedRateState
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:98:    import glc.audit.store as glc_audit_store
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:99:    import glc.config as glc_config
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:100:    import glc.db as glc_db
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:101:    import glc.economics.budget as glc_budget
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:102:    import glc.economics.meter as glc_meter
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:103:    import glc.economics.pricing as glc_pricing
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:104:    import glc.policy.engine as glc_policy_engine
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:105:    import glc.routing.policy as glc_routing_policy
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:106:    import glc.security.pairing as glc_pairing
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:107:    import glc.security.rate_limits as glc_rate_limits
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:108:    import glc.telemetry.otel as glc_otel
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:122:    import glc.main as glc_main
+./ingestion-pipeline/merged-ingestion/scripts/t57_live_check.py:12:from glc.client import LLM
+
+===== direct starts of glc.main =====
+./ingestion-pipeline/INGESTION_ARCHITECTURE_REFACTOR.md:59:  `extract_batch`, real model calls through `glc.client.LLM.chat()`.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:5:The active application is `merged-ingestion`, and its repository coordinator drives intake, immutable capture, segmentation, semantic extraction, review, and projection into Neo4j, Chroma, and SQLite. Model work is deliberately behind one synchronous client object shared across segmentation, extraction, OCR cleanup, spelling review, and embeddings. The wire contract already matches `glc_v5`; the current blocker is that ingestion installs and imports the older `llm_gateway` client, whose documented endpoint is port 8107, while GLC v5 ships `glc.client.LLM` and defaults to port 8111.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:18:4. **Construct the one shared model client** (`src/ingestion/runner.py:74`) — current code dynamically imports `llm_gateway.client.LLM` and instantiates it once. In a production session the same object is injected into `GatewayExtractor`, `GatewayTopicSegmenter`, `VectorStore`, and `VectorConsumer` (`src/ingestion/runner.py:154`). This is the exact integration seam to replace with `glc.client.LLM`; callers below it already use a structural protocol rather than the concrete package type.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:43:2. In `src/ingestion/runner.py:_shared_gateway_client` (`runner.py:74`), dynamically import `glc.client`, not `llm_gateway.client`. Update the error text and docstrings at `runner.py:75` and `runner.py:223` to name GLC v5 and its default port 8111. No downstream constructor needs to change because `glc.client.LLM` satisfies the existing `GatewayClient`/`ChatClient` call shapes.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:45:4. Update `scripts/verify_environment.py:12` to verify `glc.client` (and a stable GLC module such as `glc.providers`) and report distribution `glc-v5`, replacing `llm_gateway.*` and `llm-gateway-v7`.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:49:5. Run GLC v5 separately with `uv run glc serve`; it binds `127.0.0.1:8111` by default (`../glc_v5/glc/main.py:59`, `../glc_v5/glc/client.py:14`). If it runs elsewhere, export `GLC_BASE_URL` in the ingestion process before `glc.client` is imported. Do not retain the old hard-coded 8107 assumption.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:55:8. Update `tests/test_llm_gateway_policy.py:test_only_runner_constructs_the_shared_gateway_client` to recognize only `glc.client`, and keep the invariant that only `runner.py` constructs it. Rename the test/module wording if desired; the architecture rule itself remains valid.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:57:10. Update the installed-dependency assertion and prose in `tests/test_runner.py:254`; it should construct `glc.client.LLM` and verify GLC's default/configured base URL.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:58:11. Change `scripts/t57_live_check.py:12` to `from glc.client import LLM`, and change/remove its explicit `http://127.0.0.1:8107` at line 38 so it uses `GLC_BASE_URL`/8111.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:64:14. Add one contract test using `glc.client.LLM` with an `httpx` mock transport (or GLC's FastAPI `TestClient`) that exercises the three shapes ingestion relies on: profile resolution, structured chat with `parsed`, and the 768-dimensional embedding envelope. Existing ingestion unit tests validate fakes, while GLC's own `tests/test_client.py` validates its client; a cross-project test prevents future drift at the seam.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:108:    K -->|glc.client.LLM → :8111| L[GLC v5 /v1/chat]
+./ingestion-pipeline/docs/INGESTION_PIPELINE_ASSESSMENT.md:54:| Python client | Imports `llm_gateway.client.LLM` | Provides `glc.client.LLM` |
+./ingestion-pipeline/docs/INGESTION_PIPELINE_ASSESSMENT.md:67:`glc.client.LLM`. The adapter should satisfy the existing ingestion
+./ingestion-pipeline/docs/INGESTION_PIPELINE_ASSESSMENT.md:132:   assumption with a tested adapter to `glc.client.LLM` at a configurable URL.
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:9:The ingestion pipeline must construct exactly one `glc.client.LLM` client and share it across all model-backed operations. Ingestion may select a task profile, but it must not select a provider or model.
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:14:  -> glc.client.LLM
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:124:- import `glc.client` instead of `llm_gateway.client`;
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:125:- construct `glc.client.LLM`;
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:136:- replace `llm_gateway.client` with `glc.client`;
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:147:- import `LLM` from `glc.client`;
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:151:**Gate B:** A fresh runtime imports `glc.client`, `_shared_gateway_client()` returns a GLC client pointed at the configured/default URL, and no runtime file imports `llm_gateway`.
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:166:Keep protocol types aligned with `glc.client.LLM`; do not import GLC concrete types below the runner boundary.
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:244:- only `runner.py` constructs/imports `glc.client.LLM`;
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:287:Add an ingestion test using `glc.client.LLM` with a mock HTTP transport or an in-process GLC FastAPI test application. Cover:
+./ingestion-pipeline/docs/GLC_V5_PROFILE_INTEGRATION_PLAN.md:348:- [ ] `src/ingestion/runner.py` — construct `glc.client.LLM` only once.
+./ingestion-pipeline/merged-ingestion/tests/test_glc_policy.py:110:            if isinstance(first, ast.Constant) and first.value == "glc.client":
+./ingestion-pipeline/merged-ingestion/tests/test_glc_policy.py:156:    `glc.client.LLM`'s own signature) and as ordinary variable/field names
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:1:"""Cross-project contract test: ingestion's `glc.client.LLM` against a real,
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:19:from glc.client import LLM, GatewayError
+./ingestion-pipeline/merged-ingestion/tests/test_glc_contract.py:122:    import glc.main as glc_main
+./ingestion-pipeline/merged-ingestion/README.md:37:`glc.client.LLM`, pointed at GLC v5 (default `http://127.0.0.1:8111`,
+./ingestion-pipeline/merged-ingestion/scripts/t57_live_check.py:12:from glc.client import LLM
+./ingestion-pipeline/merged-ingestion/scripts/verify_environment.py:18:    "glc.client",
+./ingestion-pipeline/merged-ingestion/build/lib/ingestion/runner.py:78:    This does not start or implement a gateway. It loads ``glc.client.LLM``,
+./ingestion-pipeline/merged-ingestion/build/lib/ingestion/runner.py:85:        client_module = import_module("glc.client")
+./ingestion-pipeline/merged-ingestion/build/lib/ingestion/runner.py:89:            "The shared glc.client.LLM package is not importable"
+./ingestion-pipeline/merged-ingestion/build/lib/ingestion/runner.py:229:    construction creates exactly one ``glc.client.LLM`` object and shares it
+./ingestion-pipeline/merged-ingestion/src/ingestion/runner.py:78:    This does not start or implement a gateway. It loads ``glc.client.LLM``,
+./ingestion-pipeline/merged-ingestion/src/ingestion/runner.py:85:        client_module = import_module("glc.client")
+./ingestion-pipeline/merged-ingestion/src/ingestion/runner.py:89:            "The shared glc.client.LLM package is not importable"
+./ingestion-pipeline/merged-ingestion/src/ingestion/runner.py:229:    construction creates exactly one ``glc.client.LLM`` object and shares it
+./ingestion-pipeline/merged-ingestion/src/ingestion/extraction/gateway.py:3:All model traffic goes through `glc.client.LLM.chat()` with a named task
+./To Do/UNIFIED UI/UNIFIED_UI_PLAN.md:47:- Mounting `glc.main:app` anywhere inside `gateway/main.py` — that's the
+./To Do/Gateway to do/GLC and ingestion gateway migration/06-ingestion-domain-migration.md:51:semantics currently enforced around `glc.client.LLM`. Do not make ingestion
+./To Do/Gateway to do/GLC and ingestion gateway migration/06-ingestion-domain-migration.md:111:- Replace dynamic `glc.client` construction.
+./To Do/Gateway to do/GLC and ingestion gateway migration/06-ingestion-domain-migration.md:147:- Ingestion has no `glc-v5`, `glc.client`, or port-8111 dependency.
+./To Do/Gateway to do/GLC and ingestion gateway migration/04-glc-llm-orchestration-and-providers.md:87:Proposed default: formalize today's `glc.client.LLM` (currently kept only as
+./To Do/Gateway to do/GLC and ingestion gateway migration/04-glc-llm-orchestration-and-providers.md:98:- [ ] Keep `glc.client.LLM` as an unpromoted compatibility shim only; describe
+./To Do/Gateway to do/GLC and ingestion gateway migration/04-glc-llm-orchestration-and-providers.md:187:- Port `glc.client.LLM`'s public surface onto it without behavior changes.
+./To Do/Gateway to do/GLC and ingestion gateway migration/01-baseline-and-ownership-decisions.md:87:  - Direct starts of `glc.main`.
+./To Do/Gateway to do/GLC and ingestion gateway migration/00-program-roadmap.md:38:  GLC's LLM domain today (via `glc.client.LLM` over HTTP; see
+./To Do/Gateway to do/GLC and ingestion gateway migration/00-program-roadmap.md:137:- Ingestion currently installs `glc-v5` and calls `glc.client.LLM`.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:31:Proposed default: retain a thin `glc.client` compatibility package only long
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:80:- Remove `glc.client` compatibility after its caller inventory reaches zero.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:81:- Remove starts of `glc.main`.
+./To Do/Gateway to do/GLC and ingestion gateway migration/07-runtime-cutover-and-legacy-removal.md:94:  package, `glc.main`, or copied port 8111.
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:505:gateway lifespan without importing the old `glc.main` application.
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:596:- [ ] Confirm no deployment script starts `glc.main`.
+
+===== /v1/ routes referenced (outside glc_v5) =====
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:22:8. **Resolve and call the segmentation profile** (`src/ingestion/pipeline.py:693`, `src/ingestion/parsing.py:156`) — long documents are parsed through `document-segmentation-v1`. Before the first model call, ingestion resolves the profile and requires exactly `phi4-local` / `phi4:14b-q4_K_M` (`src/ingestion/parsing.py:170`); each call sends a constrained JSON Schema and accepts only a parser-offered boundary ID (`src/ingestion/parsing.py:208`). GLC v5 already registers that exact profile (`../glc_v5/glc/profiles.yaml:15`) and exposes its resolution at `GET /v1/chat/profiles/{profile}` (`../glc_v5/glc/routes/chat.py:1437`).
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:25:11. **Embed and project approved envelopes** (`src/ingestion/consumers/vector_consumer.py:56`) — the vector consumer chunks the highlight, calls `embed(..., task_type="retrieval_document", provider="ollama")`, and refuses any response not using `ollama`, `nomic-embed-text`, and dimension 768 (`src/ingestion/vector/vector_store.py:47`). GLC v5's `/v1/embed` accepts that request and returns `provider`, `model`, `embedding`, and `dim` (`../glc_v5/glc/routes/chat.py:1262`, `../glc_v5/glc/llm_schemas.py:142`). Neo4j and content SQLite consume the same approved envelope; Chroma gets only already-generated, validated vectors.
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:32:| Profile resolution | profile name in path | `GET /v1/chat/profiles/{profile}` → `profile`, `provider`, `model`, `available` (`../glc_v5/glc/routes/chat.py:548`) | Compatible |
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:33:| Segmentation | `prompt`, `profile`, `max_tokens`, `temperature`, `response_format` | `POST /v1/chat`; response includes `provider`, `model`, `stop_reason`, `parsed` (`../glc_v5/glc/client.py:69`, `../glc_v5/glc/llm_schemas.py:164`) | Compatible |
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:36:| Vector embedding | `text`, `task_type`, explicit `provider="ollama"` | `POST /v1/embed` → `provider`, `model`, `embedding`, `dim` (`../glc_v5/glc/client.py:154`) | Compatible |
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:88:- GLC v5 receives network requests on `/v1/chat`, `/v1/embed`, and `/v1/chat/profiles/{profile}`. It may contact Anthropic and local Ollama, and records its own audit/economics/telemetry data (`../glc_v5/glc/main.py:137`).
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:108:    K -->|glc.client.LLM → :8111| L[GLC v5 /v1/chat]
+./ingestion-pipeline/docs/WORKFLOW_ingestion_glc_v5.md:120:    U -->|/v1/embed; ollama pinned| V[GLC v5 embeddings]
+./To Do/AI Agent to do/01-agent-under-gateway-plan.md:81:     `glc_v5` at some point, consistent with the `/v1/chat`/`/v1/embed`
+./To Do/AI Agent to do/01-agent-under-gateway-plan.md:86:   `glc_v5/glc/routes/chat.py` serves `POST /v1/chat` and `POST /v1/embed`;
+./To Do/AI Agent to do/01-agent-under-gateway-plan.md:155:  if its `/v1/chat` and `/v1/embed` contracts are confirmed compatible before
+./To Do/AI Agent to do/01-agent-under-gateway-plan.md:170:- [ ] Confirm `glc_v5`'s `POST /v1/chat` and `POST /v1/embed` are a strict
+./To Do/Gateway to do/GLC and ingestion gateway migration/05-glc-channels-and-voice.md:110:- Preserve `/v1/transcribe` and `/v1/speak` behavior.
+./To Do/Gateway to do/GLC and ingestion gateway migration/04-glc-llm-orchestration-and-providers.md:18:new multi-provider monolith. Preserve `/v1/chat`, batch, vision, embeddings,
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:360:existing /v1/chat request
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:374:- Preserve `/v1/chat`, `/v1/chat/batch`, `/v1/vision`, `/v1/embed`,
+./To Do/Gateway to do/01-dismantle-glc-v5-into-gateway.md:375:  `/v1/transcribe`, `/v1/speak`, channel, budget, cost, and status contracts.
+./AI Agent/docs/OLD/MEMORY_ARTIFACTS_DEEPDIVE.md:882:> the gateway's `/v1/embed` endpoint, `_try_embed`, `memory.py:111-125`)
+./AI Agent/docs/WORKFLOW_agent_cli.md:71:   `http://localhost:8107/v1/providers`; if unavailable, the code starts the
+./AI Agent/docs/WORKFLOW_agent_cli.md:232:| Gateway health | A successful `/v1/providers` request proceeds immediately. Failure starts the gateway and polls 45 times; timeout raises and aborts before the run banner. |
+./AI Agent/docs/AGENT OVERVIEWS/OVERVIEW_REPORT.md:175:3. **`embed(text, task_type)`** — A module-level helper that calls the gateway's `POST /v1/embed` endpoint and returns the embedding vector.
+./AI Agent/docs/AGENT OVERVIEWS/OVERVIEW_REPORT.md:208:This is a separate FastAPI application that acts as a unified interface to multiple AI providers. The agent never calls Gemini, Groq, or any other provider directly — all LLM calls go to the gateway's `POST /v1/chat` endpoint at `http://localhost:8107`.
+./AI Agent/docs/AGENT OVERVIEWS/OVERVIEW_REPORT.md:211:- A new `POST /v1/embed` endpoint that returns a vector embedding for a piece of text. This is what `gateway.embed()` calls and what the Memory layer uses for every vector write and read.
+./AI Agent/docs/AGENT OVERVIEWS/OVERVIEW_REPORT.md:329:- LLM Gateway V7 with the new `/v1/embed` endpoint
+./AI Agent/docs/AGENT OVERVIEWS/red-team.md:22:- `llm_gateway/main.py /v1/chat`: arbitrary `ChatRequest` body — unauthenticated FastAPI endpoint
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:54:a unified `/v1/chat` and `/v1/embed` endpoint.
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:70:`memory.remember()` (`memory.py:223`) calls the LLM gateway's `/v1/chat` to
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:79:to `/v1/embed`. The returned float vector is stored on the `MemoryItem` and the
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:192:**Vector path:** Embeds the query via `/v1/embed` with `task_type="retrieval_query"`,
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:316:The response from `/v1/chat` contains either:
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:417:Embeds the descriptor via `/v1/embed`. Writes `MemoryItem` to `memory.json`
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:542:POST to `http://localhost:8107/v1/chat` and `/v1/embed` respectively.
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:544:**`/v1/chat` flow** (main.py:268):
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:562:**`/v1/embed` flow** (main.py — embedders section):
+./AI Agent/docs/AGENT OVERVIEWS/WORKFLOW_REPORT.md:646:   descriptor via `/v1/embed` and writes a `fact` MemoryItem to `memory.json`
+./AI Agent/README.md:41:- `AI Code/llm_gateway/` — the shared LLM + `/v1/embed` gateway (auto-started on port 8107)
+./AI Agent/src/agent/gateway.py:3:This agent uses the gateway's chat endpoint plus `POST /v1/embed`.
+./AI Agent/src/agent/gateway.py:61:        httpx.get(f"{GATEWAY_URL}/v1/providers", timeout=2.0)
+./AI Agent/src/agent/cognition/memory.py:11:separate gateway endpoint, `POST /v1/embed`, exposed by `gateway.embed()`.
+
+===== /api/ingestion/ routes referenced (outside ingestion-pipeline & gateway) =====
+./shell/src/api/client.ts:3:const ROOT = "/api/ingestion";
+./shell/src/api/schema.d.ts:7:    "/api/ingestion/run": {
+./shell/src/api/schema.d.ts:24:    "/api/ingestion/run/start": {
+./shell/src/api/schema.d.ts:41:    "/api/ingestion/run/decision": {
+./shell/src/api/schema.d.ts:58:    "/api/ingestion/run/retry": {
+./shell/src/api/schema.d.ts:75:    "/api/ingestion/run/{run_id}/report": {
+./shell/src/api/schema.d.ts:92:    "/api/ingestion/evidence/{run_id}/{item_id}": {
+./shell/src/api/schema.d.ts:109:    "/api/ingestion/cleanup/mappings": {
+./shell/src/api/schema.d.ts:127:    "/api/ingestion/cleanup/mappings/{mapping_id}": {
+./To Do/AI Agent to do/01-agent-under-gateway-plan.md:159:  routes the same way the shell already talks to `/api/ingestion/*`.
+./To Do/AI Agent to do/01-agent-under-gateway-plan.md:252:(`app.include_router(create_router(service), prefix="/api/ingestion")`):
+./To Do/Gateway to do/GLC and ingestion gateway migration/06-ingestion-domain-migration.md:7:rules, and `/api/ingestion/*` frontend contract.
+./To Do/Gateway to do/GLC and ingestion gateway migration/06-ingestion-domain-migration.md:68:Proposed default: keep `/api/ingestion/*` and `component6.v1` unchanged during
+./To Do/Gateway to do/GLC and ingestion gateway migration/06-ingestion-domain-migration.md:148:- `/api/ingestion/*` and the shell journey are unchanged.
+./To Do/Gateway to do/GLC and ingestion gateway migration/01-baseline-and-ownership-decisions.md:29:`/api/ingestion/*` contracts until caller migration is complete.
+./To Do/Gateway to do/GLC and ingestion gateway migration/01-baseline-and-ownership-decisions.md:89:  - `/api/ingestion/*` routes.
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:121:`/api/ingestion/*` behavior. Once Plan 04/05 add GLC and webhook routes,
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:238:  `app.include_router(create_router(service), prefix="/api/ingestion", ...)`
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:275:- Keep the current ingestion router mounted at `/api/ingestion`. *(No change
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:296:existing `/api/ingestion/*` test in `test_main.py` still passes unchanged.
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:308:  here on `/api/ingestion/*` paths is a red flag; a diff only from brand-new
+./To Do/Gateway to do/GLC and ingestion gateway migration/02-gateway-foundation.md:337:- Existing `/api/ingestion/*`, `/health`, shell, docs, and auth tests pass.

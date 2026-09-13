@@ -1,0 +1,595 @@
+Baseline run started 20260913T201104Z UTC
+
+### glc: ruff check
+$ uv run ruff check .
+All checks passed!
+RESULT: PASS
+
+### glc: ruff format --check
+$ uv run ruff format --check .
+Would reformat: glc/cache/semantic.py
+Would reformat: glc/channels/setup.py
+Would reformat: glc/client.py
+Would reformat: glc/direct_providers.py
+Would reformat: glc/main.py
+Would reformat: glc/routes/channels.py
+Would reformat: tests/test_cache_semantic_live.py
+Would reformat: tests/test_channel_setup.py
+Would reformat: tests/test_client.py
+Would reformat: tests/test_direct_providers_live.py
+Would reformat: tests/test_profiles.py
+Would reformat: tests/test_s16_channel_connections.py
+Would reformat: tests/test_ssrf_guard.py
+Would reformat: tests/test_webhook_replay.py
+14 files would be reformatted, 267 files already formatted
+RESULT: FAIL (exit 1)
+
+### glc: mypy (advisory)
+$ uv run mypy glc tests
+tests/voice/stt/mocks/whisper_cpp_mock.py:53: error: Cannot determine type of "setup_frame"  [has-type]
+tests/voice/stt/mocks/groq_whisper_mock.py:55: error: Cannot determine type of "setup_frame"  [has-type]
+glc/db.py:334: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/audit/store.py:129: error: Argument 1 to "append" of "list" has incompatible type "int"; expected "str"  [arg-type]
+glc/channels/catalogue/webui/adapter.py:45: error: Incompatible return value type (got "None", expected "ChannelMessage")  [return-value]
+glc/channels/catalogue/webui/adapter.py:51: error: Incompatible return value type (got "None", expected "ChannelMessage")  [return-value]
+glc/channels/catalogue/webui/adapter.py:62: error: Incompatible return value type (got "None", expected "ChannelMessage")  [return-value]
+glc/channels/catalogue/slack/adapter.py:29: error: Return type "Coroutine[Any, Any, ChannelMessage | None]" of "on_message" incompatible with return type "Coroutine[Any, Any, ChannelMessage]" in supertype "glc.channels.base.ChannelAdapter"  [override]
+glc/channels/catalogue/signal/adapter.py:40: error: Return type "Coroutine[Any, Any, ChannelMessage | None]" of "on_message" incompatible with return type "Coroutine[Any, Any, ChannelMessage]" in supertype "glc.channels.base.ChannelAdapter"  [override]
+glc/routing/core.py:163: error: Need type annotation for "state"  [var-annotated]
+glc/routing/core.py:200: error: Value of type "object" is not indexable  [index]
+glc/routing/core.py:202: error: Value of type "object" is not indexable  [index]
+glc/routing/core.py:239: error: Need type annotation for "state"  [var-annotated]
+glc/channels/catalogue/gmail/server.py:107: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/gmail/server.py:109: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/gmail/server.py:110: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/gmail/server.py:221: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/discord/tests/test_privacy_allowlist.py:171: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/discord/tests/test_privacy_allowlist.py:197: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/twilio_voice/test.py:381: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/twilio_voice/test.py:592: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/catalogue/twilio_voice/test.py:609: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/telemetry/otel.py:426: error: Argument 1 to "SimpleSpanProcessor" has incompatible type "_ListExporter"; expected "SpanExporter"  [arg-type]
+glc/telemetry/otel.py:432: error: Argument 1 to "SimpleSpanProcessor" has incompatible type "_RecentTraceExporter"; expected "SpanExporter"  [arg-type]
+glc/telemetry/otel.py:434: error: Incompatible types in assignment (expression has type "TracerProvider", variable has type "None")  [assignment]
+glc/telemetry/otel.py:440: error: Incompatible types in assignment (expression has type "Tracer", variable has type "None")  [assignment]
+glc/providers.py:823: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/direct_providers.py:183: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/direct_providers.py:359: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/channels/agent_bridge.py:30: error: Item "None" of "str | None" has no attribute "rstrip"  [union-attr]
+glc/security/ssrf.py:82: error: Item "int" of "str | int" has no attribute "split"  [union-attr]
+glc/routes/observability.py:121: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/routes/economics.py:77: error: Item "None" of "BudgetPolicy | None" has no attribute "as_dict"  [union-attr]
+glc/cache/semantic.py:440: error: Argument 3 to "embed_with_failover" has incompatible type "str"; expected "Literal['retrieval_document', 'retrieval_query']"  [arg-type]
+tests/test_local_models.py:44: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_local_models.py:61: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_direct_providers.py:189: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/routes/chat.py:829: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+glc/routes/chat.py:1086: error: Argument 1 to "append" of "list" has incompatible type "str | None"; expected "str"  [arg-type]
+glc/routes/chat.py:1088: error: Argument 2 to "_tier_candidates" has incompatible type "str | None"; expected "str"  [arg-type]
+glc/routes/chat.py:1092: error: Incompatible types in assignment (expression has type "str | None", variable has type "str")  [assignment]
+glc/routes/chat.py:1452: error: Value of type "object" is not indexable  [index]
+glc/routes/chat.py:1453: error: Value of type "object" is not indexable  [index]
+glc/routes/chat.py:1454: error: Value of type "object" is not indexable  [index]
+glc/channels/catalogue/twilio_sms/tests/test_webhook_route.py:49: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_schema_bomb.py:31: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_provider_reasoning.py:47: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_provider_reasoning.py:56: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_provider_reasoning.py:65: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_provider_reasoning.py:71: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_provider_reasoning.py:81: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+tests/test_cache_semantic.py:42: error: Argument 1 to "SemanticCacheConfig" has incompatible type "**dict[str, object]"; expected "bool"  [arg-type]
+tests/test_cache_semantic.py:42: error: Argument 1 to "SemanticCacheConfig" has incompatible type "**dict[str, object]"; expected "float"  [arg-type]
+tests/test_cache_semantic.py:42: error: Argument 1 to "SemanticCacheConfig" has incompatible type "**dict[str, object]"; expected "int"  [arg-type]
+tests/test_cache_semantic.py:42: error: Argument 1 to "SemanticCacheConfig" has incompatible type "**dict[str, object]"; expected "list[str]"  [arg-type]
+tests/test_cache_semantic.py:42: error: Argument 1 to "SemanticCacheConfig" has incompatible type "**dict[str, object]"; expected "str"  [arg-type]
+Found 31 errors in 14 files (checked 278 source files)
+RESULT: FAIL (exit 1)
+
+### glc: pytest (CI subset, excludes live/model/channel/voice-slot tests)
+$ uv run pytest tests/ -m not requires_live_api and not requires_models --ignore=tests/channels --ignore=tests/voice/stt --ignore=tests/voice/tts
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.0, pluggy-1.6.0
+rootdir: /Users/aryamanchandak/Documents/AI OS/glc_v5
+configfile: pyproject.toml
+plugins: anyio-4.14.0, cov-7.1.0, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=session, asyncio_default_test_loop_scope=function
+collected 418 items / 15 deselected / 403 selected
+
+tests/test_allowlists_trust.py .........                                 [  2%]
+tests/test_audit_log.py ......                                           [  3%]
+tests/test_cache_semantic.py ......................                      [  9%]
+tests/test_channel_gate_derivation.py ........                           [ 11%]
+tests/test_channel_setup.py .......                                      [ 12%]
+tests/test_client.py .....                                               [ 14%]
+tests/test_control_plane.py .......                                      [ 15%]
+tests/test_dashboard.py .                                                [ 16%]
+tests/test_direct_providers.py .......                                   [ 17%]
+tests/test_economics_budget.py .........................                 [ 24%]
+tests/test_economics_meter.py ...............                            [ 27%]
+tests/test_economics_pricing.py ................                         [ 31%]
+tests/test_envelope.py ......                                            [ 33%]
+tests/test_local_models.py .....                                         [ 34%]
+tests/test_multigemini_pool.py ..                                        [ 34%]
+tests/test_observability.py ....................                         [ 39%]
+tests/test_pairing.py ........                                           [ 41%]
+tests/test_policy_engine.py .............                                [ 45%]
+tests/test_policy_matcher_hardening.py ..........                        [ 47%]
+tests/test_preflight.py .......                                          [ 49%]
+tests/test_profiles.py ............                                      [ 52%]
+tests/test_provider_reasoning.py ............                            [ 55%]
+tests/test_rate_limit_bounded.py ...                                     [ 56%]
+tests/test_rate_limits.py .......                                        [ 57%]
+tests/test_registry.py .....                                             [ 59%]
+tests/test_routing_policy.py ........................................... [ 69%]
+..                                                                       [ 70%]
+tests/test_s13_separation.py .                                           [ 70%]
+tests/test_s16_channel_connections.py .....                              [ 71%]
+tests/test_schema_bomb.py .......                                        [ 73%]
+tests/test_ssrf_guard.py ....................                            [ 78%]
+tests/test_teams_service_url.py ...............                          [ 82%]
+tests/test_telemetry_otel.py .............                               [ 85%]
+tests/test_transcribe_route.py .....                                     [ 86%]
+tests/test_v4_routes.py ..............s...........                       [ 93%]
+tests/test_v9_compat.py ..........                                       [ 95%]
+tests/test_voice_routing.py ............                                 [ 98%]
+tests/test_webhook_replay.py ......                                      [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  /Users/aryamanchandak/Documents/AI OS/glc_v5/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+========== 402 passed, 1 skipped, 15 deselected, 1 warning in 15.66s ===========
+RESULT: PASS
+
+### glc: validate_envelope
+$ uv run python scripts/validate_envelope.py
+Traceback (most recent call last):
+  File "/Users/aryamanchandak/Documents/AI OS/glc_v5/scripts/validate_envelope.py", line 13, in <module>
+    from glc.channels.envelope import ChannelMessage, ChannelReply
+ModuleNotFoundError: No module named 'glc.channels'
+RESULT: FAIL (exit 1)
+
+### glc: validate_policy
+$ uv run python scripts/validate_policy.py
+Traceback (most recent call last):
+  File "/Users/aryamanchandak/Documents/AI OS/glc_v5/scripts/validate_policy.py", line 10, in <module>
+    from glc.config import PACKAGED_POLICY
+ModuleNotFoundError: No module named 'glc.config'
+RESULT: FAIL (exit 1)
+
+### ingestion: pytest
+$ bash scripts/run.sh pytest -q
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 46%]
+........................................................................ [ 62%]
+........................................................................ [ 78%]
+........................................................................ [ 93%]
+............................                                             [100%]
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:241
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:241
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+.venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+  /Users/aryamanchandak/Documents/AI OS/ingestion-pipeline/merged-ingestion/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+460 passed, 6 warnings in 2.28s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+RESULT: PASS
+
+### ingestion: verify_environment
+$ bash scripts/run.sh python scripts/verify_environment.py
+Traceback (most recent call last):
+  File "/Users/aryamanchandak/Documents/AI OS/ingestion-pipeline/merged-ingestion/scripts/verify_environment.py", line 59, in <module>
+    main()
+  File "/Users/aryamanchandak/Documents/AI OS/ingestion-pipeline/merged-ingestion/scripts/verify_environment.py", line 29, in main
+    module = importlib.import_module(name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aryamanchandak/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/importlib/__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1126, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1140, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'ingestion'
+RESULT: FAIL (exit 1)
+
+### ingestion: mypy --strict cockpit/server.py
+$ ./.venv/bin/python -m mypy --strict cockpit/server.py
+Success: no issues found in 1 source file
+RESULT: PASS
+
+### gateway: pytest (checks openapi.json staleness)
+$ /Users/aryamanchandak/Documents/AI OS/ingestion-pipeline/merged-ingestion/.venv/bin/python -m pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.1.1, pluggy-1.6.0
+rootdir: /Users/aryamanchandak/Documents/AI OS/gateway
+plugins: anyio-4.14.2
+collected 27 items
+
+test_contract_staleness.py ..                                            [  7%]
+test_main.py .........................                                   [100%]
+
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:241
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:241
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+<frozen importlib._bootstrap>:241
+  <frozen importlib._bootstrap>:241: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+
+../ingestion-pipeline/merged-ingestion/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+  /Users/aryamanchandak/Documents/AI OS/ingestion-pipeline/merged-ingestion/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 27 passed, 6 warnings in 0.91s ========================
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute
+RESULT: PASS
+
+### gateway: export_openapi (staleness check)
+$ /Users/aryamanchandak/Documents/AI OS/ingestion-pipeline/merged-ingestion/.venv/bin/python export_openapi.py
+/Users/aryamanchandak/Documents/AI OS/gateway/openapi.json
+RESULT: PASS
+
+### gateway: mypy --strict main.py
+$ /Users/aryamanchandak/Documents/AI OS/ingestion-pipeline/merged-ingestion/.venv/bin/python -m mypy --config-file mypy.ini main.py
+Success: no issues found in 1 source file
+RESULT: PASS
+
+### shell: types:generate
+$ npm run types:generate
+
+> aryaman-ai-os-shell@0.1.0 types:generate
+> openapi-typescript ../gateway/openapi.json -o src/api/schema.d.ts
+
+✨ openapi-typescript 7.13.0
+🚀 ../gateway/openapi.json → src/api/schema.d.ts [42.9ms]
+RESULT: PASS
+
+### shell: tsc -b
+$ npx tsc -b
+RESULT: PASS
+
+### shell: vite build
+$ npx vite build
+vite v7.3.6 building client environment for production...
+transforming...
+✓ 2090 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:   0.30 kB
+dist/assets/index-BiPr1Kt7.css   13.67 kB │ gzip:   4.16 kB
+dist/assets/index-CgIi6hbg.js   386.38 kB │ gzip: 119.83 kB
+✓ built in 854ms
+RESULT: PASS
+
+### shell: vitest run
+$ npx vitest run
+
+ RUN  v3.2.7 /Users/aryamanchandak/Documents/AI OS/shell
+
+ ✓ src/settlement.test.ts (29 tests) 9ms
+ ✓ src/drafts.test.ts (18 tests) 10ms
+ ✓ src/components/ActionBar.test.tsx (7 tests) 97ms
+ ✓ src/screens/PhaseHandoffReview.test.tsx (6 tests) 123ms
+ ✓ src/screens/ImageReview.test.tsx (7 tests) 224ms
+ ✓ src/screens/KnowledgeProposalReview.test.tsx (12 tests) 275ms
+stderr | src/App.test.tsx > failure announcements > announces a new failure once and does not move focus
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > failure announcements > announces a new failure once and does not move focus
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > a failed start > stops the spinner, shows the error and offers an explicit Try start again
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > a failed start > stops the spinner, shows the error and offers an explicit Try start again
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > retry and reconnect > keeps a failed retry prominent with its new message and never auto-retries
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > retry and reconnect > keeps a failed retry prominent with its new message and never auto-retries
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > confirmed success > never carries a rejected submission forward to a later unrelated success
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > confirmed success > never carries a rejected submission forward to a later unrelated success
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/App.test.tsx > confirmed success > never carries a rejected submission forward to a later unrelated success
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to App inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ src/App.test.tsx (39 tests) 14725ms
+   ✓ failure announcements > announces a new failure once and does not move focus  1721ms
+   ✓ failure announcements > announces a new failure whose text reads the same as the previous one  766ms
+   ✓ a failed start > stops the spinner, shows the error and offers an explicit Try start again  1747ms
+   ✓ retry and reconnect > calls the retry endpoint and records the confirmed retry in diagnostics  777ms
+   ✓ retry and reconnect > keeps a failed retry prominent with its new message and never auto-retries  2471ms
+   ✓ transport failures > stops polling after the first 401 instead of repeating it every interval  1711ms
+   ✓ confirmed success > does not celebrate on the 202; it waits for the confirming snapshot  777ms
+   ✓ confirmed success > does not celebrate when the coordinator failed after accepting  766ms
+   ✓ confirmed success > does not celebrate while the same item is still pending  778ms
+   ✓ confirmed success > never carries a rejected submission forward to a later unrelated success  1736ms
+   ✓ draft lifecycle > clears the draft only after the matching decision is confirmed  773ms
+
+ Test Files  7 passed (7)
+      Tests  118 passed (118)
+   Start at  01:41:39
+   Duration  15.81s (transform 287ms, setup 840ms, collect 1.18s, tests 15.46s, environment 3.35s, prepare 331ms)
+
+RESULT: PASS
+
