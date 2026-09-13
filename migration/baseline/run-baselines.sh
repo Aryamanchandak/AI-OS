@@ -22,7 +22,8 @@ run_step() {
   if ( "$@" ) >>"$LOG" 2>&1; then
     echo "RESULT: PASS" | tee -a "$LOG"
   else
-    echo "RESULT: FAIL (exit $?)" | tee -a "$LOG"
+    local rc=$?
+    echo "RESULT: FAIL (exit $rc)" | tee -a "$LOG"
   fi
   echo "" | tee -a "$LOG"
 }

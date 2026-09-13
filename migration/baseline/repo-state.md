@@ -42,26 +42,28 @@ Submodule pointers updated to the two commits above. Committed as `9fc863b`.
 
 ## Untracked root directories — decision and rationale
 
-Decision (confirmed 2026-09-14): **track only `gateway/` for now**, per this
-plan's exit gate ("Gateway is tracked"). Everything else stays untracked and
-is now explicitly `.gitignore`d rather than silently untracked, so `git
-status` stays honest:
+Decision (confirmed 2026-09-14): **track `gateway/`** per this plan's exit
+gate ("Gateway is tracked"). Everything else was evaluated individually:
 
 - `Database/` — 517MB. Contains `Database/Raw Data/`, which is **its own git
   repository** with a remote pointing at a *different, unrelated* personal
   project (`git@github.com:aryamanchandak/Agentic-Calendar.git`) — not part
   of this migration. Also contains photos, financial documents, and personal
-  notes. Not something to fold into the AI OS parent repo without a separate,
-  explicit decision.
+  notes. **Gitignored** — not something to fold into the AI OS parent repo
+  without a separate, explicit decision.
 - `AI Agent/` — 654MB. **Its own separate git repository** (no remote
   configured), with its own in-flight migration plan
-  (`To Do/AI Agent to do/01-agent-under-gateway-plan.md`). Out of scope for
-  the GLC/ingestion migration this plan folder covers.
-- `Project plan/`, `To Do/` — lightweight docs/plans. Left untracked
-  alongside the above pending a separate decision, not because they're risky.
-- `shell/` — the React/Vite UI shell. Not mentioned anywhere in Plan 01;
-  tracking it is a call for whoever owns `To Do/UNIFIED UI/UNIFIED_UI_PLAN.md`
-  to make, not an implicit side effect of this plan.
+  (`To Do/AI Agent to do/01-agent-under-gateway-plan.md`). **Gitignored** —
+  out of scope for the GLC/ingestion migration this plan folder covers.
+- `shell/` — the React/Vite UI shell, 208MB mostly `node_modules/`.
+  **Gitignored.** Not mentioned anywhere in Plan 01; tracking it is a call
+  for whoever owns `To Do/UNIFIED UI/UNIFIED_UI_PLAN.md` to make.
+- `Project plan/`, `To Do/` — lightweight docs/plans (288K + 168K, no nested
+  repos, no data, no secrets). **Tracked.** This was revised mid-capture:
+  `To Do/Gateway to do/GLC and ingestion gateway migration/01-baseline-and-ownership-decisions.md`
+  itself — the plan's own decision checkboxes — lives in this tree. Leaving
+  it gitignored would have made the approvals recorded in `decisions.md`
+  unrecoverable from git and every later plan in that folder untracked too.
 
 Also added to `.gitignore`: `__pycache__/`, `*.pyc`, `.pytest_cache/`,
 `.mypy_cache/`, `node_modules/`, `dist/` — none of these existed as ignore

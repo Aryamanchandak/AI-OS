@@ -30,10 +30,13 @@ files.
 
 - GLC's and ingestion's uncommitted work: reviewed (diffed for secrets,
   checked deletions) and committed in their own repos. See `repo-state.md`.
-- Untracked root files: **track only `gateway/` for now.** `Database/`,
-  `AI Agent/` (each its own separate git repo / large personal data),
-  `Project plan/`, `To Do/`, `shell/` stay untracked and are now explicitly
-  gitignored. See `repo-state.md`.
+- Untracked root files: **track `gateway/`, `Project plan/`, and `To Do/`.**
+  `Database/`, `AI Agent/` (each its own separate git repo / large personal
+  data), and `shell/` stay untracked and are now explicitly gitignored.
+  `Project plan/`/`To Do/` were initially left ignored too, then revised
+  once it was clear this plan's own decision record
+  (`01-baseline-and-ownership-decisions.md`) lives inside `To Do/` — see
+  `repo-state.md`.
 - Gateway and shell baseline: gateway is now committed; shell was left
   untracked per the above (not part of this plan's exit gate).
 
