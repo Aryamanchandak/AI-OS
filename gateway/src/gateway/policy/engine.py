@@ -20,11 +20,19 @@ def _string(value: Any, label: str) -> str:
     return value
 
 
+def _normalize_path_for_glob(value: str) -> str:
+    """Expand ``~`` and normalize separators so a rule written as
+    ``~/Documents/**`` also matches the equivalent path spelled with
+    backslashes. Without this, spelling the same file with backslashes
+    slips past a tilde- or slash-based deny rule."""
+    return os.path.expanduser(value).replace("\\", "/")
+
+
 def _matches(condition: dict[str, Any], parameters: dict[str, Any]) -> bool:
     for key, expected in condition.items():
         if key.endswith("_glob"):
-            value = os.path.expanduser(_string(parameters.get(key[:-5]), "glob condition"))
-            pattern = os.path.expanduser(_string(expected, "glob pattern"))
+            value = _normalize_path_for_glob(_string(parameters.get(key[:-5]), "glob condition"))
+            pattern = _normalize_path_for_glob(_string(expected, "glob pattern"))
             if "**" in pattern:
                 expression = re.escape(pattern).replace(r"\*\*", ".*").replace(r"\*", "[^/]*")
                 if re.fullmatch(expression, value, re.DOTALL) is None:
@@ -41,6 +49,9 @@ def _matches(condition: dict[str, Any], parameters: dict[str, Any]) -> bool:
             command = _string(parameters.get("command", ""), "command_matches").casefold()
             patterns = expected if isinstance(expected, list) else [expected]
             if not any(str(item).casefold() in command for item in patterns):
+                return False
+        elif isinstance(expected, list):
+            if parameters.get(key) not in expected:
                 return False
         elif parameters.get(key) != expected:
             return False
@@ -101,9 +112,13 @@ class PolicyEngine:
             first = first or (index, rule)
             if rule.action == "deny" and deny is None:
                 deny = (index, rule)
-        selected = deny or first
-        if selected is not None:
-            index, rule = selected
+        if deny is not None:
+            index, rule = deny
+            return PolicyVerdict(
+                action="deny", reason=rule.reason or "denied by policy", matched_rule_index=index
+            )
+        if first is not None:
+            index, rule = first
             return PolicyVerdict(
                 action=rule.action,
                 reason=rule.reason or f"matched rule #{index}",
