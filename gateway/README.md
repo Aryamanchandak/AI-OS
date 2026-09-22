@@ -46,9 +46,12 @@ domains. Their SQLite files default to `../Database/sqlite/audit.sqlite`,
 The compatibility control routes remain at `/v1/control/*` and use the GLC
 install token, not `AI_OS_TOKEN`. Policy reload is available at
 `POST /v1/control/reload-policy` and through SIGHUP; both call the same atomic
-reload operation and are audited. In the unified process, `/v1/control/kill`
-suspends the GLC capability but deliberately does not terminate Gateway,
-ingestion, or the shell.
+`PolicyEngine.reload()`. Only the HTTP path is audited — the SIGHUP handler
+runs on the main thread inside the interpreter's signal-check point and
+deliberately avoids the SQLite write an audit record would require, so a
+signal-triggered reload (success or failure) does not appear in the audit
+log. In the unified process, `/v1/control/kill` suspends the GLC capability
+but deliberately does not terminate Gateway, ingestion, or the shell.
 
 ## Regression commands
 

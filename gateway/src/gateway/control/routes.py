@@ -47,6 +47,7 @@ def pair(request: PairRequest, service: Annotated[ControlService, Depends(_autho
             400,
             f"trust_level must be user_paired or owner_paired, got {request.trust_level!r}",
         )
+    service.require_audit_writable()
     code, expires_at = service.pairings.issue_code(
         request.channel,
         request.channel_user_id,
@@ -65,6 +66,7 @@ def pair_confirm(
     request: PairConfirmRequest,
     service: Annotated[ControlService, Depends(_authorized)],
 ) -> Any:
+    service.require_audit_writable()
     record = service.pairings.confirm_code(request.code)
     if record is None:
         raise HTTPException(404, "code unknown or expired")
@@ -95,7 +97,7 @@ def presence(service: Annotated[ControlService, Depends(_authorized)]) -> Any:
         "paired_users": paired_users,
         "uptime_s": int(time.time() - service.started_at),
     }
-    service.audit_control("presence_read", result={"paired_user_count": len(paired_users)})
+    service.audit_best_effort("presence_read", result={"paired_user_count": len(paired_users)})
     return result
 
 

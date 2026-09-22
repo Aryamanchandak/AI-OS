@@ -23,9 +23,29 @@ from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
 from gateway.llm import LLMService
 import signal
+import sys
 from typing import Any, TypeVar
 
 T = TypeVar("T")
+
+
+def _reload_policy_on_sighup(container: DependencyContainer) -> None:
+    """SIGHUP handler body: policy reload only, no other I/O.
+
+    Runs on the main thread inside the interpreter's signal-check point,
+    which can interrupt arbitrary code. It must not touch SQLite (the audit
+    or pairing stores) or otherwise block; a failed reload is caught and
+    logged rather than left to propagate out of the handler, matching GLC's
+    original behavior. Unlike the authenticated HTTP reload endpoint
+    (`POST /v1/control/reload-policy`), a SIGHUP reload is not audited —
+    auditing it would mean doing a database write from the signal frame,
+    which this handler deliberately avoids.
+    """
+    try:
+        container.policy.reload()
+        print("[gateway] policy.yaml reloaded via SIGHUP", file=sys.stderr)
+    except Exception as exc:
+        print(f"[gateway] SIGHUP policy reload failed: {exc!r}", file=sys.stderr)
 
 
 def _construct(dependency: str, factory: Callable[[], T]) -> T:
@@ -50,7 +70,7 @@ def build_container(
     _construct("telemetry export", telemetry.initialize)
     rate_limiter = RateLimiter()
     channels = _construct("channels.yaml", lambda: paths.load_mapping(paths.channels))
-    rate_limiter.configure(channels)
+    _construct("channels.yaml", lambda: rate_limiter.configure(channels))
     control = ControlService(
         install_token=_construct("install token", paths.get_or_create_install_token),
         pairings=pairings,
@@ -119,7 +139,7 @@ def lifespan_for(
                     previous_sighup = signal.getsignal(signal.SIGHUP)
                     signal.signal(
                         signal.SIGHUP,
-                        lambda _signum, _frame: container.control.reload_policy(trigger="sighup"),
+                        lambda _signum, _frame: _reload_policy_on_sighup(container),
                     )
                 except ValueError:
                     pass
