@@ -1,0 +1,20 @@
+rules:
+  - tool: email.send
+    condition: {recipient_type: external}
+    action: require_approval
+    reason: external email recipient requires owner approval
+  - tool: file.delete
+    condition: {path_glob: "~/Documents/**"}
+    action: deny
+    reason: file deletes under ~/Documents are not permitted
+  - tool: calendar.delete
+    action: require_approval
+    reason: calendar deletions require owner approval
+  - tool: shell.exec
+    condition: {command_matches: [sudo, "rm -rf", "curl | sh"]}
+    action: deny
+    reason: command pattern is on the shell deny list
+  - tool: "*"
+    trust_level: untrusted
+    action: deny
+    reason: untrusted sender cannot dispatch any tool

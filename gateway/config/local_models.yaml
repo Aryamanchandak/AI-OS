@@ -1,0 +1,28 @@
+version: 1
+
+# Every entry is a separately addressable provider backed by the same Ollama
+# daemon. `model_env` keeps the general-purpose entries operator-configurable;
+# profile-owned entries are deliberately exact pins.
+models:
+  ollama:
+    model: gemma4:31b
+    model_env: OLLAMA_MODEL
+    needs_think_false: true
+    vision: true
+    context_window: 32000
+  gemma:
+    model: gemma4:12b
+    model_env: GEMMA_LOCAL_MODEL
+    needs_think_false: true
+    vision: true
+    context_window: 131072
+  phi4-local:
+    model: phi4:14b-q4_K_M
+    needs_think_false: true
+    vision: false
+    context_window: 16000
+  cover-vision-local:
+    model: gemma4:12b
+    needs_think_false: true
+    vision: true
+    context_window: 262144

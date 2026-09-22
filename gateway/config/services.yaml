@@ -1,0 +1,17 @@
+# Existing ports are grandfathered until Plan 07. New AI OS-owned external
+# workers must use an explicit free port in the reserved 81xx range.
+services:
+  gateway:
+    host: 127.0.0.1
+    port: 8000
+    enabled: true
+    required: true
+  glc_legacy:
+    host: 127.0.0.1
+    port: 8111
+    enabled: true
+    required: false
+
+# Optional-worker policy: Gateway validates optional worker configuration but
+# does not probe it during startup. An unavailable optional worker must degrade
+# only its owning feature; required configuration still fails startup eagerly.

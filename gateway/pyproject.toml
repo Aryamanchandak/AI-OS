@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-os-gateway"
+version = "0.2.0"
+description = "Typed application container and HTTP gateway for AI OS"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "httpx>=0.27",
+    "jsonschema>=4.21",
+    "merged-ingestion",
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "uvicorn[standard]>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["mypy>=1.8", "pytest>=8.0"]
+
+[tool.uv.sources]
+merged-ingestion = { path = "../ingestion-pipeline/merged-ingestion", editable = false }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+pythonpath = ["src", "."]
+norecursedirs = [".venv"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+exclude = ["tests", "test_.*\\.py"]
+
+[[tool.mypy.overrides]]
+module = ["cockpit.*", "ingestion.*", "preview"]
+follow_imports = "skip"

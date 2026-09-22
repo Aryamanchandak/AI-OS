@@ -1,0 +1,20 @@
+defaults:
+  rate_limits: {messages_per_minute: 30, tool_calls_per_minute: 20}
+  allowed_senders: []
+  mention_only_in_public: true
+channels:
+  telegram: {enabled: false}
+  discord: {enabled: false}
+  slack: {enabled: false}
+  whatsapp: {enabled: true}
+  teams: {enabled: false}
+  matrix: {enabled: false}
+  line: {enabled: false}
+  signal: {enabled: false}
+  gmail: {enabled: false}
+  imap: {enabled: false}
+  twilio_sms: {enabled: false}
+  twilio_voice: {enabled: false}
+  webui: {enabled: true}
+  webhook: {enabled: false}
+  local_mic: {enabled: false}
