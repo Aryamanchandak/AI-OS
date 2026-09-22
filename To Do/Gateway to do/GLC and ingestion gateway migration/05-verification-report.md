@@ -1,8 +1,11 @@
 # Plan 05 — Implementation Verification Report / Changes Receipt
 
-2026-09-22. Commit: `83a5354` — "Plan 05: checkpoint GLC channels and voice migration."
+2026-09-22. Commits: `83a5354` (checkpoint), `a54798d` (this report),
+`f7195f9` (voice fixture), and the shell UI changes described in "Update
+2026-09-22" below (not committed here — see why).
 
-**Final status: implementation found complete, verified, and committed. Two items left open by design — see "Open items" below.**
+**Final status: CLOSED.** Both items originally left open are now resolved;
+see "Update 2026-09-22" for what changed and one caveat worth knowing.
 
 ## How this report came to exist
 
@@ -125,3 +128,66 @@ separately.
 
 Everything else in the plan's decisions, checklist, work packages, and exit
 gate is implemented and verified as of this commit.
+
+## Update 2026-09-22 — both open items resolved
+
+### 1. Voice route fixture — ported, commit `f7195f9`
+
+`gateway/tests/voice/test_transcribe_route.py` ports all five cases from
+`glc_v5/tests/test_transcribe_route.py` onto `POST /v1/transcribe`: streaming
+preference → 400, bad base64 → 400, default provider success, provider error
+→ 502, stub `NotImplementedError` → 501. Each case explicitly enables the
+provider under test, since the Gateway route additionally gates on decision
+5's dormant-by-default check, which GLC's route didn't have. 5 new tests,
+gateway suite now 415/415, mypy --strict unaffected.
+
+### 2. Work Package E's other three static pages — built, but as shell UI, and correctly re-scoped away from Plan 05
+
+On inspection, three of the four pages Work Package E names —
+`dashboard.html`, `help.html`, `observability.html` — turned out to be
+**LLM-domain content** (`/v1/chat`, `/v1/providers`, `/v1/cost`, `/v1/budget`,
+`/v1/traces`), not channels or voice. Only `channels.html` was actually Plan
+05 scope, and it was already done (`ChannelsAdmin.tsx`). Flagged this before
+building anything rather than quietly generating ~1,450 lines of dashboard
+UI under the wrong plan's exit gate.
+
+**Decision (Aryaman, 2026-09-22): build all three anyway, as shell UI.**
+Built against the LLM domain's real, already-working endpoints — nothing new
+on the backend:
+
+- `shell/src/screens/LLMDashboard.tsx` (route `/llm`) — provider cards from
+  `/api/llm/providers` + `/api/llm/status` + `/api/llm/capabilities`, plus a
+  live chat test box against `/api/llm/chat`.
+- `shell/src/screens/Observability.tsx` (route `/observability`) — semantic
+  cache stats, cost-by-dimension, budget policies, and the recent call
+  ledger, from `/api/llm/cache/stats`, `/api/llm/cost/by_principal`,
+  `/api/llm/budget`, `/api/llm/calls`. States plainly that traces and
+  refusal analytics aren't ported to Gateway (no backend route exists for
+  either — confirmed by grep, not assumed).
+- `shell/src/screens/Help.tsx` (route `/help`) — current HTTP API reference
+  table and a provider-key signup table (env var name + signup URL only, no
+  hardcoded rate limits or model names, since GLC's original numbers were
+  already stale against Gateway's actual provider set — Gateway added
+  OpenAI/Anthropic and dropped none of GLC's originals).
+- `AppShell.tsx` / `App.tsx`: added nav entries (`03 LLM`, `04
+  Observability`, plain `Help` link) and pathname routing, following the
+  existing no-router convention.
+- One smoke test per new screen (`LLMDashboard.test.tsx`,
+  `Observability.test.tsx`, `Help.test.tsx`), mirroring
+  `ChannelsAdmin.test.tsx`'s pattern.
+
+**Verified, not assumed:** every field name used in the new TypeScript types
+(`Call`, `CostSummary`, `Budgets`, `Providers`, `Status`, `Capabilities`) was
+checked against a live boot of the real app (`create_app()` +
+`TestClient`), not guessed from reading Python — including the exact kwargs
+`FinalizationStage.run` passes to `meter.record()`, which are the real shape
+of a calls-table row. `tsc --noEmit`, `vite build`, and the full shell
+`vitest run` all pass (11 files, 122 tests, up from 8/119).
+
+**Caveat: none of this shell work is committed.** `/shell/` is
+`.gitignore`d at the repo root — pre-existing, not something I changed, same
+situation already flagged for `ChannelsAdmin.tsx` in the original report
+above. These six files (three screens, three tests) plus the `AppShell.tsx`
+/ `App.tsx` edits exist on disk only. If you want them durable, the repo's
+`.gitignore` needs a decision — that's yours to make, not mine to
+unilaterally reverse.
