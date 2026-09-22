@@ -43,3 +43,12 @@ exclude = ["tests", "test_.*\\.py"]
 [[tool.mypy.overrides]]
 module = ["cockpit.*", "ingestion.*", "preview"]
 follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = [
+    "gateway.channels.catalogue.*",
+    "gateway.voice.stt.providers.*",
+    "gateway.voice.tts.providers.*",
+]
+follow_imports = "skip"
+ignore_errors = true

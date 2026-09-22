@@ -11,6 +11,16 @@ services:
     port: 8111
     enabled: true
     required: false
+  agent_runtime:
+    host: 127.0.0.1
+    port: 8113
+    enabled: true
+    required: false
+  telegram_worker:
+    host: 127.0.0.1
+    port: 8121
+    enabled: false
+    required: false
 
 # Optional-worker policy: Gateway validates optional worker configuration but
 # does not probe it during startup. An unavailable optional worker must degrade

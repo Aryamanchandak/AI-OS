@@ -19,7 +19,7 @@ class StructuredOutputStage:
             original = context.result
             repair_messages = [*context.messages, {"role": "assistant", "content": original.text}, {"role": "user", "content": f"Your previous reply did not match the required JSON schema: {first_error}. Reply ONLY with valid JSON conforming to the schema."}]
             context.attempts.append({"provider": provider.name, "reason": "structured-output repair"})
-            repaired = await provider.chat(messages=repair_messages, system=context.system, model=context.request.model, max_tokens=context.request.max_tokens, temperature=0, response_format=context.request.response_format)
+            repaired = await provider.chat(messages=repair_messages, system=context.system, model=context.request.model, max_tokens=context.request.max_tokens, temperature=0, response_format=context.request.response_format, cache_system=bool(context.request.cache_system))
             repaired.usage.input_tokens += original.usage.input_tokens
             repaired.usage.output_tokens += original.usage.output_tokens
             repaired.usage.cache_creation_input_tokens += original.usage.cache_creation_input_tokens

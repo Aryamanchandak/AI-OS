@@ -36,6 +36,9 @@ class RateLimiter:
                     int(limits.get("tool_calls_per_minute", self.default_tpm)),
                 )
 
+    # Kept for the moved provider test/harness contract.
+    configure_from_yaml = configure
+
     def check_message(self, channel: str, user_id: str) -> tuple[bool, str]:
         return self._check(channel, user_id, "messages")
 
@@ -66,3 +69,21 @@ class RateLimiter:
     def _trim(queue: deque[float], now: float) -> None:
         while queue and queue[0] < now - 60:
             queue.popleft()
+
+
+_limiter: RateLimiter | None = None
+
+
+def bind_rate_limiter(limiter: RateLimiter | None) -> None:
+    global _limiter
+    _limiter = limiter
+
+
+def get_rate_limiter() -> RateLimiter:
+    global _limiter
+    if _limiter is None:
+        from gateway.channels.setup_config import load_channels
+
+        _limiter = RateLimiter()
+        _limiter.configure(load_channels())
+    return _limiter

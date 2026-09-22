@@ -5,14 +5,15 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 import time
-from typing import Any
+from collections.abc import AsyncIterator
+from typing import Any, Literal
 
 from fastapi import HTTPException
 import httpx
 import yaml
 
 from gateway.audit import AuditStore
-from gateway.llm.cache import SemanticCache
+from gateway.llm.cache import SemanticCache, SemanticCacheConfig
 from gateway.llm.economics import BudgetController, Meter, Principal, PricingTable
 from gateway.llm.models import ChatRequest, EmbedRequest
 from gateway.llm.orchestration.budget import BudgetReservationStage
@@ -50,17 +51,39 @@ class LLMService:
         pricing = PricingTable.from_yaml(config_dir / "pricing.yaml")
         budget = BudgetController(config_dir / "budgets.yaml", database_path)
         meter = Meter()
-        service = cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, meter=meter, audit=audit, cache=None)
-        config = yaml.safe_load((config_dir / "cache.yaml").read_text(encoding="utf-8")) or {}; semantic = config.get("semantic") or {}
-        service.cache = SemanticCache(service._cache_embed, threshold=float(semantic.get("threshold", .95)), ttl_seconds=int(semantic.get("ttl_seconds", 3600)), enabled=bool(semantic.get("enabled", True)), default_on=bool(semantic.get("default_on", False)))
-        service.pipeline.cache_lookup.cache = service.cache; service.pipeline.cache_store.cache = service.cache
-        return service
+        return cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, meter=meter, audit=audit, cache=None)
+
+    def build_semantic_cache(self, *, config_path: Path, database_path: Path) -> SemanticCache:
+        raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+        if not isinstance(raw, dict):
+            raise ValueError(f"{config_path}: configuration must be a YAML mapping")
+        return SemanticCache(
+            self._cache_embed,
+            database_path,
+            config=SemanticCacheConfig.from_mapping(raw),
+        )
+
+    def attach_semantic_cache(self, cache: SemanticCache) -> None:
+        self.cache = cache
+        self.pipeline.cache_lookup.cache = cache
+        self.pipeline.cache_store.cache = cache
 
     async def chat(self, request: ChatRequest) -> dict[str, Any]:
         return await self.pipeline.run(request)
 
-    async def _cache_embed(self, text: str) -> list[float]:
-        response = await self.embed(EmbedRequest(text=text, task_type="retrieval_query"), record=False)
+    async def stream_chat(self, request: ChatRequest) -> dict[str, Any] | AsyncIterator[str]:
+        """Return the SSE frame generator, with stages 1-6 already run.
+
+        Awaiting here means a validation/budget/routing rejection surfaces as an
+        ordinary error response instead of as an error frame inside a 200. A
+        semantic-cache hit comes back as a dict, which the route serves as JSON.
+        """
+        return await self.pipeline.run_stream(request)
+
+    async def _cache_embed(
+        self, text: str, task_type: Literal["retrieval_document", "retrieval_query"]
+    ) -> list[float]:
+        response = await self.embed(EmbedRequest(text=text, task_type=task_type), record=False)
         return list(response["embedding"])
 
     async def embed(self, request: EmbedRequest, *, record: bool = True) -> dict[str, Any]:

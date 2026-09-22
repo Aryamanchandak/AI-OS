@@ -26,6 +26,7 @@ class GLCPaths:
         self.ledger_db = Path(env.get("GLC_GATEWAY_DB", str(DATABASE_ROOT / "gateway.sqlite"))).expanduser()
         self.audit_db = Path(env.get("GLC_AUDIT_DB", str(DATABASE_ROOT / "audit.sqlite"))).expanduser()
         self.pairing_db = Path(env.get("GLC_PAIRING_DB", str(DATABASE_ROOT / "pairings.sqlite"))).expanduser()
+        self.cache_db = Path(env.get("GLC_CACHE_DB", str(DATABASE_ROOT / "semantic_cache.sqlite"))).expanduser()
         self.install_token = Path(
             env.get("GLC_INSTALL_TOKEN_FILE", str(DATABASE_ROOT / "glc_install_token"))
         ).expanduser()

@@ -6,7 +6,7 @@ channels:
   telegram: {enabled: false}
   discord: {enabled: false}
   slack: {enabled: false}
-  whatsapp: {enabled: true}
+  whatsapp: {enabled: false}
   teams: {enabled: false}
   matrix: {enabled: false}
   line: {enabled: false}
@@ -15,6 +15,17 @@ channels:
   imap: {enabled: false}
   twilio_sms: {enabled: false}
   twilio_voice: {enabled: false}
-  webui: {enabled: true}
+  webui: {enabled: false}
   webhook: {enabled: false}
   local_mic: {enabled: false}
+voice:
+  stt:
+    gemini_live: {enabled: false}
+    groq_whisper: {enabled: false}
+    whisper_cpp: {enabled: false}
+  tts:
+    cartesia: {enabled: false}
+    elevenlabs: {enabled: false}
+    gemini_live: {enabled: false}
+    kokoro: {enabled: false}
+    system_fallback: {enabled: false}

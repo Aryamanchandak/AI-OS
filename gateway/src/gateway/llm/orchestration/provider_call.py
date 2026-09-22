@@ -18,10 +18,16 @@ class ProviderCallStage:
             for retry in range(self.max_retries + 1):
                 try:
                     async with self._semaphore:
-                        context.result = await provider.chat(messages=context.messages, system=context.system, model=context.request.model, max_tokens=context.request.max_tokens, temperature=context.request.temperature, tools=context.request.tools, tool_choice=context.request.tool_choice, response_format=context.request.response_format, reasoning=context.request.reasoning)
+                        context.result = await provider.chat(messages=context.messages, system=context.system, model=context.request.model, max_tokens=context.request.max_tokens, temperature=context.request.temperature, tools=context.request.tools, tool_choice=context.request.tool_choice, response_format=context.request.response_format, reasoning=context.request.reasoning, cache_system=bool(context.request.cache_system))
                     if context.request.profile and context.result.model != context.request.model:
-                        raise ProviderError(f"chat profile '{context.request.profile}' expected model '{context.request.model}' but provider '{provider.name}' returned '{context.result.model}'", status=500)
+                        # A pin mismatch is a configuration fault, not a
+                        # transient provider fault: raising it inside the loop
+                        # buried the specific message under a generic 503 "all
+                        # providers unavailable". Surface it as itself.
+                        raise HTTPException(500, f"chat profile '{context.request.profile}' expected model '{context.request.model}' but provider '{provider.name}' returned '{context.result.model}'")
                     return
+                except HTTPException:
+                    raise
                 except BaseException as exc:
                     last = exc; context.attempts.append({"provider": provider.name, "reason": str(exc)[:120]})
                     retryable = isinstance(exc, ProviderError) and exc.retryable

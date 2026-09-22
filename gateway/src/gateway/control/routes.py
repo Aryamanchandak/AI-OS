@@ -7,7 +7,8 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 
-from gateway.app.dependencies import get_control_service
+from gateway.app.dependencies import get_channel_service, get_control_service
+from gateway.channels.service import ChannelService
 from gateway.control.service import ControlService
 from gateway.security.pairing import CODE_TTL_SECONDS
 from gateway.app.router_registry import RouterRegistration
@@ -82,7 +83,10 @@ def pair_confirm(
 
 
 @router.get("/v1/control/presence", response_model=None)
-def presence(service: Annotated[ControlService, Depends(_authorized)]) -> Any:
+def presence(
+    service: Annotated[ControlService, Depends(_authorized)],
+    channels: Annotated[ChannelService, Depends(get_channel_service)],
+) -> Any:
     paired_users = [
         {
             "channel": item.channel,
@@ -93,7 +97,7 @@ def presence(service: Annotated[ControlService, Depends(_authorized)]) -> Any:
         for item in service.pairings.all_pairings()
     ]
     result: dict[str, object] = {
-        "channels": [],
+        "channels": channels.presence(),
         "paired_users": paired_users,
         "uptime_s": int(time.time() - service.started_at),
     }

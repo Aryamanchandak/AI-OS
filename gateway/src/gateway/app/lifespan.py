@@ -22,6 +22,11 @@ from gateway.security import PairingStore, RateLimiter
 from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
 from gateway.llm import LLMService
+from gateway.channels import setup as channel_setup
+from gateway.channels.agent_bridge import S16AgentBridge
+from gateway.channels.runtime import bind_install_token
+from gateway.channels.service import ChannelService
+from gateway.security import Allowlist, bind_allowlist, bind_pairing_store, bind_rate_limiter
 import signal
 import sys
 from typing import Any, TypeVar
@@ -62,6 +67,8 @@ def build_container(
     """Construct and validate every long-lived dependency before serving."""
 
     paths = GLCPaths()
+    settings = load_gateway_settings(gateway_config_path)
+    services = load_service_registry(service_registry_path)
     policy = _construct("policy.yaml", lambda: PolicyEngine.from_yaml(paths.policy))
     audit = _construct("audit database", lambda: AuditStore(paths.audit_db))
     pairings = _construct("pairing database", lambda: PairingStore(paths.pairing_db))
@@ -69,10 +76,18 @@ def build_container(
     telemetry = Telemetry()
     _construct("telemetry export", telemetry.initialize)
     rate_limiter = RateLimiter()
-    channels = _construct("channels.yaml", lambda: paths.load_mapping(paths.channels))
-    _construct("channels.yaml", lambda: rate_limiter.configure(channels))
+    channels_config = _construct("channels.yaml", lambda: paths.load_mapping(paths.channels))
+    channels_config = channel_setup.effective_configuration(channels_config)
+    channel_setup.apply_saved_environment()
+    _construct("channels.yaml", lambda: rate_limiter.configure(channels_config))
+    allowlist = Allowlist(channels_config)
+    bind_pairing_store(pairings)
+    bind_rate_limiter(rate_limiter)
+    bind_allowlist(allowlist)
+    install_token = _construct("install token", paths.get_or_create_install_token)
+    bind_install_token(install_token)
     control = ControlService(
-        install_token=_construct("install token", paths.get_or_create_install_token),
+        install_token=install_token,
         pairings=pairings,
         policy=policy,
         audit=audit,
@@ -87,6 +102,27 @@ def build_container(
             audit=audit,
         ),
     )
+    semantic_cache = _construct(
+        "semantic cache",
+        lambda: llm.build_semantic_cache(
+            config_path=paths.config_dir / "cache.yaml",
+            database_path=paths.cache_db,
+        ),
+    )
+    llm.attach_semantic_cache(semantic_cache)
+    try:
+        agent_url = services.url_for("agent_runtime")
+    except (KeyError, ValueError):
+        agent_url = "http://127.0.0.1:8113"
+    channel_service = ChannelService(
+        configuration=channels_config,
+        pairings=pairings,
+        limiter=rate_limiter,
+        allowlist=allowlist,
+        audit=audit,
+        bridge=S16AgentBridge(base_url=agent_url, client=http.client),
+        services=services,
+    )
     try:
         run_startup_checks(
             (
@@ -95,6 +131,7 @@ def build_container(
                 StartupCheck("pairing database", pairings.healthcheck),
                 StartupCheck("call ledger database", ledger.healthcheck),
                 StartupCheck("telemetry export", telemetry.healthcheck),
+                StartupCheck("semantic cache", semantic_cache.healthcheck),
                 *startup_checks,
             )
         )
@@ -102,8 +139,8 @@ def build_container(
         telemetry.close()
         raise
     return DependencyContainer(
-        settings=load_gateway_settings(gateway_config_path),
-        service_registry=load_service_registry(service_registry_path),
+        settings=settings,
+        service_registry=services,
         http=http,
         policy=policy,
         audit=audit,
@@ -113,6 +150,7 @@ def build_container(
         telemetry=telemetry,
         control=control,
         llm=llm,
+        channels=channel_service,
     )
 
 

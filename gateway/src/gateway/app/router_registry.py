@@ -30,5 +30,10 @@ def migrated_domain_registrations() -> tuple[RouterRegistration, ...]:
 
     from gateway.control.routes import registration as control_registration
     from gateway.llm.api import alias_registration, registration as llm_registration
+    from gateway.channels.routes import registration as channels_registration
+    from gateway.voice.routes import registration as voice_registration
 
-    return (control_registration(), llm_registration(), alias_registration())
+    return (
+        control_registration(), llm_registration(), alias_registration(),
+        channels_registration(), voice_registration(),
+    )

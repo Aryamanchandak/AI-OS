@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 import os
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ import yaml
 
 from gateway.llm.providers.anthropic import AnthropicProvider
 from gateway.llm.providers.base import Provider
+from gateway.llm.providers.capabilities import resolve as capability_overrides
 from gateway.llm.providers.gemini import GeminiProvider
 from gateway.llm.providers.ollama import OllamaProvider
 from gateway.llm.providers.openai import OpenAIProvider
@@ -65,4 +67,13 @@ def build_provider_registry(client: httpx.AsyncClient, *, config_dir: Path) -> P
     for name, spec in (raw.get("models") or {}).items():
         model = os.getenv(spec.get("model_env", ""), spec["model"]) if spec.get("model_env") else spec["model"]
         providers[name] = OllamaProvider(name, model, client, ollama_url, vision=bool(spec.get("vision")), context_window=int(spec.get("context_window", 32000)), needs_think_false=bool(spec.get("needs_think_false")))
+    # Bake per-model capability overrides into each instance, so `/capabilities`
+    # reports what the configured model can do rather than a class-level default.
+    for name, provider in providers.items():
+        resolved = capability_overrides(name, provider.model, provider.capabilities)
+        if isinstance(provider, OllamaProvider):
+            # `local_models.yaml` states vision per model; that operator-declared
+            # value outranks the name-hint guess, exactly as in the legacy tree.
+            resolved = replace(resolved, vision=provider.capabilities.vision)
+        provider.capabilities = resolved
     return ProviderRegistry(providers)

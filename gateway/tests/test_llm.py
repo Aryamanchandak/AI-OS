@@ -5,6 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from gateway.llm.cache import SemanticCache
 from gateway.llm.economics import BudgetController, Meter, Principal, PricingTable
 from gateway.llm.models import ChatRequest
@@ -70,17 +72,59 @@ def test_atomic_budget_reservations_never_admit_over_ceiling(tmp_path: Path) -> 
     assert round(status.reserved_usd, 8) == 0.05
 
 
-def test_cache_miss_reuses_lookup_embedding_for_store() -> None:
+def test_cache_miss_reuses_lookup_embedding_for_store(tmp_path: Path) -> None:
     calls = 0
-    async def embed(_: str) -> list[float]:
+    async def embed(_: str, _task_type: str) -> list[float]:
         nonlocal calls; calls += 1; return [1.0, 0.0]
-    cache = SemanticCache(embed)
+    cache = SemanticCache(embed, tmp_path / "semantic-cache.sqlite")
     async def exercise() -> None:
         lookup = await cache.lookup("prompt", {"model": "x"}, opt_in=True)
         assert not lookup.hit
-        cache.store({"model": "x"}, {"text": "answer"}, lookup.embedding)
+        cache.store("prompt", {"model": "x"}, {"text": "answer"}, lookup.embedding)
     asyncio.run(exercise())
     assert calls == 1
+
+
+def test_semantic_cache_persists_across_instances_and_scopes_tenants(tmp_path: Path) -> None:
+    async def embed(_: str, _task_type: str) -> list[float]:
+        return [1.0, 0.0]
+
+    database = tmp_path / "semantic-cache.sqlite"
+    first = SemanticCache(embed, database)
+
+    async def seed() -> None:
+        lookup = await first.lookup(
+            "first wording", {"model": "x"}, principal={"tenant": "one"}, opt_in=True,
+        )
+        first.store(
+            "first wording", {"model": "x"}, {"text": "saved"}, lookup.embedding,
+            principal={"tenant": "one"},
+        )
+
+    asyncio.run(seed())
+    restarted = SemanticCache(embed, database)
+
+    async def verify() -> None:
+        hit = await restarted.lookup(
+            "similar wording", {"model": "x"}, principal={"tenant": "one"}, opt_in=True,
+        )
+        assert hit.hit and hit.response == {"text": "saved"}
+        other_tenant = await restarted.lookup(
+            "similar wording", {"model": "x"}, principal={"tenant": "two"}, opt_in=True,
+        )
+        assert not other_tenant.hit
+
+    asyncio.run(verify())
+
+
+def test_semantic_cache_database_failure_does_not_serve_uncached(tmp_path: Path) -> None:
+    async def embed(_: str, _task_type: str) -> list[float]:
+        return [1.0, 0.0]
+
+    cache = SemanticCache(embed, tmp_path / "semantic-cache.sqlite")
+    cache.database.path = tmp_path  # SQLite cannot open a directory as a database.
+    with pytest.raises(Exception):
+        asyncio.run(cache.lookup("prompt", {"model": "x"}, opt_in=True))
 
 
 def test_profile_resolution_is_an_exact_pin() -> None:

@@ -17,6 +17,7 @@ from gateway.security import PairingStore, RateLimiter
 from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
 from gateway.llm import LLMService
+from gateway.channels.service import ChannelService
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +35,7 @@ class DependencyContainer:
     telemetry: Telemetry
     control: ControlService
     llm: LLMService
+    channels: ChannelService
 
     async def close(self) -> None:
         """Close container-owned resources in reverse construction order.
@@ -42,6 +44,7 @@ class DependencyContainer:
         shutdown ownership explicit before Plans 04–06 add async clients and
         connection pools.
         """
+        await self.channels.close()
         self.telemetry.close()
         await self.http.close()
 
@@ -75,3 +78,9 @@ def get_llm_service(
     """Expose LLMService only to Gateway's own LLM route module."""
 
     return container.llm
+
+
+def get_channel_service(
+    container: Annotated[DependencyContainer, Depends(get_container)],
+) -> ChannelService:
+    return container.channels

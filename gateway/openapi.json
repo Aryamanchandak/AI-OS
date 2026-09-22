@@ -2262,6 +2262,337 @@
         },
         "deprecated": true
       }
+    },
+    "/webhooks/twilio_sms": {
+      "post": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Twilio Sms Webhook",
+        "operationId": "twilio_sms_webhook_webhooks_twilio_sms_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels/{name}/webhook": {
+      "get": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Channel Webhook Verify",
+        "operationId": "channel_webhook_verify_v1_channels__name__webhook_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Channel Webhook",
+        "operationId": "channel_webhook_v1_channels__name__webhook_post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Channel Webhook V1 Channels  Name  Webhook Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channels": {
+      "get": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Channel Catalogue",
+        "operationId": "channel_catalogue_v1_channels_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Channel Catalogue V1 Channels Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channel-admin/catalogue": {
+      "get": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Channel Admin Catalogue",
+        "operationId": "channel_admin_catalogue_v1_channel_admin_catalogue_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Channel Admin Catalogue V1 Channel Admin Catalogue Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/channel-admin/{name}": {
+      "put": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Update Channel Settings",
+        "operationId": "update_channel_settings_v1_channel_admin__name__put",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChannelSettingsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Update Channel Settings V1 Channel Admin  Name  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/transcribe": {
+      "post": {
+        "tags": [
+          "voice"
+        ],
+        "summary": "Transcribe Route",
+        "operationId": "transcribe_route_v1_transcribe_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranscribeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/speak": {
+      "post": {
+        "tags": [
+          "voice"
+        ],
+        "summary": "Speak Route",
+        "operationId": "speak_route_v1_speak_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeakRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpeakResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2489,6 +2820,30 @@
           "text"
         ],
         "title": "CacheableSystemBlock"
+      },
+      "ChannelSettingsUpdate": {
+        "properties": {
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "values": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "title": "ChannelSettingsUpdate"
       },
       "ChatRequest": {
         "properties": {
@@ -4452,6 +4807,86 @@
         "title": "SiblingProposalBody",
         "description": "A read-only preview of another proposal from the same envelope.\n\nLets the shell show every proposal derived from one highlight on a single\nscreen without re-fetching or re-rendering the shared highlight/evidence\ncontext per proposal. Each sibling is still decided through its own\n`/run/decision` call once it becomes the active `proposal_id` -- this is\na display aid, not a bulk-decision channel."
       },
+      "SpeakRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "voice_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Voice Id"
+          },
+          "agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent"
+          },
+          "prefer": {
+            "type": "string",
+            "enum": [
+              "default",
+              "quality",
+              "streaming",
+              "realtime",
+              "fallback"
+            ],
+            "title": "Prefer",
+            "default": "default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "SpeakRequest"
+      },
+      "SpeakResponse": {
+        "properties": {
+          "audio_b64": {
+            "type": "string",
+            "title": "Audio B64"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime"
+          },
+          "sample_rate": {
+            "type": "integer",
+            "title": "Sample Rate"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "cost_usd": {
+            "type": "number",
+            "title": "Cost Usd",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "audio_b64",
+          "mime",
+          "sample_rate",
+          "provider"
+        ],
+        "title": "SpeakResponse"
+      },
       "StageBody": {
         "properties": {
           "stage": {
@@ -4606,6 +5041,78 @@
         ],
         "title": "ToolDef",
         "description": "Canonical tool definition. Schema is JSON-Schema (typically from Pydantic)."
+      },
+      "TranscribeRequest": {
+        "properties": {
+          "audio_b64": {
+            "type": "string",
+            "title": "Audio B64"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime",
+            "default": "audio/wav"
+          },
+          "agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent"
+          },
+          "prefer": {
+            "type": "string",
+            "enum": [
+              "default",
+              "local",
+              "streaming"
+            ],
+            "title": "Prefer",
+            "default": "default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "audio_b64"
+        ],
+        "title": "TranscribeRequest"
+      },
+      "TranscribeResponse": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "cost_usd": {
+            "type": "number",
+            "title": "Cost Usd",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "language",
+          "duration_ms",
+          "provider"
+        ],
+        "title": "TranscribeResponse"
       },
       "ValidationError": {
         "properties": {

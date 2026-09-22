@@ -36,6 +36,7 @@ def glc_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str
         "audit": tmp_path / "audit.sqlite",
         "pairing": tmp_path / "pairings.sqlite",
         "ledger": tmp_path / "gateway.sqlite",
+        "cache": tmp_path / "semantic_cache.sqlite",
         "token_file": tmp_path / "install_token",
         "token": "install-token-for-tests",
     }
@@ -45,13 +46,14 @@ def glc_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str
     monkeypatch.setenv("GLC_AUDIT_DB", str(values["audit"]))
     monkeypatch.setenv("GLC_PAIRING_DB", str(values["pairing"]))
     monkeypatch.setenv("GLC_GATEWAY_DB", str(values["ledger"]))
+    monkeypatch.setenv("GLC_CACHE_DB", str(values["cache"]))
     monkeypatch.setenv("GLC_INSTALL_TOKEN_FILE", str(values["token_file"]))
     return values
 
 
 def test_database_defaults_are_centralized_under_database_sqlite() -> None:
     paths = GLCPaths(environment={})
-    for path in (paths.ledger_db, paths.audit_db, paths.pairing_db):
+    for path in (paths.ledger_db, paths.audit_db, paths.pairing_db, paths.cache_db):
         assert path.parent.name == "sqlite"
         assert path.parent.parent.name == "Database"
         assert ".glc" not in str(path)
@@ -100,6 +102,20 @@ def test_caller_supplied_startup_check_refuses_startup_and_names_it(
     with pytest.raises(StartupDependencyError, match="injected dependency"):
         with TestClient(app):
             pass
+
+
+def test_broken_semantic_cache_backend_refuses_real_startup(
+    glc_environment: dict[str, Path | str], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    invalid_database = tmp_path / "cache-is-a-directory"
+    invalid_database.mkdir()
+    monkeypatch.setenv("GLC_CACHE_DB", str(invalid_database))
+    with pytest.raises(StartupDependencyError) as caught:
+        with TestClient(create_app(token="gateway-token")):
+            pass
+    event = json.loads(str(caught.value))
+    assert event["dependency"] == "semantic cache"
+    assert event["event"] == "gateway.startup.dependency_failed"
 
 
 def test_configured_unreachable_telemetry_target_fails_real_startup(

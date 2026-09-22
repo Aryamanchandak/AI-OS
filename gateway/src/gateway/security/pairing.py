@@ -9,6 +9,7 @@ import sqlite3
 import threading
 import time
 from collections.abc import Callable
+import os
 
 from gateway.platform.database import SQLiteDatabase
 
@@ -101,6 +102,23 @@ class PairingStore:
         with self.database.connect() as connection:
             return [self._record(row) for row in connection.execute("SELECT * FROM pairings")]
 
+    def owners(self, channel: str | None = None) -> list[PairingRecord]:
+        query = "SELECT * FROM pairings WHERE trust_level='owner_paired'"
+        arguments: tuple[str, ...] = ()
+        if channel is not None:
+            query += " AND channel=?"
+            arguments = (channel,)
+        with self.database.connect() as connection:
+            return [self._record(row) for row in connection.execute(query, arguments)]
+
+    def revoke(self, channel: str, channel_user_id: str) -> bool:
+        with self._lock, self.database.connect(autocommit=True) as connection:
+            cursor = connection.execute(
+                "DELETE FROM pairings WHERE channel=? AND channel_user_id=?",
+                (channel, channel_user_id),
+            )
+            return cursor.rowcount > 0
+
     def force_pair_owner(
         self, channel: str, channel_user_id: str, user_handle: str = "owner"
     ) -> PairingRecord:
@@ -122,3 +140,24 @@ class PairingStore:
     def healthcheck(self) -> None:
         with self.database.connect() as connection:
             connection.execute("SELECT 1 FROM pairings LIMIT 1").fetchone()
+
+
+# Provider adapters are deliberately kept vertically self-contained and retain
+# their historic zero-argument pairing lookup. Gateway binds the lifespan-owned
+# store here before any adapter is activated. The fallback exists for adapter
+# tests and standalone setup tools only.
+_singleton: PairingStore | None = None
+
+
+def bind_pairing_store(store: PairingStore | None) -> None:
+    global _singleton
+    _singleton = store
+
+
+def get_pairing_store() -> PairingStore:
+    global _singleton
+    if _singleton is None:
+        from gateway.platform.configuration import GLCPaths
+
+        _singleton = PairingStore(GLCPaths(os.environ).pairing_db)
+    return _singleton

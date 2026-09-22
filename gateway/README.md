@@ -53,6 +53,36 @@ signal-triggered reload (success or failure) does not appear in the audit
 log. In the unified process, `/v1/control/kill` suspends the GLC capability
 but deliberately does not terminate Gateway, ingestion, or the shell.
 
+## Channels and voice
+
+Gateway owns the shared envelope, all 15 channel packages, the injected S16
+bridge, and the request/response STT/TTS providers. Every adapter is registered
+but disabled by default in `config/channels.yaml`. Disabled channels do not
+mount a listener or start a poller; disabled voice providers return a clear 503.
+
+Open `/channels` in the shell to inspect health, save provider-local credentials
+and deliberately enable a channel. The API returns only credential-presence
+booleans; saved values live in the owner-only `channel_secrets.json` file and
+are never returned by presence, administration, or service diagnostics.
+
+Short webhook adapters run in Gateway. Long-poll, persistent-connection, and
+native-dependency adapters run as workers; each provider folder contains a
+`RUNTIME.md` explaining its boundary. Telegram is the first worker proof slice:
+
+```bash
+python -m gateway.channels.catalogue.telegram.worker
+```
+
+Its Gateway address comes from `config/services.yaml`, and its worker loop uses
+cancellation-safe shutdown plus bounded exponential restart backoff. Twilio SMS
+is the in-process proof slice at `POST /webhooks/twilio_sms`; its provider-local
+signature check rejects altered form bodies before identity translation.
+
+`GET /v1/control/presence` reports every channel and voice provider as
+`healthy`, `degraded`, or `disabled`, including its process boundary. Current
+voice routes remain `/v1/transcribe` and `/v1/speak`; real-time streaming voice
+is intentionally not part of this migration.
+
 ## Regression commands
 
 Run these commands without any preconfigured environment variables:

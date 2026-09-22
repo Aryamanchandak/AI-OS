@@ -46,16 +46,17 @@ class ProviderResult:
     reasoning_applied: bool = False
 
 
-@dataclass(frozen=True, slots=True)
-class ProviderChunk:
-    data: bytes
-
-
 class ProviderError(RuntimeError):
     def __init__(self, message: str, *, status: int = 502, retryable: bool = False) -> None:
         super().__init__(message)
         self.status = status
         self.retryable = retryable
+
+
+#: Prefix marking a streamed chunk as a tool-call delta rather than text. The
+#: streaming pipeline splits on it to pick the SSE frame key (`tool_call_delta`
+#: vs `delta`). Byte-identical to the legacy marker in `glc_v5/glc/providers.py`.
+TOOL_CALL_DELTA = "[[TOOL_CALL_DELTA]]"
 
 
 @runtime_checkable
@@ -68,12 +69,37 @@ class Provider(Protocol):
                    model: str | None = None, max_tokens: int = 2048,
                    temperature: float = 0.7, tools: list[Any] | None = None,
                    tool_choice: Any = None, response_format: Any = None,
-                   reasoning: str | None = None) -> ProviderResult: ...
+                   reasoning: str | None = None,
+                   cache_system: bool = False) -> ProviderResult: ...
 
-    def stream(self, **kwargs: Any) -> AsyncIterator[bytes]: ...
+    def stream(self, *, messages: list[dict[str, Any]], system: Any = None,
+               model: str | None = None, max_tokens: int = 2048,
+               temperature: float = 0.7, tools: list[Any] | None = None,
+               tool_choice: Any = None, response_format: Any = None,
+               reasoning: str | None = None, cache_system: bool = False,
+               result_sink: dict[str, Any] | None = None) -> AsyncIterator[str]: ...
 
     async def embed(self, text: str, *, model: str | None = None,
                     task_type: str = "retrieval_document") -> list[float]: ...
+
+
+async def fallback_stream(chat: Any, *, result_sink: dict[str, Any] | None = None,
+                          **kwargs: Any) -> AsyncIterator[str]:
+    """Buffered stream: call `chat` to completion and yield the text once.
+
+    This is what every provider except the OpenAI-compatible family does in the
+    legacy tree (`BaseProvider.stream`), so it is the equivalent behaviour, not a
+    stub. Because the whole result is in hand, the model the vendor actually
+    resolved to can be published through `result_sink` — which is what lets a
+    streamed pinned-profile call be checked against its pin the same way the
+    non-streaming path is.
+    """
+    result: ProviderResult = await chat(**kwargs)
+    if result_sink is not None:
+        result_sink["model"] = result.model
+        result_sink["result"] = result
+    if result.text:
+        yield result.text
 
 
 def system_text(system: Any) -> str | None:

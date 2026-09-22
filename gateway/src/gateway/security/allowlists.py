@@ -6,6 +6,14 @@ from collections.abc import Mapping
 from typing import Any
 
 
+def load_channels() -> dict[str, Any]:
+    """Late-bound configuration hook retained for provider characterization tests."""
+
+    from gateway.channels.setup_config import load_channels as load
+
+    return load()
+
+
 class Allowlist:
     def __init__(self, configuration: Mapping[str, Any]) -> None:
         self.configuration = configuration
@@ -40,3 +48,33 @@ class Allowlist:
         if is_public_channel and mention_only and not was_mentioned:
             return False, "sender in public channel must be explicitly mentioned"
         return True, ""
+
+
+_allowlist: Allowlist | None = None
+
+
+def bind_allowlist(allowlist: Allowlist | None) -> None:
+    global _allowlist
+    _allowlist = allowlist
+
+
+def allowed(
+    channel: str,
+    channel_user_id: str,
+    *,
+    owner_ids: list[str] | None = None,
+    is_public_channel: bool = False,
+    was_mentioned: bool = False,
+) -> tuple[bool, str]:
+    global _allowlist
+    if _allowlist is None:
+        current = Allowlist(load_channels())
+    else:
+        current = _allowlist
+    return current.allowed(
+        channel,
+        channel_user_id,
+        owner_ids=owner_ids,
+        is_public_channel=is_public_channel,
+        was_mentioned=was_mentioned,
+    )

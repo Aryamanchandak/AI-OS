@@ -23,12 +23,13 @@ router = APIRouter()
 
 @router.post("/chat")
 async def chat(request: ChatRequest, service: Annotated[LLMService, Depends(get_llm_service)]):
-    output = await service.chat(request)
-    if not request.stream: return output
-    async def events():
-        if output.get("text"): yield f"data: {json.dumps({'provider': output['provider'], 'delta': output['text']})}\n\n"
-        yield f"data: {json.dumps({'done': True, 'provider': output['provider'], 'model': output['model'], 'profile': output.get('profile')})}\n\n"
-    return StreamingResponse(events(), media_type="text/event-stream")
+    if request.stream:
+        outcome = await service.stream_chat(request)
+        # A semantic-cache hit answers with the stored JSON body even on a
+        # streaming request, which is what the legacy route does.
+        if isinstance(outcome, dict): return outcome
+        return StreamingResponse(outcome, media_type="text/event-stream")
+    return await service.chat(request)
 
 
 @router.post("/chat/batch")
@@ -92,7 +93,7 @@ async def cost_by_agent(service: Annotated[LLMService, Depends(get_llm_service)]
 
 
 @router.get("/budget")
-async def list_budgets(service: Annotated[LLMService, Depends(get_llm_service)]): return service.budget.describe()
+async def list_budgets(service: Annotated[LLMService, Depends(get_llm_service)]): return await asyncio.to_thread(service.budget.describe)
 
 
 @router.get("/budget/{principal:path}")
@@ -133,13 +134,18 @@ async def cost_by_principal(service: Annotated[LLMService, Depends(get_llm_servi
 
 
 @router.get("/cache/stats")
-async def cache_stats(service: Annotated[LLMService, Depends(get_llm_service)]): return {"enabled": False, "message": "semantic cache not initialised"} if service.cache is None else {**service.cache.stats(), "enabled": service.cache.enabled}
+async def cache_stats(service: Annotated[LLMService, Depends(get_llm_service)]):
+    if service.cache is None:
+        return {"enabled": False, "message": "semantic cache not initialised"}
+    stats = await asyncio.to_thread(service.cache.stats)
+    return {**stats, "enabled": service.cache.enabled}
 
 
 @router.post("/cache/purge")
 async def cache_purge(service: Annotated[LLMService, Depends(get_llm_service)], expired_only: bool = True):
     if service.cache is None: raise HTTPException(503, "semantic cache not initialised")
-    return {"ok": True, "removed": service.cache.purge(expired_only=expired_only)}
+    removed = await asyncio.to_thread(service.cache.purge, expired_only=expired_only)
+    return {"ok": True, "removed": removed}
 
 
 @router.get("/pricing")
