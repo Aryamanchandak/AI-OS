@@ -69,18 +69,35 @@ def test_malformed_policy_refuses_startup_with_structured_dependency(
     assert event["event"] == "gateway.startup.dependency_failed"
 
 
-@pytest.mark.parametrize("dependency", ["semantic cache", "telemetry export"])
-def test_broken_runtime_dependency_refuses_startup_and_names_it(
-    glc_environment: dict[str, Path | str], dependency: str
+def test_caller_supplied_startup_check_refuses_startup_and_names_it(
+    glc_environment: dict[str, Path | str],
 ) -> None:
+    """`build_container`'s `startup_checks` extension point re-raises a
+    caller-injected failure with a structured, named error. This is a
+    harness test, not dependency-specific: it proves the plumbing, not any
+    particular dependency's real check.
+
+    Plan 03's decision #2 table also lists a semantic-cache row as
+    fail-hard, but no cache backend is imported under this plan — the
+    Goal section's confirmed `git filter-repo` path list (`glc/config.py`,
+    `glc/db.py`, `glc/audit/`, `glc/security/`, `glc/policy/`,
+    `glc/routes/control.py`) excludes `glc/cache/` and `glc/economics/`
+    entirely. That table row is therefore unimplementable until whichever
+    later plan imports the cache (Plan 04, since semantic cache sits on
+    the chat request path) does so and wires a real health check for it.
+    Real telemetry coverage lives in
+    `test_configured_unreachable_telemetry_target_fails_real_startup`
+    below, against the actual `Telemetry` object, not an injected fake.
+    """
+
     def broken() -> None:
         raise ConnectionError("unreachable")
 
     app = create_app(
         token="gateway-token",
-        startup_checks=(StartupCheck(dependency, broken),),
+        startup_checks=(StartupCheck("injected dependency", broken),),
     )
-    with pytest.raises(StartupDependencyError, match=dependency):
+    with pytest.raises(StartupDependencyError, match="injected dependency"):
         with TestClient(app):
             pass
 
