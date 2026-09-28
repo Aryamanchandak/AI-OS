@@ -1,5 +1,6 @@
-# Existing ports are grandfathered until Plan 07. New AI OS-owned external
-# workers must use an explicit free port in the reserved 81xx range.
+# Gateway port 8000 is a deliberate stable entry point. The legacy listener
+# on 8111 is optional compatibility for callers that still use the old port.
+# New AI OS-owned external workers use a free port in the reserved 81xx range.
 services:
   gateway:
     host: 127.0.0.1

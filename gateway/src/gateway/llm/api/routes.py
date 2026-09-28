@@ -16,9 +16,37 @@ from gateway.app.router_registry import RouterRegistration
 from gateway.llm import LLMService
 from gateway.llm.economics.budget import BudgetConfigError, _parse_principal, _period_start
 from gateway.llm.economics.meter import DIMENSIONS
-from gateway.llm.models import BatchChatRequest, BudgetSetRequest, ChatRequest, EmbedRequest, ResponseFormat, VisionRequest
+from gateway.llm.models import BatchChatRequest, BudgetSetRequest, ChatRequest, EmbedRequest, ResponseFormat, VisionRequest, PreflightRequest, PreflightResponse
+from gateway.llm.api.preflight import run_preflight
+from gateway.platform.observability.redaction import safe_error
 
 router = APIRouter()
+
+
+def _chat_trace(result: dict[str, Any]) -> dict[str, Any]:
+    from opentelemetry.trace import get_current_span
+
+    span = get_current_span()
+    context = span.get_span_context()
+    output = dict(result)
+    if context.is_valid:
+        output["trace"] = {"trace_id": f"{context.trace_id:032x}", "span_id": f"{context.span_id:016x}", "url": None}
+        for key, field in (("gen_ai.provider.name", "provider"), ("gen_ai.response.model", "model")):
+            if result.get(field) is not None:
+                span.set_attribute(key, safe_error(result[field]))
+        for key, field in (("gen_ai.usage.input_tokens", "input_tokens"), ("gen_ai.usage.output_tokens", "output_tokens")):
+            if isinstance(result.get(field), int):
+                span.set_attribute(key, result[field])
+        for key, section, field in (("glc.cost.usd", "cost", "total_usd"), ("glc.cache.hit", "cache", "hit"), ("glc.budget.admitted", "budget", "allowed")):
+            value = (result.get(section) or {}).get(field)
+            if isinstance(value, (int, float, bool)):
+                span.set_attribute(key, value)
+    return output
+
+
+@router.post("/preflight", response_model=PreflightResponse)
+async def preflight(request: PreflightRequest, service: Annotated[LLMService, Depends(get_llm_service)]) -> PreflightResponse:
+    return await run_preflight(request, service)
 
 
 @router.post("/chat")
@@ -27,9 +55,9 @@ async def chat(request: ChatRequest, service: Annotated[LLMService, Depends(get_
         outcome = await service.stream_chat(request)
         # A semantic-cache hit answers with the stored JSON body even on a
         # streaming request, which is what the legacy route does.
-        if isinstance(outcome, dict): return outcome
+        if isinstance(outcome, dict): return _chat_trace(outcome)
         return StreamingResponse(outcome, media_type="text/event-stream")
-    return await service.chat(request)
+    return _chat_trace(await service.chat(request))
 
 
 @router.post("/chat/batch")

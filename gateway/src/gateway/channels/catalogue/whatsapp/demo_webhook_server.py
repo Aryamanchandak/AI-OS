@@ -8,8 +8,7 @@ scope: shared glc/routes/channels.py, handled separately).
 Run from repo root:
     uv run python gateway/channels/catalogue/whatsapp/demo_webhook_server.py
 
-Listens on port 8111 by default — same as `glc serve`'s default GLC_PORT,
-since this script and the gateway are mutually exclusive (put this behind
+Listens on port 8201 by default (put this behind
 ngrok and register the public URL + WHATSAPP_VERIFY_TOKEN in the Meta/Twilio
 console).
 Reads WHATSAPP_APP_SECRET, WHATSAPP_VERIFY_TOKEN, WHATSAPP_PHONE_NUMBER_ID,
@@ -48,7 +47,7 @@ from gateway.channels.envelope import ChannelReply  # noqa: E402
 from gateway.channels.registry import instantiate  # noqa: E402
 
 VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN", "glc-verify-token-us1")
-PORT = int(os.environ.get("WEBHOOK_PORT", "8111"))
+PORT = int(os.environ.get("WEBHOOK_PORT", "8201"))
 
 adapter = instantiate("whatsapp")
 

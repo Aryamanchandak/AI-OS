@@ -2,11 +2,11 @@
 
 Flow (see README.md's "Live Demo" section):
     Phone --SMS--> Twilio --POST--> this receiver --on_message--> ChannelMessage
-      --WS--> GLC gateway (:8111) --echo--> ChannelReply --adapter.send--> Twilio --> Phone
+      --WS--> Gateway --echo--> ChannelReply --adapter.send--> Twilio --> Phone
 
 Run:
-    cd glc_v1
-    # terminal A:  uv run glc serve                       (the gateway, :8111)
+    cd gateway
+    # terminal A:  .venv/bin/python main.py
     # terminal B:  ngrok http 8200                        (public tunnel)
     # terminal C:
     GLC_PUBLIC_BASE=https://<id>.ngrok.io \
@@ -17,7 +17,7 @@ Env:
     TWILIO_OWNER_NUMBER      your mobile, paired as owner (owner_paired)
     GLC_PUBLIC_BASE          the ngrok https URL (serves /artifacts for outbound MMS)
     GLC_TWILIO_WEBHOOK_PORT  receiver port (default 8200)
-    GLC_GATEWAY_HOST/PORT    gateway location (default localhost:8111)
+    AI_OS_SERVICE_GATEWAY_HOST/PORT    gateway location (registry overrides)
     GLC_TWILIO_SKIP_SIG=1    dev-only: skip signature verification
 """
 
@@ -32,6 +32,7 @@ from dotenv import load_dotenv
 
 from gateway.channels.envelope import ChannelMessage
 from gateway.security.pairing import get_pairing_store
+from gateway.platform.service_registry import gateway_address
 
 from .adapter import Adapter
 from .webhook import build_app, gateway_roundtrip
@@ -66,6 +67,7 @@ def _trust_color(trust: str) -> str:
 
 
 def _config() -> dict[str, Any]:
+    gateway = gateway_address()
     return {
         "account_sid": os.environ.get("TWILIO_ACCOUNT_SID", ""),
         "auth_token": os.environ.get("TWILIO_AUTH_TOKEN", ""),
@@ -73,8 +75,8 @@ def _config() -> dict[str, Any]:
         "owner_number": os.environ.get("TWILIO_OWNER_NUMBER", ""),
         "public_base": os.environ.get("GLC_PUBLIC_BASE", "").rstrip("/"),
         "port": int(os.environ.get("GLC_TWILIO_WEBHOOK_PORT", "8200")),
-        "gw_host": os.environ.get("GLC_GATEWAY_HOST", "localhost"),
-        "gw_port": int(os.environ.get("GLC_GATEWAY_PORT", "8111")),
+        "gw_host": gateway.host,
+        "gw_port": gateway.port,
     }
 
 
@@ -104,7 +106,7 @@ def _make_handle_message(adapter: Adapter, cfg: dict[str, Any]):
             reply = await gateway_roundtrip(msg, host=cfg["gw_host"], port=cfg["gw_port"])
         except Exception as e:
             print(f"  {RED}gateway unreachable: {e!r}{RESET}")
-            print(f"  {DIM}(is `uv run glc serve` running on {cfg['gw_host']}:{cfg['gw_port']}?){RESET}")
+            print(f"  {DIM}(is Gateway running on {cfg['gw_host']}:{cfg['gw_port']}?){RESET}")
             return
 
         # Gateway dropped or rate-limited the message.

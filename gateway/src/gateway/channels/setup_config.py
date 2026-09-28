@@ -8,9 +8,12 @@ from typing import Any
 
 import yaml
 
-from gateway.platform.configuration.glc import GATEWAY_CONFIG_ROOT
+from gateway.platform.configuration.glc import DATABASE_ROOT, GATEWAY_CONFIG_ROOT
 
 CONFIG_DIR = Path(os.getenv("GLC_CONFIG_DIR", str(GATEWAY_CONFIG_ROOT))).expanduser()
+SECRET_ROOT = Path(
+    os.getenv("GLC_CHANNEL_SECRETS_DIR", str(DATABASE_ROOT / "channel_secrets"))
+).expanduser()
 
 
 def load_channels() -> dict[str, Any]:

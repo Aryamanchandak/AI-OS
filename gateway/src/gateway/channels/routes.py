@@ -16,11 +16,46 @@ from gateway.app.dependencies import get_channel_service, get_control_service
 from gateway.app.router_registry import RouterRegistration
 from gateway.channels import setup
 from gateway.channels.agent_bridge import AgentBridgeError
-from gateway.channels.envelope import ChannelMessage
+from gateway.channels.envelope import ChannelMessage, ChannelReply
 from gateway.channels.service import ChannelDisabledError, ChannelService
 from gateway.control import ControlService
 
 router = APIRouter()
+
+
+@router.post("/v1/channels/{name}/send")
+async def send_channel_message(
+    name: str,
+    reply: ChannelReply,
+    service: Annotated[ChannelService, Depends(get_channel_service)],
+    control: Annotated[ControlService, Depends(get_control_service)],
+    authorization: Annotated[str | None, Header()] = None,
+) -> dict[str, object]:
+    presented = (authorization or "").removeprefix("Bearer ").strip()
+    tokens = [control.install_token, os.getenv("GLC_S16_BRIDGE_TOKEN", "").strip()]
+    if not presented or not any(token and hmac.compare_digest(presented, token) for token in tokens):
+        raise HTTPException(401, "invalid channel bridge token")
+    if reply.channel != name:
+        raise HTTPException(422, "body channel does not match route")
+    known = {item["name"] for item in service.presence() if item["kind"] == "channel"}
+    if name not in known:
+        raise HTTPException(404, f"unknown channel: {name}")
+    try:
+        adapter = service.instantiate(name)
+    except ChannelDisabledError as exc:
+        raise _disabled(exc) from exc
+    except RuntimeError:
+        raise HTTPException(503, "channel adapter is unavailable") from None
+    control.require_audit_writable()
+    audit = dict(channel=name, channel_user_id=reply.channel_user_id, trust_level="owner_paired")
+    service.audit.append(**audit, event_type="outbound_message_requested")
+    try:
+        result = await adapter.send(reply)
+    except Exception as exc:
+        service.audit.append(**audit, event_type="outbound_message_failed", result={"error_type": type(exc).__name__})
+        raise HTTPException(502, f"channel send failed: {type(exc).__name__}") from None
+    service.audit.append(**audit, event_type="outbound_message", result={"accepted": True})
+    return {"accepted": True, "channel": name, "adapter_result": result}
 
 
 class ChannelSettingsUpdate(BaseModel):

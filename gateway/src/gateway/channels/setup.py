@@ -1,11 +1,11 @@
 """Local, deliberately small channel setup store.
 
-This is an installer UI aid, not a cloud credential vault.  Secrets are kept
-only on the gateway machine in ``$GLC_CONFIG_DIR/channel_secrets.json`` with
-owner-only permissions.  Read APIs expose *presence*, never values.  At boot
-the saved values are made available to the existing adapters through their
-documented environment variable names; an explicit process environment value
-always wins.
+This is an installer UI aid, not a cloud credential vault. Secrets are kept
+only on the gateway machine in provider-local files below
+``$GLC_CHANNEL_SECRETS_DIR`` (or ``Database/sqlite/channel_secrets``) with
+owner-only permissions. Read APIs expose *presence*, never values. At boot the
+saved values are made available to adapters through their documented
+environment variable names; an explicit process environment value always wins.
 """
 
 from __future__ import annotations
@@ -38,26 +38,36 @@ CHANNEL_SPECS: dict[str, dict[str, Any]] = {
 }
 
 
-def _path() -> Path:
-    return config.CONFIG_DIR / "channel_secrets.json"
+def _path(name: str) -> Path:
+    if name not in CHANNEL_SPECS:
+        raise KeyError(name)
+    return config.SECRET_ROOT / f"{name}.json"
 
 
-def _load() -> dict[str, Any]:
-    path = _path()
+def _load_record(name: str) -> dict[str, Any]:
+    path = _path(name)
     if not path.exists():
-        return {"channels": {}}
+        return {}
     try:
-        data = json.loads(path.read_text())
+        data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return {"channels": {}}
-    return data if isinstance(data, dict) and isinstance(data.get("channels"), dict) else {"channels": {}}
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
-def _save(data: dict[str, Any]) -> None:
-    path = _path()
+def _load_all() -> dict[str, dict[str, Any]]:
+    return {
+        name: record
+        for name in CHANNEL_SPECS
+        if (record := _load_record(name))
+    }
+
+
+def _save(name: str, record: dict[str, Any]) -> None:
+    path = _path(name)
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_suffix(".tmp")
-    temp.write_text(json.dumps(data, indent=2, sort_keys=True))
+    temp.write_text(json.dumps(record, indent=2, sort_keys=True), encoding="utf-8")
     os.chmod(temp, 0o600)
     temp.replace(path)
     try:
@@ -67,14 +77,13 @@ def _save(data: dict[str, Any]) -> None:
 
 
 def configured(name: str) -> dict[str, Any]:
-    return dict(_load()["channels"].get(name, {}))
+    return dict(_load_record(name))
 
 
 def update(name: str, values: dict[str, str], enabled: bool | None = None) -> None:
     spec = CHANNEL_SPECS[name]
     allowed = {field[0] for field in spec["fields"]}
-    data = _load()
-    record = dict(data["channels"].get(name, {}))
+    record = _load_record(name)
     secrets = dict(record.get("values", {}))
     for key, value in values.items():
         if key in allowed and isinstance(value, str):
@@ -85,12 +94,11 @@ def update(name: str, values: dict[str, str], enabled: bool | None = None) -> No
     record["values"] = secrets
     if enabled is not None:
         record["enabled"] = enabled
-    data["channels"][name] = record
-    _save(data)
+    _save(name, record)
 
 
 def public_catalogue(base_url: str, known_channels: list[str]) -> list[dict[str, Any]]:
-    saved = _load()["channels"]
+    saved = _load_all()
     result: list[dict[str, Any]] = []
     for name in known_channels:
         spec = CHANNEL_SPECS.get(name, {"mode": "adapter configuration", "fields": [], "steps": [], "webhook": False})
@@ -110,7 +118,7 @@ def public_catalogue(base_url: str, known_channels: list[str]) -> list[dict[str,
 
 def apply_saved_environment() -> None:
     """Expose stored credentials to legacy adapters without exposing them over HTTP."""
-    for name, record in _load()["channels"].items():
+    for name, record in _load_all().items():
         if not record.get("enabled", False):
             continue
         spec = CHANNEL_SPECS.get(name)
@@ -126,7 +134,7 @@ def effective_configuration(base: dict[str, Any]) -> dict[str, Any]:
     """Overlay only explicit activation flags; credentials never enter config."""
 
     merged = {**base, "channels": {**(base.get("channels") or {})}}
-    for name, record in _load()["channels"].items():
+    for name, record in _load_all().items():
         if "enabled" not in record:
             continue
         current = dict(merged["channels"].get(name, {}))

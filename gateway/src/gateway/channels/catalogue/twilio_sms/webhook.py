@@ -71,8 +71,8 @@ def _skip_signature() -> bool:
 async def gateway_roundtrip(
     envelope: ChannelMessage,
     *,
-    host: str = "localhost",
-    port: int = 8111,
+    host: str | None = None,
+    port: int | None = None,
     token: str | None = None,
 ) -> ChannelReply | dict[str, Any]:
     """Ship a ChannelMessage to the GLC gateway over WS and read the reply.
@@ -85,8 +85,13 @@ async def gateway_roundtrip(
     import websockets
 
     from gateway.channels.runtime import get_install_token
+    from gateway.platform.service_registry import gateway_address
 
     token = token or get_install_token()
+    if host is None or port is None:
+        address = gateway_address()
+        host = host or address.host
+        port = port if port is not None else address.port
     uri = f"ws://{host}:{port}/v1/channels/{envelope.channel}"
     async with websockets.connect(uri, additional_headers={"Authorization": f"Bearer {token}"}) as ws:
         await ws.send(envelope.model_dump_json())

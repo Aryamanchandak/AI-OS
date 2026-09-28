@@ -7,8 +7,8 @@ from pathlib import Path
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, FastAPI
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from gateway import __version__
@@ -23,12 +23,7 @@ from gateway.app.router_registry import (
     migrated_domain_registrations,
     register_routers,
 )
-from gateway.app.temporary_ingestion_adapter import (
-    AI_OS_ROOT as AI_OS_ROOT,
-    INGESTION_ROOT as INGESTION_ROOT,
-    create_review_service,
-    ingestion_registration,
-)
+from gateway.ingestion.setup import AI_OS_ROOT as AI_OS_ROOT
 from gateway.platform.service_registry import ServiceRegistry
 from gateway.platform.startup import StartupCheck
 
@@ -55,37 +50,69 @@ def create_app(
     *,
     token: str | None = None,
     gateway_config_path: Path = DEFAULT_GATEWAY_CONFIG,
-    service_registry_path: Path = DEFAULT_SERVICE_REGISTRY,
+    service_registry_path: Path | None = None,
     startup_checks: tuple[StartupCheck, ...] = (),
 ) -> FastAPI:
-    # cockpit.server.create_router captures a concrete ReviewService. This is
-    # the explicitly temporary Plan-06 exception to lifespan construction.
-    legacy_review_service = create_review_service()
     expected_token = token if token is not None else os.environ.get("AI_OS_TOKEN", "").strip()
+    resolved_registry_path = service_registry_path or Path(
+        os.environ.get("AI_OS_SERVICE_REGISTRY_PATH", str(DEFAULT_SERVICE_REGISTRY))
+    )
     app = FastAPI(
         title="AI OS Gateway",
         version=__version__,
         lifespan=lifespan_for(
             gateway_config_path=gateway_config_path,
-            service_registry_path=service_registry_path,
-            legacy_review_service=legacy_review_service,
+            service_registry_path=resolved_registry_path,
             startup_checks=startup_checks,
         ),
     )
     install_bearer_auth(app, expected_token)
+    from gateway.platform.observability.capture import DiagnosticCapture
+    app.add_middleware(DiagnosticCapture)
+
+    @app.get("/dashboard", response_class=RedirectResponse)
+    def legacy_dashboard() -> RedirectResponse:
+        return RedirectResponse("/observability", status_code=307)
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/healthz")
+    def legacy_healthz(
+        service_registry: Annotated[ServiceRegistry, Depends(get_service_registry)],
+    ) -> dict[str, object]:
+        """Preserve the old JSON health response on Gateway's configured port."""
+        return {"ok": True, "port": service_registry.get("gateway").port}
+
+    ingestion, *other_domains = migrated_domain_registrations()
     register_routers(
         app,
         (
-            ingestion_registration(legacy_review_service),
+            ingestion,
             _diagnostics_registration(),
-            *migrated_domain_registrations(),
+            *other_domains,
         ),
     )
+
+    # API typos and retired routes must not be mistaken for a successful shell
+    # page. These handlers run after the registered API routes and before the
+    # shell's navigation fallback.
+    @app.api_route(
+        "/v1/{route:path}",
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+        include_in_schema=False,
+    )
+    def unknown_legacy_api(route: str) -> None:
+        raise HTTPException(status_code=404, detail="Unknown API route")
+
+    @app.api_route(
+        "/api/{route:path}",
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+        include_in_schema=False,
+    )
+    def unknown_api(route: str) -> None:
+        raise HTTPException(status_code=404, detail="Unknown API route")
 
     if SHELL_DIST.is_dir():
         assets = SHELL_DIST / "assets"

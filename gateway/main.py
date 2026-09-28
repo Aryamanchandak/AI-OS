@@ -15,7 +15,6 @@ if str(PACKAGE_ROOT) not in sys.path:
 
 from gateway.app.main import (  # noqa: E402,F401
     AI_OS_ROOT,
-    INGESTION_ROOT,
     SCHEMA_AND_DOCS_PATHS,
     SHELL_DIST,
     app,
@@ -25,5 +24,7 @@ from gateway.app.main import (  # noqa: E402,F401
 
 if __name__ == "__main__":
     import uvicorn
+    from gateway.platform.service_registry import gateway_address
 
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=False)
+    address = gateway_address()
+    uvicorn.run("main:app", host=address.host, port=address.port, reload=False)

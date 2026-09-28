@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from pathlib import Path
 
 import httpx
 
@@ -17,9 +16,7 @@ from gateway.channels.catalogue.telegram.adapter import Adapter
 from gateway.channels.envelope import ChannelReply
 from gateway.channels.runtime import get_install_token
 from gateway.channels.worker import WorkerSupervisor
-from gateway.platform.service_registry import load_service_registry
-
-DEFAULT_SERVICES = Path(__file__).resolve().parents[5] / "config" / "services.yaml"
+from gateway.platform.service_registry import gateway_address
 
 
 class TelegramPoller:
@@ -71,9 +68,7 @@ async def run_worker() -> None:
     bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     if not bot_token:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is required")
-    registry_path = Path(os.getenv("AI_OS_SERVICES_YAML", str(DEFAULT_SERVICES)))
-    registry = load_service_registry(registry_path)
-    poller = TelegramPoller(registry.url_for("gateway"), get_install_token(), bot_token)
+    poller = TelegramPoller(gateway_address().url, get_install_token(), bot_token)
     supervisor = WorkerSupervisor(initial_backoff_s=1.0, max_backoff_s=30.0)
     supervisor.register("telegram", poller, enabled=True)
     try:

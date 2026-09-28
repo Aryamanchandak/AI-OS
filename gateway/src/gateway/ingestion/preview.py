@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import gettempdir
 
-from ingestion.config import IngestionConfig, IntakeConfig
-from ingestion.coordinator.report import RunReportView
-from ingestion.coordinator.stages import RunStage, StageStatus
-from ingestion.coordinator.state import (
+from gateway.ingestion.config import IngestionConfig, IntakeConfig
+from gateway.ingestion.coordinator.report import RunReportView
+from gateway.ingestion.coordinator.stages import RunStage, StageStatus
+from gateway.ingestion.coordinator.state import (
     DecisionRequest,
     PendingDecision,
     ProgressView,

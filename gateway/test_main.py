@@ -3,7 +3,9 @@ import pytest
 import time
 from typing import Any
 
-from main import AI_OS_ROOT, INGESTION_ROOT, SCHEMA_AND_DOCS_PATHS, SHELL_DIST, create_app
+from main import AI_OS_ROOT, SCHEMA_AND_DOCS_PATHS, SHELL_DIST, create_app
+import gateway.ingestion
+import gateway.ingestion.preview
 
 
 PROTECTED_PATHS = ("/api/ingestion/run", *sorted(SCHEMA_AND_DOCS_PATHS))
@@ -12,7 +14,7 @@ OPEN_PATHS = ("/health", "/ingestion", "/")
 
 def test_local_application_folders_are_connected() -> None:
     assert (AI_OS_ROOT / "gateway" / "main.py").is_file()
-    assert (INGESTION_ROOT / "cockpit" / "server.py").is_file()
+    assert gateway.ingestion.__file__ is not None
     assert SHELL_DIST == AI_OS_ROOT / "shell" / "dist"
 
 

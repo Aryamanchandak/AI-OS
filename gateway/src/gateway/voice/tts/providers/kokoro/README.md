@@ -79,14 +79,14 @@ uv pip install kokoro soundfile
 Start the gateway:
 
 ```sh
-cd glc_v5
-uv run glc serve
+cd gateway
+.venv/bin/python main.py
 ```
 
 Synthesize speech via the HTTP endpoint:
 
 ```sh
-curl -s -X POST http://localhost:8111/v1/speak \
+curl -s -X POST http://localhost:8000/v1/speak \
   -H "Content-Type: application/json" \
   -d '{"text": "Hello from Kokoro, the default voice for GLC v1.", "prefer": "default"}' \
   | python -c "

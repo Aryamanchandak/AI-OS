@@ -44,7 +44,11 @@ from gateway.voice.stt import transcribe as stt_transcribe
 logger = logging.getLogger(__name__)
 
 # Default WebSocket the Media Stream is pointed at. Overridable via config.
-DEFAULT_STREAM_URL = "wss://localhost:8111/v1/channels/twilio_voice/media"
+def default_stream_url() -> str:
+    from gateway.platform.service_registry import gateway_address
+
+    gateway = gateway_address()
+    return f"wss://{gateway.host}:{gateway.port}/v1/channels/twilio_voice/media"
 
 # Twilio Media Streams audio is base64 mu-law @ 8 kHz mono. We decode it to a
 # 16 kHz mono PCM WAV (see audio.py) before handing it to the STT facade — raw
@@ -419,7 +423,7 @@ class Adapter(ChannelAdapter):
     # -- outbound helper ----------------------------------------------------
 
     def _build_twiml(self, reply: ChannelReply) -> str:
-        stream_url = self.config.get("stream_url", DEFAULT_STREAM_URL)
+        stream_url = self.config.get("stream_url") or default_stream_url()
         say = f"<Say>{escape(reply.text)}</Say>" if reply.text else ""
         # Pass the caller as a <Parameter> so Twilio echoes it back in the
         # stream's `start` frame — that's how the caller-less media stream

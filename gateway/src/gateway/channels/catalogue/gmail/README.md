@@ -61,7 +61,7 @@ gateway/channels/catalogue/gmail/
 ### Step 1: Install
 
 ```bash
-cd glc_v5
+cd gateway
 uv sync
 ```
 

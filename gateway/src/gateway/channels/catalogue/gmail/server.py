@@ -1,8 +1,8 @@
 """Live server for Gmail adapter — uses history polling (no ngrok needed).
 
 Run:
-    cd glc_v5
-    uv run python -m gateway.channels.catalogue.gmail.server
+    cd gateway
+    .venv/bin/python -m gateway.channels.catalogue.gmail.server
 
 Polls Gmail via history.list for new messages. No public URL required.
 """

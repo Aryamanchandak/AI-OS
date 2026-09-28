@@ -19,10 +19,11 @@ uv add sounddevice soundfile
 ## 2. Start the gateway
 
 ```bash
-uv run glc serve        # starts on http://localhost:8111
+cd gateway
+.venv/bin/python main.py  # uses config/services.yaml
 ```
 
-Wait until you see `Uvicorn running on http://0.0.0.0:8111`.
+Wait until Gateway reports its configured address (port 8000 by default).
 
 ## 3. Run unit tests (no API key needed)
 
@@ -59,7 +60,7 @@ audio_b64 = base64.b64encode(buf.getvalue()).decode()
 
 payload = json.dumps({"audio_b64": audio_b64, "mime": "audio/wav", "prefer": "streaming"}).encode()
 req = urllib.request.Request(
-    "http://localhost:8111/v1/transcribe",
+    "http://localhost:8000/v1/transcribe",
     data=payload,
     headers={"Content-Type": "application/json"},
     method="POST",

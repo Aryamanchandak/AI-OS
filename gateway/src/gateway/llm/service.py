@@ -68,6 +68,9 @@ class LLMService:
         self.pipeline.cache_lookup.cache = cache
         self.pipeline.cache_store.cache = cache
 
+    def attach_tracer(self, tracer: Any) -> None:
+        self.pipeline.tracer = tracer
+
     async def chat(self, request: ChatRequest) -> dict[str, Any]:
         return await self.pipeline.run(request)
 

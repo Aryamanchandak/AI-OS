@@ -4,6 +4,7 @@ import asyncio
 import base64
 from datetime import UTC, datetime
 from pathlib import Path
+import stat
 
 import pytest
 
@@ -85,13 +86,17 @@ def test_twilio_signature_rejects_tampered_payload() -> None:
 def test_channel_admin_never_returns_stored_credentials(monkeypatch, tmp_path: Path) -> None:
     import gateway.channels.setup_config as setup_config
 
-    monkeypatch.setattr(setup_config, "CONFIG_DIR", tmp_path)
+    monkeypatch.setattr(setup_config, "SECRET_ROOT", tmp_path / "channel_secrets")
     secret = "do-not-return-this-token"
     setup.update("telegram", {"TELEGRAM_BOT_TOKEN": secret}, enabled=True)
     public = setup.public_catalogue("https://gateway.example", ["telegram"])
     assert public[0]["enabled"] is True
     assert public[0]["fields"][0]["configured"] is True
     assert secret not in repr(public)
+    provider_file = tmp_path / "channel_secrets" / "telegram.json"
+    assert provider_file.exists()
+    assert stat.S_IMODE(provider_file.stat().st_mode) == 0o600
+    assert not (tmp_path / "channel_secrets" / "twilio_sms.json").exists()
 
 
 @pytest.mark.anyio

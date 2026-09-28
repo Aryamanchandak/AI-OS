@@ -32,8 +32,11 @@ def migrated_domain_registrations() -> tuple[RouterRegistration, ...]:
     from gateway.llm.api import alias_registration, registration as llm_registration
     from gateway.channels.routes import registration as channels_registration
     from gateway.voice.routes import registration as voice_registration
+    from gateway.ingestion.routes import registration as ingestion_registration
+    from gateway.platform.observability.routes import registrations as observability_registrations
 
     return (
-        control_registration(), llm_registration(), alias_registration(),
-        channels_registration(), voice_registration(),
+        ingestion_registration(), control_registration(), llm_registration(),
+        alias_registration(), channels_registration(), voice_registration(),
+        *observability_registrations(),
     )

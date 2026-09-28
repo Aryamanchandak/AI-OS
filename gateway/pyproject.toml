@@ -8,14 +8,24 @@ version = "0.2.0"
 description = "Typed application container and HTTP gateway for AI OS"
 requires-python = ">=3.11"
 dependencies = [
+    "chromadb>=0.4.0",
     "fastapi>=0.110",
     "httpx>=0.27",
     "jsonschema>=4.21",
-    "merged-ingestion",
+    "neo4j>=5.0",
+    "numpy>=1.26",
+    "ocrmac>=1.0; sys_platform == 'darwin'",
+    "opencv-python>=4.10",
     "opentelemetry-api>=1.27",
     "opentelemetry-sdk>=1.27",
     "opentelemetry-exporter-otlp-proto-http>=1.27",
     "pydantic>=2.0",
+    "pillow>=10.0",
+    "pillow-heif>=0.18",
+    "pymupdf>=1.24",
+    "python-dotenv>=1.0",
+    "python-docx>=1.1",
+    "twilio>=9.0",
     "pyyaml>=6.0",
     "uvicorn[standard]>=0.27",
 ]
@@ -23,26 +33,19 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["mypy>=1.8", "pytest>=8.0"]
 
-[tool.uv.sources]
-merged-ingestion = { path = "../ingestion-pipeline/merged-ingestion", editable = false }
-
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["."]
 pythonpath = ["src", "."]
-norecursedirs = [".venv"]
+norecursedirs = [".venv", "build"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 strict = true
 ignore_missing_imports = true
 exclude = ["tests", "test_.*\\.py"]
-
-[[tool.mypy.overrides]]
-module = ["cockpit.*", "ingestion.*", "preview"]
-follow_imports = "skip"
 
 [[tool.mypy.overrides]]
 module = [

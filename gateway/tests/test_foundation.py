@@ -108,11 +108,33 @@ def test_authenticated_diagnostics_are_allow_listed_and_redacted(monkeypatch: py
     assert "api_key" not in serialized
 
 
-def test_sibling_path_injection_is_confined_to_the_temporary_adapter() -> None:
+def test_legacy_healthz_is_json_and_uses_registry_port() -> None:
+    with TestClient(create_app(token="test-token")) as client:
+        response = client.get("/healthz")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.json() == {"ok": True, "port": 8000}
+
+
+def test_missing_api_routes_do_not_fall_through_to_shell() -> None:
+    with TestClient(create_app(token="test-token")) as client:
+        for path in ("/v1/not-a-route", "/v1/not-traces/recent"):
+            response = client.get(path)
+            assert response.status_code == 404
+            assert response.headers["content-type"].startswith("application/json")
+        response = client.post("/v1/not-preflight", json={})
+        assert response.status_code == 404
+        response = client.get(
+            "/api/not-a-route", headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 404
+
+
+def test_migrated_domains_do_not_inject_sibling_paths() -> None:
     source_root = Path(__file__).resolve().parents[1] / "src"
     offenders = [
         path.relative_to(source_root).as_posix()
         for path in source_root.rglob("*.py")
         if "sys.path" in path.read_text(encoding="utf-8")
     ]
-    assert offenders == ["gateway/app/temporary_ingestion_adapter.py"]
+    assert offenders == []

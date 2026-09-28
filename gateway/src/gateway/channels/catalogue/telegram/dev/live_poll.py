@@ -2,7 +2,7 @@
 
 Requires:
   - TELEGRAM_BOT_TOKEN env variable.
-  - A running GLC gateway (uv run glc serve) on port 8111.
+  - A running Gateway (python main.py); its address comes from the service registry.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from gateway.channels.catalogue.telegram.adapter import Adapter
 from gateway.channels.envelope import ChannelReply
 from gateway.channels.runtime import get_install_token
 from gateway.security.pairing import get_pairing_store
+from gateway.platform.service_registry import gateway_address
 
 load_dotenv()
 
@@ -46,16 +47,16 @@ async def main() -> None:
         print("\n[live_poll] No TELEGRAM_OWNER_ID set. Will auto-pair the first user who messages the bot!")
 
     # 2. Get Gateway connection details
-    gateway_port = int(os.getenv("GLC_PORT", "8111"))
+    gateway = gateway_address()
     install_token = get_install_token()
 
     # Instantiate the adapter
     adapter = Adapter()
 
     # WebSocket URL
-    ws_url = f"ws://localhost:{gateway_port}/v1/channels/telegram?token={install_token}"
+    ws_url = f"ws://{gateway.host}:{gateway.port}/v1/channels/telegram?token={install_token}"
 
-    print(f"Connecting to GLC Gateway WebSocket at: ws://localhost:{gateway_port}/v1/channels/telegram")
+    print(f"Connecting to Gateway WebSocket at: ws://{gateway.host}:{gateway.port}/v1/channels/telegram")
 
     try:
         import websockets

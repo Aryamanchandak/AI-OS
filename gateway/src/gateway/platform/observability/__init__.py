@@ -6,12 +6,15 @@ import os
 import socket
 from typing import Any
 from urllib.parse import urlparse
+from gateway.platform.observability.capture import RecentTraceExporter, RefusalLog
 
 
 class Telemetry:
     def __init__(self) -> None:
         self.provider: Any = None
         self.tracer: Any = None
+        self.recent = RecentTraceExporter()
+        self.refusals = RefusalLog()
         self.endpoint = (
             os.getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
             or os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
@@ -38,13 +41,14 @@ class Telemetry:
         from opentelemetry import trace
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
-        from opentelemetry.sdk.trace.export import BatchSpanProcessor
+        from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor
 
         provider = TracerProvider(
             resource=Resource.create(
                 {"service.name": os.getenv("OTEL_SERVICE_NAME", "ai-os-gateway")}
             )
         )
+        provider.add_span_processor(SimpleSpanProcessor(self.recent))
         if self.endpoint:
             from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 
@@ -56,6 +60,21 @@ class Telemetry:
             trace.set_tracer_provider(provider)
         self.provider = provider
         self.tracer = provider.get_tracer("gateway")
+
+    def describe(self) -> dict[str, object]:
+        parsed = urlparse(self.endpoint)
+        # Diagnostics never expose collector userinfo, query credentials, or fragments.
+        public_endpoint = None
+        if parsed.hostname:
+            host = f"[{parsed.hostname}]" if ":" in parsed.hostname else parsed.hostname
+            public_endpoint = f"{parsed.scheme}://{host}" + (f":{parsed.port}" if parsed.port else "") + parsed.path
+        return {"active": self.tracer is not None,
+                "service_name": os.getenv("OTEL_SERVICE_NAME", "ai-os-gateway"),
+                "endpoint": public_endpoint,
+                "traces_endpoint": (public_endpoint.rstrip("/") if public_endpoint.endswith("/v1/traces") else public_endpoint.rstrip("/") + "/v1/traces") if public_endpoint else None,
+                "protocol": "http/protobuf" if self.endpoint else None,
+                "exporters": ["in_memory", *(["otlp/http"] if self.endpoint else [])],
+                "capture_content": False, "trace_ui": None}
 
     def healthcheck(self) -> None:
         if self.provider is None or self.tracer is None:

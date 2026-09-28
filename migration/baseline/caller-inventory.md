@@ -87,3 +87,20 @@ duplicate/superseded `glc_v1_whatsapp`, migration-snapshot, and
 
 "Unknown callers have an owner or an explicit compatibility requirement" —
 satisfied: zero callers remain in the unknown bucket.
+
+## Plan 07 resolution — 2026-09-28
+
+Per Plan 07 Work Package B ("record owner and completion evidence for every
+Plan 01 caller"), the rows above are left as the frozen 2026-09-14 baseline
+snapshot; this section records how each one actually resolved.
+
+| Row | Status | Evidence |
+| --- | --- | --- |
+| **ingestion → GLC** (`glc.client.LLM` in `ingestion-pipeline/merged-ingestion/`) | **Migrated.** The Gateway-owned migration under `gateway/src/gateway/ingestion/` calls `gateway/src/gateway/ingestion/http_client.py`'s `GatewayHTTPClient`, an in-process Gateway HTTP client — zero `glc.client` import. The old `ingestion-pipeline` submodule still contains the pre-migration code as-is (untouched, per Plan 01's "move, not rewrite" charter), but nothing in Gateway's runtime imports it. | `grep -rn "^import glc\|^from glc" gateway/src` — zero hits. `gateway/ingestion_tests/test_glc_contract.py` exercises `GatewayHTTPClient` against a real `create_app()`. `gateway/ingestion_tests/test_glc_policy.py` is an AST architecture guard asserting no ingestion module imports a model-provider SDK directly. |
+| **shell → gateway** (`/api/ingestion/*`) | **Confirmed current**, no change needed — shell already called Gateway's own contract, not GLC's. | `gateway/openapi.json` (regenerated 2026-09-28) matches `shell/src/api/schema.d.ts`. |
+| **AI Agent → `llm_gateway`** (port 8107) | **Out of scope, unchanged** — this is a different, older service outside this migration, as Plan 01 already noted. Tracked by `To Do/AI Agent to do/01-agent-under-gateway-plan.md`, not this plan. | No action taken; correctly excluded from this plan's exit gate. |
+| **GLC itself** (`glc_v5/`, port 8111) | **Retired as a runtime dependency, retained as a source archive.** Plan 07 decision #4 (recorded in `07-runtime-cutover-and-legacy-removal.md`) removed the `glc_v5` and `ingestion-pipeline` git submodules from this repo after their replacement code was committed and tagged. The original repositories still exist at their hosted URLs (`.gitmodules`, now removed, recorded them). | Tag `plan-07-pre-legacy-removal` marks the last commit where both submodules were still present, for rollback. |
+| **Documentation-only rows** | Unchanged; still documentation, not runtime callers. | — |
+
+Zero callers remain "classified but not yet migrated." Every "active" row
+above is resolved.

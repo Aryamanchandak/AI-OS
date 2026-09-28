@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from contextlib import nullcontext
 from collections.abc import AsyncIterator
 import time
 from typing import Any
@@ -36,6 +37,22 @@ class LLMPipeline:
         self.cache_lookup, self.routing, self.budget = cache_lookup, routing, budget
         self.provider_call, self.structured = provider_call, structured
         self.finalization, self.cache_store = finalization, cache_store
+        self.tracer: Any = None
+
+    async def _run_stage(self, stage: Any, context: PipelineContext) -> None:
+        boundary = (
+            self.tracer.start_as_current_span(
+                f"llm.{type(stage).__name__}", record_exception=False, set_status_on_exception=False,
+            ) if self.tracer is not None else nullcontext()
+        )
+        with boundary as span:
+            try:
+                await stage.run(context)
+            except BaseException:
+                if span is not None:
+                    from opentelemetry.trace import StatusCode
+                    span.set_status(StatusCode.ERROR)
+                raise
 
     async def run_stream(self, request: ChatRequest) -> dict[str, Any] | AsyncIterator[str]:
         """Stages 1–6 eagerly, then an SSE generator that owns stages 7 and 9.
@@ -62,13 +79,13 @@ class LLMPipeline:
         try:
             for stage in (self.validation, self.profiles, self.normalization,
                           self.cache_lookup, self.routing, self.budget):
-                await stage.run(context)
+                await self._run_stage(stage, context)
         except BaseException as exc:
             context.error = exc
-            await self.finalization.run(context)
+            await self._run_stage(self.finalization, context)
             raise
         if context.output is not None:
-            await self.finalization.run(context)
+            await self._run_stage(self.finalization, context)
             return await self._finish(context)
         return self._stream_frames(context)
 
@@ -77,7 +94,7 @@ class LLMPipeline:
         assert context.output is not None
         context.output["cost"] = context.cost
         context.output["budget"] = context.admission.as_dict() if context.admission else None
-        await self.cache_store.run(context)
+        await self._run_stage(self.cache_store, context)
         return context.output
 
     async def _stream_frames(self, context: PipelineContext) -> AsyncIterator[str]:
@@ -128,14 +145,14 @@ class LLMPipeline:
             yield error_frame(str(exc))
         finally:
             # Stage 9 is unconditional here too, disconnects included.
-            await self.finalization.run(context)
+            await self._run_stage(self.finalization, context)
 
     async def run(self, request: ChatRequest) -> dict[str, Any]:
         context = PipelineContext(request=request, started=time.monotonic(), principal=Principal.from_request(request))
         try:
             for stage in (self.validation, self.profiles, self.normalization, self.cache_lookup,
                           self.routing, self.budget, self.provider_call, self.structured):
-                await stage.run(context)
+                await self._run_stage(stage, context)
             if context.output is None:
                 result = context.result
                 assert result is not None
@@ -156,6 +173,6 @@ class LLMPipeline:
             raise
         finally:
             # Stage 9 is unconditional: retry/failover/error paths cannot skip it.
-            await self.finalization.run(context)
+            await self._run_stage(self.finalization, context)
         # Stage 10 reuses stage 4's embedding and performs response translation.
         return await self._finish(context)

@@ -50,6 +50,7 @@ def _isolated_channel_state(monkeypatch, tmp_path):
     import gateway.security.rate_limits as rate_limits
 
     monkeypatch.setattr(setup_config, "CONFIG_DIR", config_dir)
+    monkeypatch.setattr(setup_config, "SECRET_ROOT", tmp_path / "channel_secrets")
     pairing._singleton = None
     rate_limits._limiter = None
     allowlists._allowlist = None

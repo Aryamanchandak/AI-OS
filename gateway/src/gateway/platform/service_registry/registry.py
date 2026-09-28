@@ -13,6 +13,7 @@ import yaml
 
 
 _SERVICE_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
+DEFAULT_REGISTRY_PATH = Path(__file__).resolve().parents[4] / "config" / "services.yaml"
 
 
 class ServiceDefinition(BaseModel):
@@ -150,3 +151,14 @@ def load_service_registry(
     document = _RegistryDocument.model_validate(raw)
     services = _apply_overrides(document.services, environment or os.environ)
     return ServiceRegistry(services)
+
+
+def gateway_address(path: Path | None = None) -> ServiceDefinition:
+    """Resolve the canonical Gateway listener for launchers and helper scripts."""
+
+    registry_path = path or Path(os.environ.get("AI_OS_SERVICE_REGISTRY_PATH", str(DEFAULT_REGISTRY_PATH)))
+    registry = load_service_registry(registry_path)
+    service = registry.get("gateway")
+    if not service.enabled or not service.required:
+        raise ValueError("gateway service must be enabled and required")
+    return service
