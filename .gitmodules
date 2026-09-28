@@ -1,6 +1,0 @@
-[submodule "glc_v5"]
-	path = glc_v5
-	url = https://github.com/Aryamanchandak/glc_v5.git
-[submodule "ingestion-pipeline"]
-	path = ingestion-pipeline
-	url = git@github.com:Aryamanchandak/AI-OS-Ingestion-Pipeline.git
