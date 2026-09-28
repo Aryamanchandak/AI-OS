@@ -1,5 +1,27 @@
 # Plan 07 — Implementation Verification Report
 
+**Update 2026-09-28 — CLOSED.** Everything in "Bottom line" below is
+resolved: `gateway/openapi.json` was regenerated and the stale test fixed
+(committed `3714e50`); `plan-07-openapi-audit.md` and
+`plan-07-cutover-status.md` were refreshed to describe the current tree;
+`migration/baseline/caller-inventory.md` got its Plan 07 resolution table;
+all four decisions are now recorded with checkboxes and rationale directly
+in `07-runtime-cutover-and-legacy-removal.md`'s "Aryaman's comments"
+section. Decision #4 (archival) was executed: both submodules were pushed
+to their own remotes first (glc_v5: 2 commits, ingestion-pipeline: 6
+commits — neither was lost), tagged here as `plan-07-pre-legacy-removal`
+(commit `3714e50`), then removed from this repo (`.gitmodules` and both
+working directories, commit `e718668`). Re-verified *after* removal, not
+just before: Gateway actually boots with neither sibling directory present
+(`TestClient` hit `/health` and `/healthz` for real), the full suite still
+passes (892 passed, 5 skipped, 0 failed), and mypy --strict is clean across
+279 files. Both commits and the tag are pushed to `origin/main`. The rest
+of this report is left as originally written, as the record of what was
+found before the fix pass — see "Bottom line" for the point-by-point
+before/after.
+
+---
+
 Verified 2026-09-27. Nothing in this report has been committed by me; the
 current commit is still `3e19fc2` ("Plan 05: close out the verification
 report"). All Plan 07 work — code and docs alike — exists only in the
