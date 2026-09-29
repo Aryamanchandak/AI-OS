@@ -1,120 +1,180 @@
-# Pipeline Staging and Batching
+# 02: Holding Areas, Batches and Parallel Workers
 
-Part of Stage B of the ingestion roadmap
-(`ingestion-pipeline/INGESTION_ARCHITECTURE_REFACTOR.md`). Do not start this
-until Stage B's trigger condition in that document is met, and only after
-`01-reader-writer-boundary-refactor.md` in this folder has settled — this
-work builds on top of that boundary, not alongside it.
+Stage B, after plan 01. **Committed, but later.** You said: *"we need to
+basically add batching... we will get there later."* It will be built;
+the only question is when.
 
-## The idea ("the factory floor")
+## The idea: a factory floor, not one big machine
 
-The pipeline should have explicit holding areas between processing steps.
-Information goes into a defined place and waits there until a batch is
-ready, rather than one function doing discovery, extraction, review, and
-delivery in memory in a single pass. Each processing step should be a
-separate, independently testable function that reads from one holding area
-and writes to the next — a factory floor, not a single machine that does
-everything.
+Today a single routine takes each item all the way through, from
+discovery to extraction to review to storage, one at a time.
 
-This is not a foreign idea being imported into this codebase — it is
-already present in two places, narrowly:
+Instead:
 
-- The coordinator's own SQLite ledger (`coordinator/state.py`) already holds
-  items durably between stages (e.g. the `intake_publications` table) rather
-  than keeping run state only in memory. This is what makes crash recovery
-  and resumption work today.
-- `sources/page_scanner/` already runs a staged sequence — detect → quality
-  gate → OCR → group into passages → clean → store — with its own
-  page/passage store tracking status per page (`page_scanner/store.py`).
+1. Each step becomes its own small worker.
+2. Between steps there's a **holding area**: a durable waiting place,
+   saved to disk.
+3. A worker takes a **batch** from one holding area, does its job, and
+   puts the results in the next one.
 
-This work generalizes that pattern deliberately, rather than inventing it.
+```text
+new items → [waiting] → text check → [approved text] → split into sentences → [sentences]
+                                                                                   ├─→ fact worker   → [facts to review] → review → [approved facts] → graph
+                                                                                   └─→ vector worker → [chunks] ─────────────────────────────────→ vector store
+```
+
+**This already exists in two narrow places.** The crash-recovery ledger
+already saves progress between steps, and the photo scanner already runs
+as a chain of separate steps. This plan makes the whole pipeline work
+that way.
+
+**What gets better:**
+
+- Work is done in batches, which is much cheaper for LLM and embedding
+  calls.
+- A crash can resume at the right *batch*, not just the right item.
+- Workers can run side by side where it makes sense (Decision 4).
 
 ## What changes
 
-### Batch as the reviewed unit
+- **A batch becomes the unit that moves through review**, instead of a
+  single item. This is a real change to the run's step-by-step rules,
+  which is why it waits until Stage B.
+- **The existing per-item logic isn't thrown away.** It runs *inside* a
+  batch step.
+- **The ledger gains a record of which holding area each piece of work is
+  in.** List those records out before starting, rather than finding them
+  halfway through.
 
-Today the state machine is item-scoped by design:
+## What must not break
 
-```text
-INTAKE_ITEM → INTAKE_ITEM         (self-loop: one item, then the next)
-PROPOSAL_REVIEW → PROPOSAL_REVIEW (self-loop: one proposal, then the next)
-```
+1. The ledger and run rules are **extended, never rewritten**.
+2. After a crash, the run resumes at the right batch *and* the right item
+   within it. This needs its own test.
+3. A destination that already succeeded is still skipped on retry, for
+   each item, even inside a batch.
 
-with a single `INTAKE_BARRIER` between intake and capture. Making a batch —
-not a single item — the reviewed unit requires new stages and new legal
-transitions in `stages.py`. This is a state-machine change, not a policy
-swap, which is why it sits here rather than alongside the judge gate or
-grouped triplet review (both of which ship in Stage A without touching the
-state machine).
+## Decisions for Aryaman
 
-Concretely, this means:
+### Decision 1: what closes a batch?
 
-- A new holding stage where candidates accumulate until a batch is ready
-  (by count, by time, or by an explicit "close the batch" action — decide
-  which when this is picked up).
-- New legal transitions in `LEGAL_TRANSITIONS` that move a batch as a unit
-  through validation, review, and dispatch, rather than one item at a time.
-- The existing per-item mechanics (`_pending_proposal`, gates, dispatch)
-  operate *within* a batch once staging changes land — they don't get
-  discarded, they get invoked once per item inside a batch stage instead of
-  once per run.
+- **A. A count:** close after N items. Simple, but a slow trickle may
+  never reach N.
+- **B. A timer:** close every N hours. Regular, but sizes vary wildly.
+- **C. By hand:** you press "review now". Full control, but it defeats
+  automatic ingestion (plan 05).
+- **D. Count or timer, whichever comes first.** A burst gets batched and a
+  trickle doesn't stall.
 
-### Explicit staging functions
+**Recommended: D.** Automatic triggers (plan 05) also rule out "close per
+event", since processing one item at a time is too expensive.
 
-Break the areas the original architecture document identified as pipeline
-responsibilities into named, separate functions with an explicit holding
-area between each, rather than steps inside one large routine:
+> **Aryaman's call:** _______________
 
-1. Ask configured readers for candidates → **candidate holding area**.
-2. Admit one candidate into the run.
-3. Normalize into the shared model → **normalized holding area**.
-4. Verify integrity and provenance.
-5. Detect duplicates and superseding versions.
-6. Apply confirmation and review policies (judge gate, grouped review) →
-   **reviewed holding area**.
-7. Produce stable highlights and knowledge proposals.
-8. Create an approved, destination-independent envelope → **approved
-   holding area** (this is close to what `ApprovedEnvelope` already is).
-9. Route the envelope to configured writers.
-10. Record each delivery attempt and receipt in the ledger.
-11. Retry only unfinished or failed destinations.
-12. Produce a truthful final run report.
+### Decision 2: does one slow item hold up the whole batch?
 
-The ledger extends to track which holding area each unit of work is
-currently in, the same way it already tracks stage and status per run today.
+- **A. Yes:** nothing is stored until every item in the batch is decided.
+  This is simpler, but one item waiting on you blocks everything else.
+- **B. No:** approved items are stored as soon as they're approved. The
+  batch only groups things for review.
 
-## Why this is Stage B, not Stage A
+**Recommended: B.** It keeps today's rule that finished work is never held
+back by unfinished work.
 
-This changes what "one unit of review" means at the state-machine level.
-Stage A's grouped triplet review (see the main roadmap document) collapses
-multiple triplet decisions *within* one envelope into one decision — that's
-a UI/gate change, not a state-machine change, and ships now. Batching
-*envelopes* or *items* together is a different, larger change to
-`LEGAL_TRANSITIONS` and the ledger schema, and depends on the reader/writer
-boundary from document 01 being settled first so there's a stable seam to
-insert batch stages into.
+> **Aryaman's call:** _______________
 
-## What must not change
+### Decision 3: do clerk-approved and needs-you items share a batch?
 
-- The ledger and state machine are carried forward, not reimplemented (see
-  the main roadmap document's "one hard invariant"). Staging and batching
-  extend the existing SQLite-backed approach; they do not replace it with a
-  different mechanism.
-- Crash recovery still resumes at the correct boundary — now the correct
-  *batch* boundary, not just the correct item boundary. This needs an
-  explicit test before this work is considered done, not an assumption that
-  it still works.
-- Successful destinations are still skipped during retries, per-item, even
-  when items are grouped into a batch for review.
+- **A. Same batch, visibly separated.**
+- **B. Separate lanes:** your queue only ever holds things that need you.
 
-## Open questions to resolve when this is picked up
+**This depends on Decision 2.** If Decision 2 is B, clerk-approved items
+leave immediately anyway, and this hardly matters. If Decision 2 is A,
+choose B here, or an all-clerk-approved batch would sit waiting for no
+reason.
 
-- What closes a batch — a count threshold, a time window, an explicit
-  action, or some combination?
-- Does a partially-reviewed batch (some items approved, some still pending)
-  block the whole batch from dispatching, or do approved items dispatch
-  independently as they clear?
-- How does this interact with the LLM judge gate from Stage A — do
-  judge-approved items get grouped separately from items still needing
-  human review, so a human reviewer isn't waiting on judge output to see the
-  batch?
+> **Aryaman's call:** _______________
+
+### Decision 4: should the vector store wait for fact review? (new, 2026-09-28)
+
+**Your idea:** first store the sentence. Then branch it to two workers
+running side by side. One makes facts (triplets) for the graph. The other
+makes chunks for the vector store.
+
+**What happens today (checked in the code):**
+
+- The vector store **is** written. For each approved highlight, the text
+  is split into sentence-sized chunks, embedded and saved.
+- Highlights with no problems flagged are written straight away. But a
+  **flagged** highlight is only written **after its facts are approved**.
+  While its facts wait for you, it isn't searchable either, even though
+  you already approved the text itself at the intake check.
+- The embeddings are made **one chunk at a time**, one call per chunk.
+
+**The options:**
+
+- **A. Keep it as today.** Vector chunks for flagged highlights wait for
+  fact review.
+  - `+` Everything about a sentence arrives at the same moment.
+  - `-` Search is held back by fact review, for no real safety benefit,
+    because the text was already approved.
+- **B. Parallel workers, your idea.** Once the text is approved and split
+  into sentences, the vector worker chunks and embeds straight away, **in
+  batches**. Obsidian notes count as approved already, since you wrote
+  them. The fact worker runs on its own track through fact review.
+  - `+` Search works as soon as the text is approved. The two stores stop
+    blocking each other. Embeddings are batched, not one call per chunk.
+    Each worker can fail and retry on its own.
+  - `-` For a while, a sentence can be searchable before its facts are in
+    the graph. If you reject a sentence's facts, its vector chunks stay,
+    because they were stored from approved text. That is probably
+    correct, but it's a behaviour change.
+- **C. B, but vector chunks are removed if the fact review rejects the
+  whole sentence as a misreading.**
+  - `+` Keeps the two stores consistent.
+  - `-` It couples them again, and needs a clean-up path.
+
+**Recommended: B.** The text approval is the right gate for search. Fact
+review is about whether the LLM understood the sentence, not whether the
+sentence should be findable. Batched embedding also follows your "never
+one at a time" rule.
+
+> **Aryaman's call:** _______________
+
+## At a glance
+
+| # | Decision | Depends on |
+|---|---|---|
+| 1 | What closes a batch | nothing |
+| 2 | Does one slow item hold up the batch? | nothing |
+| 3 | Clerk-approved items: same lane or separate? | Decision 2 |
+| 4 | Vector store: wait for facts, or a parallel worker? | nothing |
+
+## Where in the code
+
+All paths are under `gateway/src/gateway/ingestion/`.
+
+- **Run rules today:** `coordinator/stages.py` (`LEGAL_TRANSITIONS`). Items
+  loop `INTAKE_ITEM → INTAKE_ITEM` and proposals loop
+  `PROPOSAL_REVIEW → PROPOSAL_REVIEW`, with one `INTAKE_BARRIER` between
+  intake and capture. Batching adds new stages and transitions here.
+- **Ledger:** `coordinator/state.py`, for example the
+  `intake_publications` table. The new holding-area records go here.
+- **Retry per destination:** `dispatch.py`.
+- **Prior art for staged steps:** `sources/page_scanner/`, with per-page
+  status in `page_scanner/store.py`.
+- **Vector writing today:** `consumers/vector_consumer.py`.
+  - `VectorConsumer.consume()` refuses anything not `approved` or
+    `not_required`, so it is gated on fact review.
+  - It chunks with `vector/chunking.py` `sentence_chunks()`.
+  - It calls `embedding_client.embed()` once per chunk in a loop.
+  - It writes with `store.upsert_batch()` to the `knowledge` collection.
+  - Decision 4B means moving this before fact review and batching the
+    embed calls.
+- **Where text approval happens:** `coordinator/gates.py`
+  `ContentApprovalGate` (see A4).
+
+## Aryaman's comments
+
+Add your calls on Decisions 1–4 above, or push back on the recommended
+defaults.

@@ -199,6 +199,14 @@ not a viable dependency for an AI OS Gateway domain.
       in-process calls into gateway domains instead, with only genuinely
       external tools (finance, news, research, media) keeping an MCP-style
       boundary.
+> **Update 2026-09-27:** Option B's knowledge tools (`knowledge_graph`,
+> `vector_db`, `documents`) now have a detailed replacement plan:
+> `02-agent-database-read-access.md` in this folder. It adds read-only
+> tools over the AI OS databases, served from the shared Gateway MCP server
+> planned in `../Ingestion Pipeline to do/03-mcp-surface.md`. That
+> resolves Option B for knowledge tools. The external tools (finance, news,
+> research, media, utility) are still this decision's open question.
+
 - [ ] Whichever option: fix the `AI Code/agent` / `AI Code/mcp_server`
       hardcoded personal-folder assumptions everywhere they appear (agent
       side and mcp_server side) so nothing depends on a path outside the AI
@@ -368,6 +376,10 @@ Exit condition: chatting with the agent works end-to-end through the AI OS
 Gateway's normal port and shell, with no second `uvicorn` process needed.
 
 ### Phase 5: Resolve the MCP/tool dependency
+
+Knowledge tools: carried out by `02-agent-database-read-access.md` (work
+package 6, "AI Agent cut-over"). Ingestion submits: `ingest_submit` from
+`../Ingestion Pipeline to do/03-mcp-surface.md`.
 
 Scope and steps depend entirely on Decision 2's outcome (vendor mcp_server
 in vs. dissolve the process boundary for in-repo tools). Do not begin this

@@ -26,21 +26,27 @@ yourself instead of taking the checkbox on faith.
 Proposed default: preserve full history for both GLC and ingestion using a
 history-aware import, then move imported paths in later commits.
 
+Plan 03 refines the GLC mechanism to multiple domain-scoped `git
+filter-repo` imports: each imported slice keeps its full history and lands
+under `gateway/_migration/` before its separate reorganization commit.
+
 - [x] Preserve full history.
 - [ ] Preserve only one reviewed snapshot plus a reference to the source commit.
 - [ ] Different policy for GLC and ingestion; describe it below.
 
 **"Preserve full history" means:** when GLC's and ingestion's commits get
 imported into this repo (Plan 03/06), the import brings every past commit
-those two repos ever made with it — like `git subtree add` or a filtered
-`git fetch` + merge — rather than a single squashed "here's the code as of
-today" commit. The cost is a noisier `git log` for those paths forever; the
-benefit is `git blame`/`git log -p` still work on GLC/ingestion code after
-the move, the same way they do today inside each submodule.
+those two repos ever made with it — the recorded mechanism is `git subtree`
+or `git filter-repo` (see `migration/baseline/decisions.md` §1) — rather
+than a single squashed "here's the code as of today" commit. The cost is a
+noisier `git log` for those paths forever; the benefit is `git blame`/`git
+log -p` still work on GLC/ingestion code after the move, the same way they
+do today inside each submodule.
 
-**Verify:** `migration/baseline/repo-state.md` records the chosen history
-import procedure and rollback procedure (Work Package A below) — open it to
-see the exact mechanism decided on, not just that a box got checked.
+**Verify:** `migration/baseline/decisions.md` §1 names the exact mechanism
+(subtree/filter-repo); `migration/baseline/repo-state.md` has the rollback
+procedure (Work Package A below) — open both rather than taking the
+checkbox on faith.
 
 ### 2. Compatibility policy
 
@@ -113,12 +119,27 @@ proceed.
   or backed up without capturing credentials.
 - Document the selected history import procedure and rollback procedure.
 
+**Done in:** `migration/baseline/repo-state.md`. This is your rollback
+insurance — if any later plan goes sideways, this file plus the commits it
+points to are how you get back to exactly where things stood on
+2026-09-14.
+
 ### B. Freeze executable baselines
 
 - Run complete Gateway, ingestion, and GLC suites.
 - Run current lint, type, OpenAPI-staleness, and frontend checks.
 - Record required Python and Node versions and lockfiles.
 - Add one repeatable root-level baseline command or script.
+
+**Done in:** `migration/baseline/run-baselines.sh` (run it yourself with
+`bash migration/baseline/run-baselines.sh` from the repo root) plus the
+timestamped `migration/baseline/results-*.log` it produces each run. Per the
+current log: every GLC/ingestion/gateway/shell **pytest** suite passes
+(matching the 27/460/563 counts in `00-program-roadmap.md`); a handful of
+lint/type/env-verification scripts fail, but for a pre-existing reason
+(`ModuleNotFoundError` from running package scripts outside their normal
+entrypoint) unrelated to this plan — fixing those is a source change, out of
+scope here, and is called out explicitly rather than glossed over.
 
 ### C. Capture contracts
 
@@ -134,6 +155,13 @@ proceed.
   - Ingestion run, decision, retry, report, evidence, and cleanup mappings.
 - Record environment-variable defaults and precedence.
 
+**Done in:** `migration/baseline/contracts.md` (the human-readable index of
+what was captured and where) plus the two raw snapshots,
+`migration/baseline/contracts/glc-openapi.json` and
+`.../gateway-openapi.json`. Every later plan's "preserve this contract"
+promise is checkable by re-exporting the OpenAPI schema and diffing it
+against these two files.
+
 ### D. Inventory callers
 
 - Search code, scripts, services, desktop automation, and documentation for:
@@ -146,6 +174,16 @@ proceed.
 - Classify every caller as active, test-only, documentation-only, obsolete,
   or unknown.
 
+**Done in:** `migration/baseline/caller-inventory.md` (the classified list)
+and `caller-inventory-raw.txt` (the raw grep output it's built from). As a
+sanity check, this repo's own `glc.client`/`GLC_BASE_URL`/8111 callers
+include `ingestion-pipeline/merged-ingestion/src/ingestion/runner.py`
+(constructs `glc.client.LLM`, defaults to `http://127.0.0.1:8111`), several
+channel adapters under `glc_v5/glc/channels/catalogue/*` (Twilio, Discord,
+Telegram, WhatsApp), and `glc_v5/daemon/install.sh` — if a caller like this
+isn't in the inventory, it's incomplete, since "zero unknowns" is the
+stated result in `migration/baseline/README.md`.
+
 ### E. Inventory activation state
 
 Added per program-level discussion (see `00-program-roadmap.md`, program
@@ -156,6 +194,13 @@ by default once it lands." Security, audit, and control (Plan 03) are
 always-on by design and are not eligible for dormant status. Channels and
 voice (Plan 05) are dormant by default until explicitly activated. Record
 this table here so Plans 03 and 05 aren't each re-deciding it ad hoc.
+
+**Done in:** `migration/baseline/activation-state.md`. Skim it now, while
+it's cheap to correct — it's the table Plan 05 will cite as settled when it
+registers 15 channel adapters (`glc_v5/glc/channels/catalogue/*`: Discord,
+Gmail, IMAP, LINE, local mic, Matrix, Signal, Slack, Teams, Telegram,
+Twilio SMS, Twilio Voice, webhook, web UI, WhatsApp) as present but not
+started by default.
 
 ### F. Decide GLC's data-file location
 
@@ -177,6 +222,22 @@ written. Decide here, before Plan 03 moves GLC's platform/database code:
 
 This decision is binding on Plan 03's "Database layout" decision (§1).
 
+**Where this shows up in the code today, for reference:** the two lines that
+decide GLC's data location are `glc_v5/glc/db.py` line 19
+(`DB_PATH = os.getenv("GLC_GATEWAY_DB", str(DEFAULT_DIR / "gateway.sqlite"))`)
+and `glc_v5/glc/audit/store.py` line 28
+(`os.getenv("GLC_AUDIT_DB", str(DEFAULT_DIR / "audit.sqlite"))`), both with
+`DEFAULT_DIR = Path(os.path.expanduser("~/.glc"))`. Choosing the first
+checkbox means Plan 03 changes those two default paths (or the environment
+variables that override them) to point at `Database/sqlite/` instead;
+choosing the second means Plan 03 leaves them exactly as they are today.
+
+**Verify:** `migration/baseline/decisions.md` records which option was
+picked and why. If it says "relocate," the check for Plan 03 having
+followed through is that `~/.glc/gateway.sqlite` and `~/.glc/audit.sqlite`
+stop being created on a fresh run, and `Database/sqlite/` gains the
+equivalent files instead.
+
 ## Explicitly out of scope
 
 - Moving source files.
@@ -186,7 +247,14 @@ This decision is binding on Plan 03's "Database layout" decision (§1).
 
 ## Exit gate
 
-- All three baselines are green and recorded.
+- All three baselines are green and recorded. **Known caveat:**
+  `migration/baseline/README.md` marks this one "recorded, not green" — all
+  GLC/ingestion/gateway/shell *pytest* suites pass, but `glc: ruff format
+  --check`, `glc: mypy`, `glc: validate_envelope`, `glc: validate_policy`,
+  and `ingestion: verify_environment` currently fail, for a pre-existing
+  reason (scripts run outside their normal entrypoint) unrelated to this
+  plan. Fixing those is a source change and out of scope here — this bullet
+  is not actually satisfied as literally written, by design.
 - Current work exists in recoverable commits.
 - Gateway is tracked.
 - History policy is approved.

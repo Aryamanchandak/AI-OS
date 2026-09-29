@@ -1,5 +1,14 @@
 # Unified UI plan (UI only)
 
+> **Superseded (2026-09-27).** This planned an outbound link to GLC on port
+> 8111. Gateway Plan 05 has since brought GLC's UI into the shell natively
+> (`02 Channels`, `03 LLM`, `04 Observability` in
+> `shell/src/components/AppShell.tsx`). What's left of UI ownership is tracked
+> in `To Do/Ingestion Pipeline to do/A3-ui-ownership-closeout.md`. Upcoming
+> shell work from the ingestion roadmap: whole-highlight
+> review and the judge's "postal clerk" panel plus a
+> Judge's desk screen (`A1-llm-judge-gate.md`). Kept for history only.
+
 ## Context
 
 The shell (`shell/`) is the one unified UI. GLC is deliberately staying a
