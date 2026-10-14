@@ -1,5 +1,7 @@
 # 05: Ingestion That Starts by Itself
 
+> **Status 2026-10-13: still last, after the breakup and plan 02.**
+
 Stage B, **last**. It needs plan 02's holding areas first.
 
 ## The idea, in your words

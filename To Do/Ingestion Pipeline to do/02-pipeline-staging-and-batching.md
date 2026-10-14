@@ -1,5 +1,13 @@
 # 02: Holding Areas, Batches and Parallel Workers
 
+> **Status 2026-10-13: still committed. It now comes after the breakup
+> (plan 01) and the judge.**
+>
+> Note: the judge's use of Anthropic's **Batch API** is already decided
+> (M4 in `00-DECISIONS.md`). "Batches" in this plan means holding areas
+> between steps, which is a different thing. The Batch API is one way a
+> step can cut its AI costs.
+
 Stage B, after plan 01. **Committed, but later.** You said: *"we need to
 basically add batching... we will get there later."* It will be built;
 the only question is when.

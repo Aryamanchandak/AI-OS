@@ -19,3 +19,7 @@ __pycache__/
 # Node
 node_modules/
 dist/
+
+# Build output and IDE settings
+gateway/build/
+.idea/

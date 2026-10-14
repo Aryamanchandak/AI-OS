@@ -1,5 +1,12 @@
 # A4: A Look at Every Intake Check (and the Drop Folder Setting)
 
+> **Status 2026-10-13: comes after the breakup (plan 01).**
+>
+> **New finding:** the abbreviation and spelling cleanup **never runs on
+> Obsidian notes**. The pipeline uses a placeholder (`NoHighlightCleanup`,
+> `pipeline.py:63`) that always reports "no typos". The cleanup database
+> is also empty. See F2, F3 and O3 in `00-DECISIONS.md`.
+
 Stage A. **Start now.** New as of 2026-09-28, from your comment: *"we
 will need to have an individual look at all of these gates, not just
 one."*
@@ -111,8 +118,8 @@ listed here only so the picture is complete.
    folder exists and can be written to.
 3. Keep your Desktop path as the default when nothing is set.
 4. The same panel is a natural home for the other switches in this plan
-   ("always continue", the A1 clerk's off / watch-only / live setting, and
-   so on).
+   ("always continue", the judge worker's controls such as run now and
+   pause, and so on). The judge has no off / watch-only switch (M12).
 
 ## Decisions for Aryaman
 

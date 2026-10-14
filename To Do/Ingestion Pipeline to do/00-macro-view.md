@@ -7,6 +7,13 @@ this folder each cover one piece. Read this one first.
 The code lives in `gateway/src/gateway/ingestion/`. The old
 `ingestion-pipeline/merged-ingestion/` copy is kept only as a backup.
 
+> **Update 2026-10-13: the order has changed.** Breaking up the code now
+> comes **first**, before the judge or anything else. It's a move, not a
+> rewrite. See `00-DECISIONS.md` (every decision so far) and
+> `00-CURRENT-FLOW-AND-BREAKUP.md` (the flow today and the recommended
+> breakup). §1 and §4 below are updated, §5 is corrected, and your round-4
+> comments are in §7.
+>
 > **Update 2026-09-28:** your second round of comments has been acted on.
 > §7 lists each one and where it went. The other plans in this folder have
 > been rewritten in plain English, with the file and function names moved
@@ -14,15 +21,19 @@ The code lives in `gateway/src/gateway/ingestion/`. The old
 
 ## 1. The short version
 
-- **What's wrong today:** reviewing is slow. Every dropped file needs a
-  manual approve click, and every flagged fact is reviewed one at a time.
-- **Stage A (now):** make review faster without restructuring anything.
-  An LLM judge approves most flagged facts, and when a human is needed they
-  decide a whole highlight in one submit; agents can submit content; and each intake gate gets
-  looked at one by one.
-- **Stage B (later):** restructure the code: separate readers from writers,
-  add batching, then make ingestion start by itself when something
-  changes.
+- **What's wrong today:** reviewing is slow, and the code has become one
+  tangle: several jobs are packed into each big file.
+- **First (new):** review every component, then **break the code up** into
+  one folder per job. Behaviour stays the same, and every move is proven
+  with targeted checks.
+- **Alongside:** add the new models (Opus / Sonnet / Haiku 5.5) and the
+  Batch API to the gateway.
+- **Then:**
+  - the LLM judge, as a Batch API worker
+  - intake gates
+  - agents submitting content
+  - holding areas and batches
+  - automatic start
 - **One rule holds throughout:** the crash-recovery machinery (the ledger)
   is moved, never rewritten.
 
@@ -31,8 +42,8 @@ The code lives in `gateway/src/gateway/ingestion/`. The old
 1. **It works through dropped files one at a time.** It picks up a file,
    runs it through every check, publishes it, and only then moves to the
    next file. Once every file is done, it moves on to fact review. This
-   will change when the code is split into separate parts in Stage B
-   (plans 01 and 02).
+   will change after the code is broken up (plan 01, now first), when
+   plan 02 adds holding areas and batches.
 2. **An LLM turns each highlight into candidate facts.** A "fact" here is a
    triplet (subject, relationship, object), a claim or a concept, each tied
    to the exact words it came from.
@@ -40,6 +51,8 @@ The code lives in `gateway/src/gateway/ingestion/`. The old
    quote isn't in the text, the LLM wasn't confident, it came from a photo,
    it merges two entities, and so on. If it finds nothing, the facts are
    approved and stored automatically. Only facts with a problem reach you.
+   *Correction 2026-10-13:* in practice, all 7 real highlights so far
+   were flagged and reached you (finding F4 in `00-DECISIONS.md`).
 4. **When you review, you decide one fact at a time.** The screen shows the
    other facts from the same sentence, but you have to click through each.
    A1 fixes this for the highlights that still reach you: all of a
@@ -93,28 +106,42 @@ and 5 are wired together. None of them changes what the stores hold.
 
 ## 4. The plans, and the order to do them in
 
-| File | Stage | In one line |
+| File | Order | In one line |
 |---|---|---|
-| `INGESTION_ARCHITECTURE_REFACTOR.md` | Both | The roadmap: what's in each stage and what unlocks Stage B |
-| `A1-llm-judge-gate.md` | A: start now | An LLM clerk approves most flagged facts; watch it first, then trust it |
-| `A4-intake-gates-review.md` | A: start now | Look at each intake check in turn; make the drop folder a setting |
-| `03-mcp-surface.md` | A: start now | Let AI agents hand content to ingestion and check on it |
-| `A3-ui-ownership-closeout.md` | A: mostly done | Checklist: Gateway serves every screen |
-| `01-reader-writer-boundary-refactor.md` | B: first | Split "reading sources" from "writing stores" in the code |
-| `02-pipeline-staging-and-batching.md` | B: after 01 | Holding areas between steps; process in batches; parallel fact and vector workers |
-| `05-event-driven-ingestion.md` | B: last | Start ingestion automatically when something changes |
+| `00-DECISIONS.md` | Read first | Every decision, open question, finding, and the list of docs to write |
+| `00-CURRENT-FLOW-AND-BREAKUP.md` | Read first | The flow today, what's tangled, and the recommended breakup |
+| `INGESTION_ARCHITECTURE_REFACTOR.md` | — | The roadmap: the order of everything |
+| `component-reviews/CR-01 … CR-11` | 0 | One review per piece before it moves (to be written) |
+| `01-reader-writer-boundary-refactor.md` | 1: **first plan** | Break up the code: move, don't rewrite; targeted checks |
+| `To Do/Gateway to do/02-models-and-batch-api.md` | 2: alongside | New models + Batch API in the gateway (to be written) |
+| `A1-llm-judge-gate.md` / `-SIMPLE.md` | 3 | The LLM judge, as a Batch API worker |
+| `A4-intake-gates-review.md` | 4 | Look at each intake check; make the drop folder a setting |
+| `03-mcp-surface.md` | 5 | Let AI agents hand content to ingestion |
+| `02-pipeline-staging-and-batching.md` | 6 | Holding areas, batches, parallel fact and vector workers |
+| `05-event-driven-ingestion.md` | 7: last | Start ingestion automatically when something changes |
+| `A3-ui-ownership-closeout.md` | — | Checklist: Gateway serves every screen (mostly done) |
 | `04-agent-facing-database-read-access.md` | Not in this roadmap | Pointer to `To Do/AI Agent to do/02-agent-database-read-access.md` |
 
-**Order:** A1 → A4 → 03 → A3 ticks off → Stage B
-(01 → 02 → 05) once the Stage B checklist in the roadmap is met.
+**Order (changed 2026-10-13):** component reviews → **01 breakup** →
+(gateway models + Batch API alongside) → A1 judge → A4 → 03 → 02 → 05.
+A3 just gets ticked off. The full table is in the roadmap.
 
 ## 5. Each idea, and my honest take
 
 **LLM judge (A1).** An LLM reads each flagged fact and approves it if it's
-clearly fine. Anything it's unsure about goes to you. It first runs in
-watch-only mode so we can measure how often it agrees with you before it's
-allowed to approve anything. *Take:* sound, and the watch-only step is
-what makes it safe.
+clearly fine. Anything it's unsure about goes to you.
+
+- *Corrected 2026-10-13:* there is **no** watch-only trial and no kill
+  switch (M12).
+- Safety comes from three things:
+  - the judge never rejects anything
+  - 5% of its yeses are spot-checked by you
+  - risky fact types always go to you
+- It runs as its own **Batch API worker** (M4).
+- Real data showed that the draft judge checked the wrong thing (findings
+  F4 and F5 in `00-DECISIONS.md`), so its question gets rewritten.
+
+*Take:* sound, once it targets the real rejection causes.
 
 **Approve the sentence (was A2, now part of A1).** *Take, revised:* once
 the judge is live, you only see the highlights it couldn't clear, and you're
@@ -155,10 +182,26 @@ it needs 02's holding areas to land in.
 
 ## 6. Stepping back
 
-The order is right: cheap, reversible changes first; use them for real;
-then do the expensive restructuring based on what was learned.
+*Rewritten 2026-10-13.* The old view here was "cheap changes first,
+restructure later". You reversed it (M1): the code has become too tangled
+to keep building on, so it gets broken up first.
+
+This is safe because the breakup is a **move, not a rewrite**. Every step
+is proven by targeted checks. The new features (judge, batching) are then
+built once, on clean ground, in the slots the breakup leaves for them.
 
 ## 7. Your comments, and where each one went
+
+### Round 4 (2026-10-13)
+
+| Your comment | What happened |
+|---|---|
+| Break the code up first, and rebuild each piece properly, once | Breakup is now plan 01 and goes first (M1). It's a move, not a rewrite (M2), with targeted checks. New docs: `00-CURRENT-FLOW-AND-BREAKUP.md` and `00-DECISIONS.md`. |
+| A review plan for every major component | 11 component reviews (CR-01 to CR-11), written in fresh chats with the prompts in `FRESH-CHAT-PROMPTS.md` |
+| The Batch API, with the judge as its own worker | Decided (M4) |
+| New models and the Batch API in the gateway together | Decided (M6). New gateway doc to be written (prompt P4). |
+| 5% isn't a hard target; personal remarks are kept; opinions | M7 and M9 decided. Opinions and entity resolution are open questions O1 and O2, each getting its own doc. |
+| Several one-page docs asked for | Listed in `00-DECISIONS.md` §5, each with its prompt |
 
 ### Round 3 (2026-09-28)
 

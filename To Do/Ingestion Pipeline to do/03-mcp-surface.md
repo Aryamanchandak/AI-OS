@@ -1,5 +1,8 @@
 # 03: Letting AI Agents Hand Content to Ingestion (MCP)
 
+> **Status 2026-10-13: comes after the breakup (plan 01).** See the
+> roadmap for the new order.
+
 Stage A, item 4. **Start now.** This document is also the map of every
 MCP-related piece of work in AI OS.
 

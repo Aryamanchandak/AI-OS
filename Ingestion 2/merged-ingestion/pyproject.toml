@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "merged-ingestion"
+version = "0.1.0"
+description = "Immutable capture, review, KG, and vector ingestion pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "chromadb>=0.4.0",
+    "fastapi>=0.110",
+    "llm-gateway-v7>=0.3.0",
+    "neo4j>=5.0",
+    "numpy>=1.26",
+    "ocrmac>=1.0; sys_platform == 'darwin'",
+    "opencv-python>=4.10",
+    "pillow>=10.0",
+    "pillow-heif>=0.18",
+    "pydantic>=2.0",
+    "pymupdf>=1.24",
+    "python-dotenv>=1.0",
+    "python-docx>=1.1",
+    "uvicorn[standard]>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "mypy>=1.8", "httpx>=0.27"]
+
+[tool.uv.sources]
+llm-gateway-v7 = { path = "../../llm_gateway", editable = false }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true

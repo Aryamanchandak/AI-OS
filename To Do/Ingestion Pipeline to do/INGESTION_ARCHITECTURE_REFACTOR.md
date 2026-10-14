@@ -3,92 +3,73 @@
 ## What this is
 
 This is the source of truth for where ingestion is going and in what
-order. Each item has its own plan document in this folder. This page only
-says what the items are, in what order, and what unlocks the next stage.
-For the plain-English overview, read `00-macro-view.md`.
+order. Each item has its own plan document in this folder.
 
-## The approach, in two stages
+- For decisions, read `00-DECISIONS.md`.
+- For the flow today and the breakup, read `00-CURRENT-FLOW-AND-BREAKUP.md`.
+- For the plain-English overview, read `00-macro-view.md`.
 
-- **Stage A (now):** make review faster and add new abilities **on the
-  current code**, without restructuring it.
-- **Stage B (later):** once Stage A has been used for real, restructure
-  the code: split readers from writers, add holding areas and batches,
-  then automatic triggers.
+> **Reordered 2026-10-13 (decision M1).** The breakup of the code now
+> comes **first**. This reverses the earlier approach, which was "build
+> features on the current code first, restructure later". It was your
+> call: the code has become too tangled to keep building on, and you want
+> each piece built properly once.
+>
+> **The cost:** the structure is fixed before the judge and batching
+> exist. So the breakup leaves empty slots for them, but builds nothing.
+> The old "Stage B unlock checklist" no longer applies and has been
+> removed.
 
-**Why this order:** we don't yet know the right structure for batching,
-an LLM judge or agent tools. Building the features first, on code that
-works, turns guesses into evidence. Then the restructuring happens once,
-informed, rather than being guessed at twice.
+## The order
+
+| # | Phase | Plan | In one line | Status |
+| --- | --- | --- | --- | --- |
+| 0 | **Component reviews** | `component-reviews/CR-01 … CR-11` | One review per piece: how it works, what's expected of it, its test gaps and targeted checks | **Next.** Prompts are ready. |
+| 1 | **Break up the code** | `01-reader-writer-boundary-refactor.md` | Move every piece into its own folder. Behaviour unchanged, proven by targeted checks. | **First plan** |
+| 2 | **Gateway: new models + Batch API** | `To Do/Gateway to do/02-models-and-batch-api.md` (to be written) | Opus / Sonnet / Haiku 5.5 and others, plus the Batch API, done together | Can run alongside 0–1 (it's in the gateway, not ingestion) |
+| 3 | LLM judge | `A1-llm-judge-gate.md`, `A1-llm-judge-gate-SIMPLE.md` (+ A1b policy, A1c rejection causes) | A Batch API worker that says yes or no to facts, controlled from the UI | After 1 and 2 |
+| 4 | Every intake check, one by one | `A4-intake-gates-review.md` | Cut unnecessary clicks before fact review; make the drop folder a setting | After 1 |
+| 5 | Agents submit content | `03-mcp-surface.md` | Agents hand notes to ingestion through MCP, with the same review | After 1 |
+| 6 | Holding areas and batches | `02-pipeline-staging-and-batching.md` | Work moves in batches between holding areas; facts and vectors run in parallel | After 3 |
+| 7 | Automatic start | `05-event-driven-ingestion.md` | Ingestion starts by itself when something changes | Last |
+| — | Gateway serves every screen | `A3-ui-ownership-closeout.md` | Checklist only | Mostly done |
+
+**Side plans asked for on 2026-10-13** (see `00-DECISIONS.md` §5):
+
+- page-scanner batching (A5)
+- prompts folder (A6)
+- opinions and who holds them (A7)
+- people and entity resolution (A8)
+
+Their place in the order is set once they're written.
 
 ## The one hard rule
 
-The **ledger** (the saved record of each step, which lets a crashed run
-resume exactly where it stopped, and retry without repeating work) is
-**moved, never rewritten**. Rewriting it would throw away a lot of
-hard-won edge-case handling at the same time as the review process is
-changing. Those two changes must never happen together.
+The **ledger** is the saved record of each step. It lets a crashed run
+resume exactly where it stopped, and retry without repeating work. It is
+**moved, never rewritten**, including during the breakup.
 
-## Stage A: build now
+## Key points (still true)
 
-| # | Item | Plan | In one line | Status |
-|---|---|---|---|---|
-| 1 | LLM judge | `A1-llm-judge-gate.md` | A clerk LLM approves most flagged facts. It watches first, then acts. | Start now |
-| 2 | ~~Approve a sentence at once~~ | Folded into `A1-llm-judge-gate.md` | When you're needed, decide a whole highlight's facts in one submit. | Folded into A1 (2026-09-28) |
-| 3 | Gateway serves every screen | `A3-ui-ownership-closeout.md` | Checklist only. | Mostly done |
-| 4 | Agents submit content | `03-mcp-surface.md` | Agents hand ingestion notes through MCP, with the same review. | Start now |
-| 5 | Every intake check, one by one | `A4-intake-gates-review.md` | Cut unnecessary clicks before fact review; drop folder becomes a setting. | Start now (added 2026-09-28) |
-
-**Order:** A1 → A4 → 03 → A3 ticks off.
-
-**Key points:**
-
-- The clerk (A1) approves **through the same approve function you use**.
-  That's the pipeline's approve function, which also stores the result,
-  not the lower-level one that only marks it approved. Using the wrong
-  one would mark facts approved that never reach the stores. (This
-  corrects an earlier version of this page.)
+- The judge approves **through the same approve function you use**. That's
+  the pipeline's `resolve_proposal_reviews()`, which also stores the
+  result. Not the store's lower-level version, which only marks a fact
+  approved.
+- The judge never auto-rejects. It has no kill switch and no watch-only
+  trial (M12). If it fails, facts stay in your queue.
 - Agents (03) never write to a database directly. Their content goes
   through the same review as everything else.
 
-**Stage A doesn't:**
-
-- restructure folders
-- rewrite the ledger
-- introduce batch review
-- add automatic triggers
-
-## Stage B: restructure, once unlocked
-
-Stage B starts only when **all** of these are true:
-
-- The clerk (A1) is live and has been used on real runs.
-- A3's checklist is complete.
-- At least one real agent workflow uses the MCP tools (03).
-- There's real evidence of how far the clerk can be trusted, and where
-  you still need to be involved.
-
-Then, in order:
-
-1. **`01-reader-writer-boundary-refactor.md`:** separate reading sources
-   from writing stores.
-2. **`02-pipeline-staging-and-batching.md`:** holding areas between steps,
-   work in batches, and the parallel fact and vector workers. This is
-   committed.
-3. **`05-event-driven-ingestion.md`:** ingestion starts by itself when
-   something changes. Noticing a change only adds it to the waiting pile.
-
 ## Tracked elsewhere
 
-**Agents reading the databases** (querying the graph, the vector store
-and the content database) is a separate plan:
+**Agents reading the databases** is a separate plan:
 `To Do/AI Agent to do/02-agent-database-read-access.md`. It shares the MCP
 server from plan 03.
 
 ## Not doing
 
-- Restructuring before Stage B is unlocked.
+- Rewriting code as part of the breakup. It's a move, not a rewrite (M2).
 - Rewriting the ledger, ever.
-- Running the coordinator's steps concurrently in Stage A.
 - Changing how duplicates and versions work.
 - Replacing any database, or redesigning the knowledge model.
 - Letting any source, including agents, store anything without review.
@@ -100,11 +81,12 @@ All paths are under `gateway/src/gateway/ingestion/`. The old
 
 - Ledger and run rules: `coordinator/state.py`, and `coordinator/stages.py`
   (`LEGAL_TRANSITIONS`).
-- Approve function the clerk must use: `pipeline.py`
+- The approve function the judge must use: `pipeline.py`
   `UnifiedIngestionPipeline.resolve_proposal_reviews()`. Don't use
-  `store.resolve_proposal_reviews()`: it doesn't dispatch.
+  `store.resolve_proposal_reviews()`, because it doesn't dispatch.
 - Intake gates: `coordinator/gates.py`. Fact review is the coordinator's
   separate `gate == "proposal"` path.
+- Full module map: `00-CURRENT-FLOW-AND-BREAKUP.md` §2.
 
 ## Aryaman's comments
 
