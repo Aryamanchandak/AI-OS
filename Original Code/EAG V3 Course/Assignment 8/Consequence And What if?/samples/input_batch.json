@@ -1,0 +1,11 @@
+{
+  "batch_id": "sample-solar-policy",
+  "items": [
+    {"url": "https://mnre.gov.in/", "headline": "Illustrative: solar module sourcing rule takes effect", "snippet": "A supplied policy notice says a module sourcing rule will take effect. This sample exists to demonstrate the input shape; a real run fetches and verifies the source."},
+    {"url": "https://www.pib.gov.in/", "headline": "Illustrative: government outlines domestic solar manufacturing policy", "topic": "renewable energy"},
+    {"url": "https://www.sebi.gov.in/", "headline": "Unrelated control item: market circular", "topic": "market regulation"}
+  ],
+  "target_market": "indian_equities",
+  "report_audience": "informed Indian equity-market reader",
+  "requested_at": "2024-03-15T09:00:00+05:30"
+}

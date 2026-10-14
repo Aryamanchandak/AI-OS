@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sharpen</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      font-size: 13px;
+      line-height: 1.5;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    #header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    #header h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2563eb;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Tabs ── */
+    #tabs {
+      display: flex;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 9px 4px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: #888;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      letter-spacing: 0.3px;
+    }
+
+    .tab:hover { color: #444; }
+
+    .tab.active {
+      color: #2563eb;
+      border-bottom-color: #2563eb;
+    }
+
+    /* ── Panels wrapper ── */
+    #panels {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.15s;
+    }
+
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn:not(:disabled):hover { opacity: 0.82; }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #444;
+      border: 1px solid #ddd;
+    }
+
+    /* ── Counter & Bias panels ── */
+    .analyze-btn-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 4px 0;
+    }
+
+    .status-msg {
+      color: #888;
+      font-size: 12px;
+      min-height: 18px;
+      text-align: center;
+    }
+
+    .results-area {
+      flex: 1;
+      word-wrap: break-word;
+    }
+
+    .result-section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: #2563eb;
+      margin-top: 14px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .result-section-title:first-child { margin-top: 0; }
+
+    .result-bullet {
+      padding-left: 14px;
+      position: relative;
+      color: #333;
+      margin-bottom: 3px;
+      font-size: 12px;
+    }
+
+    .result-bullet::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: #aaa;
+    }
+
+    .counter-item {
+      background: #f7f9ff;
+      border: 1px solid #dde6ff;
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+    }
+
+    .counter-item-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .strength-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      letter-spacing: 0.4px;
+      flex-shrink: 0;
+    }
+
+    .strength-strong   { background: #d1fae5; color: #065f46; }
+    .strength-moderate { background: #fef3c7; color: #92400e; }
+    .strength-weak     { background: #f3f4f6; color: #6b7280; }
+
+    .counter-target {
+      font-size: 11px;
+      color: #777;
+      font-style: italic;
+    }
+
+    .counter-text {
+      font-size: 12px;
+      color: #333;
+      line-height: 1.55;
+    }
+
+    /* Bias */
+    .bias-loaded-item {
+      margin-bottom: 6px;
+    }
+
+    .bias-phrase {
+      font-style: italic;
+      color: #92400e;
+      background: #fef3c7;
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .bias-note {
+      color: #555;
+      font-size: 12px;
+      margin-top: 2px;
+      padding-left: 4px;
+    }
+
+    .disclaimer {
+      margin-top: 16px;
+      padding: 10px 12px;
+      background: #eff6ff;
+      border-left: 3px solid #2563eb;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    /* ── Debate panel ── */
+    #debate-panel {
+      /* override .panel padding/gap to manage internally */
+      padding: 0 !important;
+      gap: 0 !important;
+    }
+
+    #debate-setup {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    #debate-setup label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #777;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    #debate-position-input {
+      width: 100%;
+      padding: 9px 11px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      color: #1a1a1a;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    #debate-position-input:focus { border-color: #2563eb; }
+
+    #debate-setup-error {
+      color: #dc2626;
+      font-size: 12px;
+      min-height: 16px;
+    }
+
+    /* Confirm sub-view */
+    #debate-confirm {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .confirm-row {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .confirm-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #999;
+    }
+
+    .confirm-value {
+      font-size: 13px;
+      color: #1a1a1a;
+      background: #f3f4f6;
+      border-radius: 6px;
+      padding: 8px 10px;
+      line-height: 1.45;
+    }
+
+    .confirm-value.you   { border-left: 3px solid #2563eb; }
+    .confirm-value.claude { border-left: 3px solid #6b7280; }
+
+    #confirm-swap-btn {
+      align-self: flex-start;
+      font-size: 12px;
+      padding: 5px 12px;
+    }
+
+    #confirm-start-btn {
+      margin-top: 4px;
+    }
+
+    #debate-confirm-error {
+      color: #dc2626;
+      font-size: 12px;
+      min-height: 16px;
+    }
+
+    /* Chat */
+    #debate-chat {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #debate-chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    #debate-topic-label {
+      font-size: 11px;
+      color: #888;
+      font-style: italic;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 8px;
+    }
+
+    #debate-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 14px;
+    }
+
+    .msg {
+      max-width: 88%;
+      padding: 8px 11px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.55;
+      word-wrap: break-word;
+    }
+
+    .msg-user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: #fff;
+      border-bottom-right-radius: 3px;
+    }
+
+    .msg-assistant {
+      align-self: flex-start;
+      background: #f3f4f6;
+      color: #1a1a1a;
+      border-bottom-left-radius: 3px;
+    }
+
+    .msg-system {
+      align-self: center;
+      background: #fee2e2;
+      color: #dc2626;
+      font-size: 11px;
+      border-radius: 6px;
+      max-width: 95%;
+    }
+
+    .msg-thinking {
+      align-self: flex-start;
+      background: #f3f4f6;
+      color: #aaa;
+      font-style: italic;
+      border-bottom-left-radius: 3px;
+    }
+
+    #debate-input-bar {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      padding: 8px 14px 12px;
+      border-top: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    #debate-user-input {
+      flex: 1;
+      padding: 8px 10px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      color: #1a1a1a;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      min-height: 36px;
+      max-height: 120px;
+      line-height: 1.4;
+    }
+
+    #debate-user-input:focus { border-color: #2563eb; }
+
+    /* Utility */
+    [hidden] { display: none !important; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* ── Settings overlay ── */
+    #settings-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #settings-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      width: calc(100% - 32px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+    }
+
+    #settings-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    #settings-box-header span {
+      font-weight: 700;
+      font-size: 14px;
+      color: #1a1a1a;
+    }
+
+    #settings-close-btn {
+      background: none;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      color: #888;
+      padding: 0 2px;
+    }
+
+    #settings-box label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: #777;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    #settings-box input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: monospace;
+      outline: none;
+      margin-bottom: 6px;
+    }
+
+    #settings-box input:focus { border-color: #2563eb; }
+
+    .settings-hint {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 12px;
+    }
+
+    #settings-status {
+      font-size: 12px;
+      color: #10b981;
+      min-height: 16px;
+      margin-top: 6px;
+    }
+
+    /* ── Header settings btn ── */
+    #settings-btn {
+      background: none;
+      border: none;
+      font-size: 15px;
+      cursor: pointer;
+      color: #aaa;
+      padding: 0 2px;
+      line-height: 1;
+    }
+
+    #settings-btn:hover { color: #555; }
+
+    /* ── Socratic panel ── */
+    #socratic-panel {
+      padding: 0 !important;
+      gap: 0 !important;
+    }
+
+    #socratic-idle {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    #socratic-idle-hint {
+      font-size: 11px;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    #socratic-chat {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #socratic-chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    #socratic-video-title {
+      font-size: 11px;
+      color: #888;
+      font-style: italic;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 8px;
+    }
+
+    #socratic-progress {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    .progress-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+      transition: background 0.25s;
+    }
+
+    .progress-dot.active { background: #2563eb; }
+    .progress-dot.done   { background: #10b981; }
+
+    #socratic-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 14px;
+    }
+
+    #socratic-input-bar {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      padding: 8px 14px 12px;
+      border-top: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    #socratic-user-input {
+      flex: 1;
+      padding: 8px 10px;
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      color: #1a1a1a;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      min-height: 36px;
+      max-height: 120px;
+      line-height: 1.4;
+    }
+
+    #socratic-user-input:focus { border-color: #2563eb; }
+
+    /* Export panel */
+    #socratic-export {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    #socratic-export-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    #socratic-export-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+
+    #socratic-export-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+    }
+
+    #socratic-export-generating {
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+      min-height: 18px;
+      margin-bottom: 8px;
+    }
+
+    #socratic-export-json {
+      background: #f7f9ff;
+      border: 1px solid #dde6ff;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 11px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #333;
+      max-height: 320px;
+      overflow-y: auto;
+      line-height: 1.5;
+    }
+
+    #socratic-push-status {
+      padding: 4px 14px 2px;
+      font-size: 11px;
+      min-height: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    #socratic-export-footer {
+      display: flex;
+      gap: 6px;
+      padding: 6px 14px 12px;
+      border-top: 1px solid #e0e0e0;
+      flex-shrink: 0;
+    }
+
+    /* ── Flashcards panel ── */
+    #cards-panel {
+      padding: 18px;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 34%),
+        linear-gradient(180deg, #fbfdff 0%, #f4f7fb 100%);
+      align-items: stretch;
+      gap: 14px;
+    }
+
+    #cards-area {
+      display: grid;
+      gap: 14px;
+      width: 100%;
+      animation: fadeUp 0.42s ease-out;
+    }
+
+    .cards-stage {
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid rgba(191, 219, 254, 0.8);
+      border-radius: 22px;
+      box-shadow: 0 20px 38px -28px rgba(37, 99, 235, 0.45);
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .cards-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .cards-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #1d4ed8;
+    }
+
+    .cards-kicker::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #2563eb, #0f766e);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .card-counter {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e3a8a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #card-counter-mobile {
+      display: none;
+    }
+
+    .card-progress {
+      position: relative;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(191, 219, 254, 0.55);
+      overflow: hidden;
+    }
+
+    .card-progress-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #2563eb 0%, #0f766e 100%);
+      transition: width 0.28s ease;
+    }
+
+    .flashcard-wrap {
+      width: 100%;
+      perspective: 1400px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      min-height: 330px;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    .flashcard-inner.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .flashcard-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 20px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+      padding: 18px;
+      overflow: hidden;
+    }
+
+    .flashcard-front {
+      background:
+        linear-gradient(145deg, rgba(37, 99, 235, 0.12), rgba(15, 118, 110, 0.04)),
+        #ffffff;
+      border: 1px solid rgba(147, 197, 253, 0.85);
+      color: #0f172a;
+      box-shadow: 0 18px 34px -28px rgba(30, 64, 175, 0.5);
+    }
+
+    .flashcard-back {
+      background:
+        linear-gradient(145deg, rgba(15, 118, 110, 0.12), rgba(13, 148, 136, 0.04)),
+        #f7fffd;
+      border: 1px solid rgba(153, 246, 228, 0.9);
+      color: #0f172a;
+      transform: rotateY(180deg);
+      box-shadow: 0 18px 34px -28px rgba(13, 148, 136, 0.5);
+    }
+
+    .card-face-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-face-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #475569;
+    }
+
+    .card-flip-chip {
+      font-size: 10px;
+      font-weight: 600;
+      color: #0f766e;
+      background: rgba(15, 118, 110, 0.08);
+      border: 1px solid rgba(15, 118, 110, 0.12);
+      border-radius: 999px;
+      padding: 5px 9px;
+    }
+
+    .card-face-copy {
+      display: grid;
+      align-content: center;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .card-face-title {
+      font-size: 23px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      color: #0f172a;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .card-face-body {
+      font-size: 14px;
+      line-height: 1.72;
+      color: #334155;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .card-footer-note {
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    .card-hint {
+      font-size: 11px;
+      color: #64748b;
+      text-align: center;
+    }
+
+    .card-nav {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-nav-btn {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+
+    .card-nav-btn:first-child {
+      justify-self: start;
+    }
+
+    .card-nav-btn:last-child {
+      justify-self: end;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 420px) {
+      #cards-panel { padding: 14px; }
+      .cards-stage { padding: 14px; border-radius: 18px; }
+      .flashcard-inner { min-height: 300px; }
+      .card-face-title { font-size: 19px; }
+      .card-nav {
+        grid-template-columns: 1fr 1fr;
+      }
+      #card-counter-mobile {
+        display: inline;
+        grid-column: 1 / -1;
+        justify-self: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div id="header">
+  <h1>Sharpen</h1>
+  <button id="settings-btn" title="Local server settings">⚙</button>
+</div>
+
+<!-- Settings overlay -->
+<div id="settings-overlay" hidden>
+  <div id="settings-box">
+    <div id="settings-box-header">
+      <span>Settings</span>
+      <button id="settings-close-btn">✕</button>
+    </div>
+    <div class="settings-hint">OpenAI requests now go through the local bridge server. Put <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">OPENAI_API_KEY=...</code> in <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">.env</code> next to <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">server.py</code>, then run <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">./run.sh</code>.</div>
+    <div style="border-top:1px solid #eee;margin:12px 0 10px;"></div>
+    <label for="server-url-input">KG + VecDB Server URL</label>
+    <input id="server-url-input" type="text" placeholder="http://localhost:8765" autocomplete="off" style="font-family:monospace;font-size:12px;" />
+    <div id="settings-server-hint" style="font-size:11px;color:#999;margin-bottom:12px;">Double-click <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">start_server.command</code> in the Chrome Plugin folder, or run <code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;">./run.sh</code> in Terminal.</div>
+    <button id="settings-save-btn" class="btn btn-primary" style="width:100%">Save</button>
+    <div id="settings-status"></div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div id="tabs">
+  <button class="tab active" id="tab-counter">Counter</button>
+  <button class="tab" id="tab-bias">Bias</button>
+  <button class="tab" id="tab-debate">Debate</button>
+  <button class="tab" id="tab-tldr">TLDR</button>
+  <button class="tab" id="tab-socratic">Socratic</button>
+  <button class="tab" id="tab-cards">Cards</button>
+</div>
+
+<!-- Panels -->
+<div id="panels">
+
+  <!-- Counter panel -->
+  <div class="panel" id="counter-panel">
+    <div class="analyze-btn-wrap">
+      <button id="counter-analyze-btn" class="btn btn-primary">Analyze current page</button>
+    </div>
+    <div id="counter-status" class="status-msg"></div>
+    <div id="counter-results" class="results-area"></div>
+  </div>
+
+  <!-- Bias panel -->
+  <div class="panel" id="bias-panel" hidden>
+    <div class="analyze-btn-wrap">
+      <button id="bias-analyze-btn" class="btn btn-primary">Analyze current page</button>
+    </div>
+    <div id="bias-status" class="status-msg"></div>
+    <div id="bias-results" class="results-area"></div>
+  </div>
+
+  <!-- TLDR panel -->
+  <div class="panel" id="tldr-panel" hidden>
+    <div class="analyze-btn-wrap">
+      <button id="tldr-analyze-btn" class="btn btn-primary">Summarize current page</button>
+    </div>
+    <div id="tldr-folder-row" style="display:flex;align-items:center;gap:8px;font-size:11px;color:#888;">
+      <span id="tldr-folder-label">Save folder: <em>not set</em></span>
+      <button id="tldr-set-folder-btn" class="btn btn-secondary" style="font-size:11px;padding:3px 10px;">Set folder</button>
+    </div>
+    <div id="tldr-status" class="status-msg"></div>
+    <div id="tldr-results" class="results-area"></div>
+  </div>
+
+  <!-- Debate panel -->
+  <div class="panel" id="debate-panel" hidden>
+
+    <!-- Step 1: enter position -->
+    <div id="debate-setup">
+      <div>
+        <label for="debate-position-input">Your position on this page's topic</label>
+        <input id="debate-position-input" type="text" placeholder="e.g. I agree with the author's argument" />
+      </div>
+      <div id="debate-setup-error"></div>
+      <button id="debate-start-btn" class="btn btn-primary">Start Debate</button>
+    </div>
+
+    <!-- Chat sub-view -->
+    <div id="debate-chat" hidden>
+      <div id="debate-chat-header">
+        <span id="debate-topic-label"></span>
+        <button id="debate-reset-btn" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;">Reset</button>
+      </div>
+      <div id="debate-messages"></div>
+      <div id="debate-input-bar">
+        <textarea id="debate-user-input" rows="1" placeholder="Your argument…"></textarea>
+        <button id="debate-send-btn" class="btn btn-primary" style="padding:8px 14px;flex-shrink:0;">Send</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Socratic panel -->
+  <div class="panel" id="socratic-panel" hidden>
+
+    <!-- Idle: load button -->
+    <div id="socratic-idle">
+      <div class="analyze-btn-wrap">
+        <button id="socratic-load-btn" class="btn btn-primary">Load Video</button>
+      </div>
+      <div id="socratic-load-status" class="status-msg"></div>
+      <div id="socratic-idle-hint">Open a YouTube video, then click Load Video to start a Socratic session. Works on articles too.</div>
+    </div>
+
+    <!-- Chat: Socratic Q&A -->
+    <div id="socratic-chat" hidden>
+      <div id="socratic-chat-header">
+        <span id="socratic-video-title"></span>
+        <button id="socratic-reset-btn" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;">Reset</button>
+      </div>
+      <div id="socratic-progress">
+        <span class="progress-dot active" data-q="0"></span>
+        <span class="progress-dot" data-q="1"></span>
+        <span class="progress-dot" data-q="2"></span>
+      </div>
+      <div id="socratic-messages"></div>
+      <div id="socratic-input-bar">
+        <textarea id="socratic-user-input" rows="1" placeholder="Your answer…"></textarea>
+        <button id="socratic-send-btn" class="btn btn-primary" style="padding:8px 14px;flex-shrink:0;">Send</button>
+      </div>
+    </div>
+
+    <!-- Export: study materials -->
+    <div id="socratic-export" hidden>
+      <div id="socratic-export-header">
+        <span id="socratic-export-title">Study Materials</span>
+        <button id="socratic-new-session-btn" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;">New Session</button>
+      </div>
+      <div id="socratic-export-body">
+        <div id="socratic-export-generating"></div>
+        <pre id="socratic-export-json"></pre>
+      </div>
+      <div id="socratic-push-status"></div>
+      <div id="socratic-export-footer">
+        <button id="socratic-copy-btn" class="btn btn-secondary" style="flex:1">Copy</button>
+        <button id="socratic-download-btn" class="btn btn-secondary" style="flex:1">Download</button>
+        <button id="socratic-push-btn" class="btn btn-primary" style="flex:2">Push to KG + VecDB</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Flashcards panel -->
+  <div class="panel" id="cards-panel" hidden>
+    <div class="analyze-btn-wrap">
+      <button id="cards-generate-btn" class="btn btn-primary">Generate flashcards</button>
+    </div>
+    <div id="cards-status" class="status-msg"></div>
+    <div id="cards-area" hidden>
+      <div class="cards-stage">
+        <div class="cards-meta">
+          <span class="cards-kicker">Study Cards</span>
+          <span id="card-counter" class="card-counter"></span>
+        </div>
+        <div class="card-progress" aria-hidden="true">
+          <div id="card-progress-fill" class="card-progress-fill"></div>
+        </div>
+        <div class="flashcard-wrap" id="flashcard-wrap">
+          <div class="flashcard-inner" id="flashcard-inner">
+            <article class="flashcard-face flashcard-front">
+              <div class="card-face-header">
+                <span class="card-face-label">Prompt</span>
+                <span class="card-flip-chip">Tap to reveal</span>
+              </div>
+              <div class="card-face-copy">
+                <div id="card-front-text" class="card-face-title"></div>
+              </div>
+              <div class="card-footer-note">Read the prompt first, answer it yourself, then flip to check the explanation.</div>
+            </article>
+            <article class="flashcard-face flashcard-back">
+              <div class="card-face-header">
+                <span class="card-face-label">Answer</span>
+                <span class="card-flip-chip">Tap to revisit</span>
+              </div>
+              <div class="card-face-copy">
+                <div id="card-back-text" class="card-face-body"></div>
+              </div>
+              <div class="card-footer-note">Use the answer as a compressed explanation, not just something to memorize verbatim.</div>
+            </article>
+          </div>
+        </div>
+        <div class="card-hint">Tap the card to flip between the prompt and the explanation.</div>
+        <div class="card-nav">
+          <button id="card-prev-btn" class="btn btn-secondary card-nav-btn">Previous</button>
+          <span class="card-counter" id="card-counter-mobile"></span>
+          <button id="card-next-btn" class="btn btn-secondary card-nav-btn">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="sidepanel.js"></script>
+</body>
+</html>

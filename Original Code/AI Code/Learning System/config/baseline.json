@@ -1,0 +1,38 @@
+{
+  "daily_card_sets": 5,
+  "cards_per_set": 5,
+  "review_limit": 50,
+  "card_gen_model": "gpt-4o-mini",
+  "feynman_model": "gpt-4o-mini",
+  "challenger_model": "gpt-4o-mini",
+  "llm_gateway_url": "http://127.0.0.1:8107",
+  "generation_backend": "gateway",
+  "gateway_timeout_seconds": 120,
+  "quality_min_front_chars": 8,
+  "quality_min_back_chars": 8,
+  "quality_backend": "gateway",
+  "quality_model": "gpt-4o-mini",
+  "rubric_fail_threshold": 2.5,
+  "grounding_min_confidence": 0.5,
+  "fsrs_weights": [
+    0.4072, 1.1829, 3.1262, 15.4722, 7.2102, 0.5316, 1.0651,
+    0.0589, 1.533, 0.1544, 1.0071, 1.9395, 0.11, 0.29, 2.27,
+    0.25, 2.9898, 0.51, 0.43
+  ],
+  "prompt_versions": {
+    "flashcard": "card_generation_flashcard_v1",
+    "feynman": "feynman_evaluator_v1",
+    "challenger": "challenger_v1",
+    "grounding": "source_grounding_v1",
+    "rubric": "rubric_v1"
+  },
+  "database_root": null,
+  "sqlite_relative_path": "Ingested/SQLite/study_system/study_system.db",
+  "kg_concepts_path": null,
+  "vector_snippets_path": null,
+  "override_max_values": {
+    "daily_card_sets": 20,
+    "cards_per_set": 20,
+    "review_limit": 200
+  }
+}

@@ -1,0 +1,11 @@
+# Core (required)
+fastapi>=0.115
+uvicorn>=0.30
+pydantic>=2.8
+
+# Brain layer tests (required if you want to run pytest)
+pytest>=8.0
+
+# Optional: weekly story OpenAI rephrase pass
+# Only needed if you set USE_LLM_NARRATOR=True in brain/config.py
+# openai>=1.50

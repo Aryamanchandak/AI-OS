@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pipeline"
+version = "1.0.0"
+description = "Personal data ingestion pipeline: capture -> immutable bronze -> ledger -> Neo4j KG + ChromaDB vectors. Code only; all data lives in ../Database."
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0.0",
+    "neo4j>=5.0",
+    "chromadb>=0.4.0",
+    "ollama>=0.6",
+    "anthropic>=0.25",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "mypy>=1.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true

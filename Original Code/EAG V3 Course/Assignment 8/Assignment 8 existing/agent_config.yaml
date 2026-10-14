@@ -1,0 +1,59 @@
+# Skill catalogue.
+#
+# ARCHITECTURAL CONTRACT
+#   A skill is a YAML entry here plus a prompt file in prompts/.
+#   Adding a skill must NOT require touching agent/executor.py.
+#
+#   `runtime` selects one of the Executor's GENERIC mechanisms:
+#     llm     - render prompt, send to Claude, take the text back
+#     sandbox - render prompt, send to Claude, extract a ```python block,
+#               run it in SandboxExecutor, take stdout (+ artifacts) back
+#     tool    - no LLM; dispatch straight to a registered tool in agent/tools.py
+#
+#   A new skill that fits an existing runtime is yaml + prompt only.
+
+model: claude-opus-4-8
+effort: high
+
+skills:
+
+  planner:
+    runtime: llm
+    prompt: prompts/planner.md
+    description: Decomposes a query into a DAG of skill invocations.
+
+  retriever:
+    runtime: tool
+    prompt: prompts/retriever.md
+    tool: fetch_prices
+    description: Fetches a daily price history for one ticker.
+
+  coder:
+    runtime: sandbox
+    prompt: prompts/coder.md
+    description: >
+      Writes Python for the SandboxExecutor when the answer requires real
+      computation (CAGR, volatility, Sharpe, weightings) that a text model
+      cannot produce reliably.
+
+  critic:
+    runtime: llm
+    prompt: prompts/critic.md
+    description: >
+      Verifies a flagged producer's output against a checkable property
+      before its successors are allowed to run.
+
+  formatter:
+    runtime: llm
+    prompt: prompts/formatter.md
+    description: Turns upstream node outputs into the final prose answer.
+
+  # --- Part 5: new skill. Not covered by the existing catalogue. ---
+  # Reuses the `sandbox` runtime, so the Executor is untouched.
+  charter:
+    runtime: sandbox
+    prompt: prompts/charter.md
+    description: >
+      Renders a matplotlib chart from upstream numeric data and saves it as a
+      PNG artifact. Neither Formatter (text only) nor Coder (stdout only,
+      prompted for scalar metrics) produces a visual artifact.

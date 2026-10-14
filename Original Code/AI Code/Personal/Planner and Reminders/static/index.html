@@ -1,0 +1,1519 @@
+<!-- Version: V2 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0e0e11;
+      --border:   rgba(255,255,255,0.08);
+      --text:     rgba(255,255,255,0.75);
+      --dim:      rgba(255,255,255,0.28);
+      --accent:   #5cffc3;
+      --font:     'JetBrains Mono', monospace;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      overflow: hidden;
+    }
+
+    /* ── Canvas background ── */
+    canvas#bg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── App shell ── */
+    #app {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Shared column constraint */
+    #topbar, #chat, #plan-wrapper, #input-area, #optimizer-panel {
+      width: 100%;
+      max-width: 640px;
+      border-left:  0.5px solid var(--border);
+      border-right: 0.5px solid var(--border);
+    }
+
+    /* ── Topbar ── */
+    #topbar {
+      flex-shrink: 0;
+      border-bottom: 0.5px solid var(--border);
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .model-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--dim);
+      letter-spacing: 0.03em;
+    }
+
+    .model-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    #mode-badge {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 3px;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    #mode-badge.planning {
+      color: rgba(255,200,80,0.85);
+      border-color: rgba(255,200,80,0.3);
+      background: rgba(255,200,80,0.06);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    #daily-btn {
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      padding: 4px 11px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    #daily-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .topbar-action {
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.2);
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+
+    .topbar-action:hover { color: var(--dim); }
+
+    /* ── Chat area ── */
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 36px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.08) transparent;
+      scroll-behavior: smooth;
+    }
+
+    #chat::-webkit-scrollbar { width: 3px; }
+    #chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .message { display: flex; flex-direction: column; gap: 9px; }
+
+    .msg-label {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .msg-divider {
+      border: none;
+      border-top: 0.5px solid var(--border);
+    }
+
+    .msg-body {
+      font-size: 12.5px;
+      font-weight: 300;
+      line-height: 1.75;
+      color: var(--text);
+    }
+
+    .message.user .msg-body { color: rgba(255,255,255,0.55); }
+
+    .msg-body strong { font-weight: 500; }
+    .msg-body em { font-style: italic; }
+    .msg-body code {
+      background: rgba(255,255,255,0.07);
+      border-radius: 3px;
+      padding: 0.1em 0.35em;
+      font-family: var(--font);
+      font-size: 11.5px;
+    }
+
+    /* Typing indicator */
+    .typing-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      height: 22px;
+    }
+
+    .typing-dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--dim);
+      animation: blink 1.3s ease-in-out infinite;
+    }
+
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: 0.15; transform: scaleY(0.8); }
+      40% { opacity: 1; transform: scaleY(1); }
+    }
+
+    /* ── Plan card ── */
+    #plan-wrapper {
+      flex-shrink: 0;
+      padding: 0 32px 12px;
+    }
+
+    #plan-wrapper.hidden { display: none; }
+
+    .plan-card {
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.025);
+      overflow: hidden;
+    }
+
+    .plan-head {
+      padding: 14px 16px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .plan-goal {
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.02em;
+    }
+
+    .plan-summary {
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--dim);
+      margin-top: 3px;
+    }
+
+    .plan-tasks { padding: 0 16px; }
+
+    .plan-task {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    }
+
+    .plan-task:last-child { border-bottom: none; }
+
+    .task-badge {
+      margin-top: 2px;
+      flex-shrink: 0;
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 3px;
+      border: 0.5px solid;
+    }
+
+    .badge-work_block { color: rgba(120,160,255,0.85); border-color: rgba(120,160,255,0.3); background: rgba(120,160,255,0.07); }
+    .badge-deadline   { color: rgba(255,100,100,0.85);  border-color: rgba(255,100,100,0.3);  background: rgba(255,100,100,0.07); }
+    .badge-follow_up  { color: rgba(92,255,195,0.85);   border-color: rgba(92,255,195,0.3);   background: rgba(92,255,195,0.07); }
+    .badge-meeting    { color: rgba(200,150,255,0.85);  border-color: rgba(200,150,255,0.3);  background: rgba(200,150,255,0.07); }
+
+    .task-info { flex: 1; min-width: 0; }
+
+    .task-title {
+      font-size: 12px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .task-meta {
+      font-size: 10px;
+      font-weight: 300;
+      color: var(--dim);
+      margin-top: 2px;
+    }
+
+    .plan-foot {
+      padding: 11px 16px;
+      border-top: 0.5px solid var(--border);
+      background: rgba(255,255,255,0.015);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .plan-btn {
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    .plan-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+
+    .plan-btn.primary {
+      color: rgba(92,255,195,0.85);
+      border-color: rgba(92,255,195,0.3);
+    }
+
+    .plan-btn.primary:hover {
+      background: rgba(92,255,195,0.08);
+      border-color: rgba(92,255,195,0.55);
+    }
+
+    .plan-btn.dismiss { margin-left: auto; font-size: 9px; }
+
+    /* ── Input area ── */
+    #input-area {
+      flex-shrink: 0;
+      border-top: 0.5px solid var(--border);
+      padding: 16px 20px 18px;
+    }
+
+    .input-wrapper {
+      border: 0.5px solid rgba(255,255,255,0.1);
+      border-radius: 5px;
+      padding: 11px 14px;
+      transition: border-color 0.15s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    textarea#input {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      outline: none;
+      resize: none;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12.5px;
+      font-weight: 300;
+      line-height: 1.75;
+      min-height: 22px;
+      max-height: 160px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+
+    textarea#input::placeholder { color: var(--dim); }
+
+    .input-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .input-hint {
+      font-size: 9px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 0.04em;
+    }
+
+    #send-btn {
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--dim);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 3px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    #send-btn:hover:not(:disabled) {
+      color: var(--accent);
+      background: rgba(92,255,195,0.07);
+    }
+
+    #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── Tab navigation ── */
+    .topbar-tabs {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 12px;
+      border-left: 0.5px solid var(--border);
+      border-right: 0.5px solid var(--border);
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      color: var(--dim);
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 3px;
+      transition: color 0.15s, background 0.15s;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+
+    .tab-btn.active {
+      color: var(--accent);
+      background: rgba(92,255,195,0.07);
+    }
+
+    /* ── Optimizer panel shell ── */
+    #optimizer-panel {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px 56px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+
+    #optimizer-panel::-webkit-scrollbar { width: 3px; }
+    #optimizer-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    /* ── Optimizer shared ── */
+    .opt-section { margin-bottom: 26px; }
+
+    .opt-label {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 7px;
+    }
+
+    .opt-hint {
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--dim);
+      line-height: 1.65;
+      margin-bottom: 8px;
+    }
+
+    .opt-textarea {
+      display: block;
+      width: 100%;
+      background: rgba(255,255,255,0.025);
+      border: 0.5px solid var(--border);
+      border-radius: 5px;
+      padding: 11px 14px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 300;
+      line-height: 1.75;
+      resize: vertical;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+
+    .opt-textarea:focus { border-color: rgba(255,255,255,0.18); }
+    .opt-textarea::placeholder { color: var(--dim); }
+
+    .opt-btn {
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      padding: 5px 13px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+      margin-top: 8px;
+    }
+
+    .opt-btn:hover:not(:disabled) { color: var(--text); border-color: rgba(255,255,255,0.22); }
+    .opt-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .opt-btn.primary {
+      color: rgba(92,255,195,0.85);
+      border-color: rgba(92,255,195,0.3);
+    }
+
+    .opt-btn.primary:hover:not(:disabled) {
+      background: rgba(92,255,195,0.07);
+      border-color: rgba(92,255,195,0.5);
+    }
+
+    .opt-mode-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .opt-mode-btn {
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.07em;
+      padding: 4px 11px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+
+    .opt-mode-btn.active {
+      color: rgba(92,255,195,0.85);
+      border-color: rgba(92,255,195,0.3);
+      background: rgba(92,255,195,0.05);
+    }
+
+    .opt-context-box {
+      margin-top: 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 5px;
+      background: rgba(255,255,255,0.015);
+      padding: 12px 14px;
+    }
+
+    .opt-context-row { margin-bottom: 5px; font-size: 11px; }
+    .opt-context-key { color: var(--dim); margin-right: 6px; text-transform: capitalize; }
+    .opt-context-val { color: var(--text); font-weight: 300; }
+
+    .opt-guide-toggle {
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 11px;
+      color: var(--dim);
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .opt-guide-toggle:hover { color: var(--text); }
+
+    /* ── Section cards ── */
+    .opt-topbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .opt-topbar-meta {
+      color: var(--dim);
+      font-size: 11px;
+      margin-left: auto;
+    }
+
+    .opt-card {
+      margin-bottom: 16px;
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .opt-card-head {
+      padding: 10px 16px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+      background: rgba(255,255,255,0.01);
+    }
+
+    .opt-kind-tag {
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 3px;
+      border: 0.5px solid rgba(255,255,255,0.1);
+      color: var(--dim);
+      background: rgba(255,255,255,0.04);
+      flex-shrink: 0;
+    }
+
+    .opt-card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.85);
+    }
+
+    .opt-card-rationale {
+      font-size: 11px;
+      font-weight: 300;
+      color: var(--dim);
+      font-style: italic;
+      line-height: 1.5;
+      width: 100%;
+      margin-top: 1px;
+    }
+
+    .opt-card-body {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+    }
+
+    .opt-card-left { padding: 12px 16px; border-right: 0.5px solid var(--border); }
+    .opt-card-right { padding: 12px 14px; background: rgba(0,0,0,0.12); }
+
+    .opt-save-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .opt-discard-btn {
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: 10px;
+      color: var(--dim);
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.15s;
+    }
+
+    .opt-discard-btn:hover { color: var(--text); }
+
+    .opt-edit-count {
+      font-size: 10px;
+      color: var(--dim);
+      margin-top: 7px;
+    }
+
+    .opt-apply-btn {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .opt-apply-btn:hover:not(:disabled) { color: var(--text); border-color: rgba(255,255,255,0.22); }
+    .opt-apply-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .opt-apply-hint {
+      font-size: 10px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.16);
+      margin-top: 7px;
+      line-height: 1.55;
+    }
+
+    .opt-stitch-row {
+      display: flex;
+      justify-content: center;
+      padding: 20px 0 8px;
+    }
+
+    .opt-error {
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      border: 0.5px solid rgba(255,80,80,0.3);
+      border-radius: 5px;
+      background: rgba(255,80,80,0.05);
+      color: rgba(255,110,110,0.9);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="app">
+  <header id="topbar">
+    <div class="topbar-left">
+      <div class="model-pill">
+        <span class="model-dot"></span>
+        gpt-5.4-nano
+      </div>
+      <span id="mode-badge">chat</span>
+    </div>
+    <div class="topbar-tabs">
+      <button class="tab-btn active" id="tab-planner" onclick="switchTab('planner')">planner</button>
+      <button class="tab-btn" id="tab-optimizer" onclick="switchTab('optimizer')">optimizer</button>
+    </div>
+    <div class="topbar-right">
+      <button id="daily-btn">daily check</button>
+      <a href="/upi/" target="_blank" class="topbar-action" id="ledger-link" style="text-decoration:none;">ledger</a>
+      <button class="topbar-action">share</button>
+      <button class="topbar-action">archive</button>
+    </div>
+  </header>
+
+  <div id="chat"></div>
+
+  <div id="plan-wrapper" class="hidden"></div>
+
+  <div id="input-area">
+    <div class="input-wrapper">
+      <textarea id="input" placeholder="Type a message…" rows="1" autocomplete="off"></textarea>
+    </div>
+    <div class="input-foot">
+      <span class="input-hint">shift+enter for newline</span>
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <div id="optimizer-panel"></div>
+</div>
+
+<script>
+  // ── Canvas animated blobs ────────────────────────────────────────────────────
+  (function () {
+    const canvas = document.getElementById('bg');
+    const ctx    = canvas.getContext('2d');
+    let t = 0;
+
+    const blobs = [
+      { hBase: 260, hRange: 20, phase: 0,    r: 500, xOff: 0.3,  yOff: 0.2  },
+      { hBase: 30,  hRange: 15, phase: 2.1,  r: 400, xOff: 0.7,  yOff: 0.7  },
+      { hBase: 170, hRange: 25, phase: 4.2,  r: 450, xOff: 0.2,  yOff: 0.8  },
+      { hBase: 290, hRange: 20, phase: 1.05, r: 380, xOff: 0.8,  yOff: 0.3  },
+    ];
+
+    function resize() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function frame() {
+      const W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      blobs.forEach(b => {
+        const h = b.hBase + Math.sin(t * 0.0003 + b.phase) * b.hRange;
+        const x = W * (b.xOff + Math.sin(t * 0.0002  + b.phase) * 0.15);
+        const y = H * (b.yOff + Math.cos(t * 0.00015 + b.phase) * 0.15);
+
+        const g = ctx.createRadialGradient(x, y, 0, x, y, b.r);
+        g.addColorStop(0, `hsla(${h},70%,55%,0.55)`);
+        g.addColorStop(1, `hsla(${h},70%,55%,0)`);
+
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H);
+      });
+
+      t++;
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+
+  // ── App logic ────────────────────────────────────────────────────────────────
+  const chatEl      = document.getElementById('chat');
+  const planWrapper = document.getElementById('plan-wrapper');
+  const modeBadge   = document.getElementById('mode-badge');
+  const textarea    = document.getElementById('input');
+  const sendBtn     = document.getElementById('send-btn');
+
+  // ── helpers ──────────────────────────────────────────────────────────────────
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function md(text) {
+    let s = String(text || '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*(.+?)\*/g,     '<em>$1</em>');
+    s = s.replace(/`(.+?)`/g,       '<code>$1</code>');
+    s = s.replace(/^#{1,3}\s+(.+)$/gm, '<strong>$1</strong>');
+    s = s.replace(/\n/g, '<br>');
+    return s;
+  }
+
+  function scrollBottom() {
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function setLoading(on) {
+    sendBtn.disabled  = on;
+    textarea.disabled = on;
+    sendBtn.textContent = on ? '…' : 'Send';
+  }
+
+  // ── messages ─────────────────────────────────────────────────────────────────
+
+  function appendMessage(role, content) {
+    const isUser = role === 'user';
+    const div = document.createElement('div');
+    div.className = `message ${isUser ? 'user' : 'assistant'}`;
+    div.innerHTML =
+      `<div class="msg-label">${isUser ? 'YOU' : 'ASSISTANT'}</div>` +
+      `<hr class="msg-divider">` +
+      `<div class="msg-body">${isUser ? esc(content) : md(content)}</div>`;
+    chatEl.appendChild(div);
+    scrollBottom();
+  }
+
+  function appendTyping() {
+    const div = document.createElement('div');
+    div.id        = 'typing';
+    div.className = 'message assistant';
+    div.innerHTML =
+      `<div class="msg-label">ASSISTANT</div>` +
+      `<hr class="msg-divider">` +
+      `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+    chatEl.appendChild(div);
+    scrollBottom();
+  }
+
+  function removeTyping() {
+    document.getElementById('typing')?.remove();
+  }
+
+  // ── Unified action card ───────────────────────────────────────────────────────
+
+  function toolLabel(tool) {
+    const labels = {
+      create_event:         'event',
+      create_reminder:      'reminder',
+      move_event:           'move',
+      edit_event:           'edit event',
+      update_reminder_date: 'reschedule',
+      edit_reminder:        'edit reminder',
+      delete_event:         'delete event',
+      delete_reminder:      'delete reminder',
+    };
+    return labels[tool] || 'action';
+  }
+
+  function toolBadgeClass(tool) {
+    const classes = {
+      create_event:         'badge-meeting',
+      create_reminder:      'badge-follow_up',
+      move_event:           'badge-work_block',
+      edit_event:           'badge-work_block',
+      update_reminder_date: 'badge-work_block',
+      edit_reminder:        'badge-follow_up',
+      delete_event:         'badge-deadline',
+      delete_reminder:      'badge-deadline',
+    };
+    return classes[tool] || 'badge-work_block';
+  }
+
+  function renderActionCard(actions) {
+    if (!actions || actions.length === 0) {
+      planWrapper.innerHTML = '';
+      planWrapper.classList.add('hidden');
+      return;
+    }
+
+    const items = actions.map(a => {
+      const badge = toolBadgeClass(a.tool);
+      const label = toolLabel(a.tool);
+      const title = a.title || a.original_title || '?';
+      const date  = a.date || a.new_date || '';
+      const time  = a.time || a.new_start || a.start_time || '';
+      const dur   = a.duration_minutes ? ` · ${a.duration_minutes}m` : '';
+      const timeStr = time ? ` · ${time}` : '';
+      return `
+        <div class="plan-task">
+          <span class="task-badge ${badge}">${esc(label)}</span>
+          <div class="task-info">
+            <div class="task-title">${esc(title)}</div>
+            <div class="task-meta">${esc(date)}${timeStr}${dur}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    const heading = actions.length === 1 ? 'Proposed action' : `Proposed actions (${actions.length})`;
+
+    planWrapper.innerHTML = `
+      <div class="plan-card">
+        <div class="plan-head">
+          <div class="plan-goal">${heading}</div>
+        </div>
+        <div class="plan-tasks">${items}</div>
+        <div class="plan-foot">
+          <button id="confirm-btn" class="plan-btn primary">Confirm</button>
+          <button id="cancel-btn"  class="plan-btn dismiss">Cancel</button>
+        </div>
+      </div>`;
+    planWrapper.classList.remove('hidden');
+
+    document.getElementById('confirm-btn').addEventListener('click', () => doAction('/confirm_action'));
+    document.getElementById('cancel-btn') .addEventListener('click', () => doAction('/cancel_action'));
+  }
+
+  // ── Handle API response ───────────────────────────────────────────────────────
+
+  function handleResponse(data) {
+    if (data.reply) appendMessage('ai', data.reply);
+    if (data.confirm && data.actions) {
+      renderActionCard(data.actions);
+      modeBadge.textContent = 'confirm';
+      modeBadge.className = 'planning';
+    } else {
+      renderActionCard(null);
+      modeBadge.textContent = 'chat';
+      modeBadge.className = '';
+    }
+  }
+
+  // ── Queue status polling ──────────────────────────────────────────────────────
+
+  let _pollTimer = null;
+
+  function startQueuePolling() {
+    stopQueuePolling();
+    _pollTimer = setInterval(async () => {
+      try {
+        const res  = await fetch('/queue_status');
+        const data = await res.json();
+        const { items, pending_count, done_count, failed_count } = data;
+
+        if (pending_count === 0 && (done_count > 0 || failed_count > 0)) {
+          stopQueuePolling();
+          renderQueueStatus(items);
+        }
+      } catch {
+        stopQueuePolling();
+      }
+    }, 2000);
+  }
+
+  function stopQueuePolling() {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+  }
+
+  function renderQueueStatus(items) {
+    if (!items || items.length === 0) return;
+    const lines = items.map(item => {
+      if (item.status === 'done') return `✓ ${item.title || item.id}`;
+      if (item.status === 'failed') return `✗ ${item.title || item.id}: ${item.error || 'unknown error'}`;
+      return `- ${item.title || item.id}`;
+    });
+    const hasFailures = items.some(i => i.status === 'failed');
+    const summary = hasFailures
+      ? `Some actions failed:\n${lines.join('\n')}`
+      : `Done:\n${lines.join('\n')}`;
+    appendMessage('ai', summary);
+  }
+
+  // ── API calls ─────────────────────────────────────────────────────────────────
+
+  async function doAction(endpoint) {
+    setLoading(true);
+    appendTyping();
+    try {
+      const res  = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+      const data = await res.json();
+      removeTyping();
+      handleResponse(data);
+      // Start polling for execution results after confirm
+      if (endpoint === '/confirm_action') startQueuePolling();
+    } catch {
+      removeTyping();
+      appendMessage('ai', 'Something went wrong — please try again.');
+    }
+    setLoading(false);
+  }
+
+  // ── init ──────────────────────────────────────────────────────────────────────
+
+  async function init() {
+    try {
+      const res  = await fetch('/state');
+      const data = await res.json();
+      data.messages.forEach(m => appendMessage(m.role === 'user' ? 'user' : 'ai', m.content));
+      if (data.confirm && data.actions) {
+        renderActionCard(data.actions);
+        modeBadge.textContent = 'confirm';
+        modeBadge.className = 'planning';
+      }
+    } catch {
+      appendMessage('ai', 'Could not load session state.');
+    }
+  }
+
+  // ── textarea auto-resize ──────────────────────────────────────────────────────
+
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px';
+  });
+
+  // ── enter to send, shift+enter for newline ────────────────────────────────────
+
+  textarea.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submitChat();
+    }
+  });
+
+  // ── send ──────────────────────────────────────────────────────────────────────
+
+  async function submitChat() {
+    const msg = textarea.value.trim();
+    if (!msg) return;
+    textarea.value = '';
+    textarea.style.height = 'auto';
+    appendMessage('user', msg);
+    setLoading(true);
+    appendTyping();
+    try {
+      const res  = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg }),
+      });
+      const data = await res.json();
+      removeTyping();
+      handleResponse(data);
+    } catch {
+      removeTyping();
+      appendMessage('ai', 'Something went wrong — please try again.');
+    }
+    setLoading(false);
+    textarea.focus();
+  }
+
+  document.getElementById('send-btn').addEventListener('click', submitChat);
+
+  // ── daily check ───────────────────────────────────────────────────────────────
+
+  document.getElementById('daily-btn').addEventListener('click', async () => {
+    setLoading(true);
+    appendTyping();
+    try {
+      const res  = await fetch('/daily', { method: 'POST' });
+      const data = await res.json();
+      removeTyping();
+      handleResponse(data);
+    } catch {
+      removeTyping();
+      appendMessage('ai', 'Could not run daily check — please try again.');
+    }
+    setLoading(false);
+  });
+
+  init();
+
+  // ── Optimizer ─────────────────────────────────────────────────────────────────
+
+  const DEFAULT_GUIDE_PROMPT =
+    `You are a prompt and plan optimization assistant. Help the user improve one section at a time.\n\n` +
+    `Choose exactly one path:\n` +
+    `- EXPLAIN: They ask why the section is the way it is — put explanation in "reasoning", leave "rewritten_content" unchanged.\n` +
+    `- REWRITE: They ask you to change something — rewrite in "rewritten_content", explain in "reasoning".\n` +
+    `- ASK: Request is ambiguous — ask one focused question via "clarifying_question", leave "rewritten_content" unchanged.\n\n` +
+    `Be direct and terse. No preamble, no lectures.`;
+
+  const optState = {
+    mode: 'prompt',
+    guidePrompt: DEFAULT_GUIDE_PROMPT,
+    showGuide: false,
+    contextRaw: '',
+    projectContext: null,
+    doc: null,
+    drafts: {},
+    suggestions: {},
+    sectionBusy: {},
+    versions: [],
+    busy: '',
+    error: '',
+    stitched: false,
+    _rawInput: '',
+  };
+
+  // ── Persistence ───────────────────────────────────────────────────────────────
+
+  function saveOptDoc()      { try { localStorage.setItem('opt_doc', JSON.stringify(optState.doc)); } catch {} }
+  function saveOptContext()  { try { localStorage.setItem('opt_ctx', JSON.stringify(optState.projectContext)); } catch {} }
+  function saveOptVersions() { try { localStorage.setItem('opt_ver', JSON.stringify(optState.versions)); } catch {} }
+
+  function loadOptState() {
+    try {
+      const doc = localStorage.getItem('opt_doc');
+      const ctx = localStorage.getItem('opt_ctx');
+      const ver = localStorage.getItem('opt_ver');
+      if (doc) {
+        optState.doc = JSON.parse(doc);
+        optState.mode = optState.doc.mode || 'prompt';
+        optState.doc.sections.forEach(s => { optState.drafts[s.id] = s.content; });
+      }
+      if (ctx) {
+        optState.projectContext = JSON.parse(ctx);
+        optState.contextRaw = optState.projectContext?.raw || '';
+      }
+      if (ver) optState.versions = JSON.parse(ver);
+    } catch {}
+  }
+
+  loadOptState();
+
+  // ── Tab switching ─────────────────────────────────────────────────────────────
+
+  function switchTab(tab) {
+    const chatEl    = document.getElementById('chat');
+    const planWrap  = document.getElementById('plan-wrapper');
+    const inputArea = document.getElementById('input-area');
+    const optPanel  = document.getElementById('optimizer-panel');
+    const tabP      = document.getElementById('tab-planner');
+    const tabO      = document.getElementById('tab-optimizer');
+
+    if (tab === 'planner') {
+      chatEl.style.display    = '';
+      inputArea.style.display = '';
+      planWrap.style.display  = '';
+      optPanel.style.display  = 'none';
+      tabP.classList.add('active');
+      tabO.classList.remove('active');
+    } else {
+      chatEl.style.display    = 'none';
+      inputArea.style.display = 'none';
+      planWrap.style.display  = 'none';
+      optPanel.style.display  = '';
+      tabP.classList.remove('active');
+      tabO.classList.add('active');
+      renderOptimizer();
+    }
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+
+  function renderOptimizer() {
+    const panel = document.getElementById('optimizer-panel');
+    const scrollTop = panel.scrollTop;
+    if (!optState.doc) {
+      renderOptOnboard(panel);
+    } else {
+      renderOptCards(panel);
+    }
+    panel.scrollTop = scrollTop;
+  }
+
+  function renderOptOnboard(panel) {
+    const ctxEx = optState.projectContext?.extracted;
+    const ctxHTML = ctxEx ? `
+      <div class="opt-context-box">
+        ${Object.entries(ctxEx).map(([k, v]) => `
+          <div class="opt-context-row">
+            <span class="opt-context-key">${esc(k.replace(/_/g, ' '))}:</span>
+            <span class="opt-context-val">${Array.isArray(v) ? (v.length ? esc(v.join(', ')) : '—') : esc(String(v || '—'))}</span>
+          </div>`).join('')}
+      </div>` : '';
+
+    panel.innerHTML = `
+      ${optState.error ? `<div class="opt-error">${esc(optState.error)}</div>` : ''}
+
+      <div class="opt-section">
+        <button class="opt-guide-toggle" id="opt-guide-toggle">
+          <span style="font-size:11px;font-weight:500;color:var(--text)">Optimization guide</span>
+          <span style="font-size:10px">${optState.showGuide ? '▲ hide' : '▼ show'}</span>
+        </button>
+        ${optState.showGuide ? `
+          <p class="opt-hint">Edit to change how the AI rewrites sections.</p>
+          <textarea class="opt-textarea" id="opt-guide-ta" style="min-height:130px">${esc(optState.guidePrompt)}</textarea>
+          <button class="opt-btn" id="opt-guide-reset" style="font-size:9px;margin-top:5px">Reset to default</button>
+        ` : ''}
+      </div>
+
+      <div class="opt-section">
+        <p class="opt-label">Mode</p>
+        <div class="opt-mode-row">
+          <button class="opt-mode-btn ${optState.mode === 'prompt' ? 'active' : ''}" id="opt-mode-prompt">Prompt</button>
+          <button class="opt-mode-btn ${optState.mode === 'plan'   ? 'active' : ''}" id="opt-mode-plan">Plan</button>
+        </div>
+      </div>
+
+      <div class="opt-section">
+        <p class="opt-label">Project context</p>
+        <p class="opt-hint">Dump anything — bullets, ramblings, half a spec. The AI structures it and uses it for every suggestion.</p>
+        <textarea class="opt-textarea" id="opt-ctx-ta" placeholder="What you're building, tech stack, constraints, decisions…" style="min-height:88px">${esc(optState.contextRaw)}</textarea>
+        <button class="opt-btn primary" id="opt-extract-btn" ${optState.busy ? 'disabled' : ''}>
+          ${optState.busy === 'extracting' ? 'Extracting…' : 'Extract context'}
+        </button>
+        ${ctxHTML}
+      </div>
+
+      <div class="opt-section">
+        <p class="opt-label">Your ${optState.mode === 'prompt' ? 'prompt' : 'plan'}</p>
+        <textarea class="opt-textarea" id="opt-raw-ta" placeholder="${optState.mode === 'prompt' ? 'Paste a full prompt — sections will be auto-detected.' : 'Paste a markdown plan — sections will be auto-detected.'}" style="min-height:200px">${esc(optState._rawInput)}</textarea>
+        <button class="opt-btn primary" id="opt-analyze-btn" style="padding:6px 16px;font-size:12px" ${optState.busy ? 'disabled' : ''}>
+          ${optState.busy === 'analyzing' ? 'Analyzing…' : 'Analyze & split into sections'}
+        </button>
+        ${!optState.projectContext ? `<span style="font-size:10px;color:var(--dim);margin-left:10px">tip: add project context first</span>` : ''}
+      </div>
+    `;
+
+    document.getElementById('opt-guide-toggle').addEventListener('click', () => {
+      optState.showGuide = !optState.showGuide; renderOptimizer();
+    });
+    document.getElementById('opt-guide-ta')?.addEventListener('input', e => { optState.guidePrompt = e.target.value; });
+    document.getElementById('opt-guide-reset')?.addEventListener('click', () => {
+      optState.guidePrompt = DEFAULT_GUIDE_PROMPT; renderOptimizer();
+    });
+    document.getElementById('opt-mode-prompt').addEventListener('click', () => { optState.mode = 'prompt'; renderOptimizer(); });
+    document.getElementById('opt-mode-plan').addEventListener('click',   () => { optState.mode = 'plan';   renderOptimizer(); });
+    document.getElementById('opt-ctx-ta').addEventListener('input', e => { optState.contextRaw = e.target.value; });
+    document.getElementById('opt-extract-btn').addEventListener('click', handleOptExtract);
+    document.getElementById('opt-raw-ta').addEventListener('input', e => { optState._rawInput = e.target.value; });
+    document.getElementById('opt-analyze-btn').addEventListener('click', handleOptAnalyze);
+  }
+
+  function renderOptCards(panel) {
+    const doc = optState.doc;
+
+    const cardsHTML = doc.sections.map((s, i) => {
+      const draft   = optState.drafts[s.id] ?? s.content;
+      const isDirty = draft !== s.content;
+      const isBusy  = !!optState.sectionBusy[s.id];
+      const sugg    = optState.suggestions[s.id] ?? '';
+
+      return `
+        <div class="opt-card" data-sid="${esc(s.id)}">
+          <div class="opt-card-head">
+            <span class="opt-kind-tag">§${i + 1} · ${esc(s.kind.toUpperCase())}</span>
+            <span class="opt-card-title">${esc(s.title)}</span>
+            ${s.rationale ? `<span class="opt-card-rationale">${esc(s.rationale)}</span>` : ''}
+          </div>
+          <div class="opt-card-body">
+            <div class="opt-card-left">
+              <p class="opt-label">Content</p>
+              <textarea class="opt-textarea opt-content-ta" data-sid="${esc(s.id)}"
+                style="min-height:240px;border-color:${isDirty ? 'rgba(92,255,195,0.4)' : 'var(--border)'}">${esc(draft)}</textarea>
+              ${isDirty ? `
+                <div class="opt-save-row">
+                  <button class="opt-btn primary opt-save-btn" data-sid="${esc(s.id)}" style="margin-top:0">Save</button>
+                  <button class="opt-discard-btn opt-discard-section" data-sid="${esc(s.id)}">Discard</button>
+                  <span style="font-size:10px;color:var(--dim)">or ⌘↵</span>
+                </div>` :
+                (s.history && s.history.length > 0 ? `<p class="opt-edit-count">${s.history.length} edit${s.history.length > 1 ? 's' : ''}</p>` : '')
+              }
+            </div>
+            <div class="opt-card-right">
+              <p class="opt-label">Suggest a change</p>
+              <textarea class="opt-textarea opt-sugg-ta" data-sid="${esc(s.id)}"
+                placeholder="Describe what to improve…" style="min-height:130px">${esc(sugg)}</textarea>
+              <button class="opt-apply-btn opt-apply-section" data-sid="${esc(s.id)}"
+                ${isBusy || !sugg.trim() ? 'disabled' : ''}>
+                ${isBusy ? 'Applying…' : 'Apply  ↵'}
+              </button>
+              <p class="opt-apply-hint">Describe the change, press ↵.<br>Shift+↵ for newline.</p>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    panel.innerHTML = `
+      ${optState.error ? `<div class="opt-error">${esc(optState.error)}</div>` : ''}
+      <div class="opt-topbar">
+        <div class="opt-mode-row" style="margin-bottom:0">
+          <button class="opt-mode-btn ${doc.mode === 'prompt' ? 'active' : ''}" id="opt-tb-prompt">Prompt</button>
+          <button class="opt-mode-btn ${doc.mode === 'plan'   ? 'active' : ''}" id="opt-tb-plan">Plan</button>
+        </div>
+        <button class="opt-btn" id="opt-new-btn" style="margin-top:0">New</button>
+        <span class="opt-topbar-meta">v${optState.versions.length} · ${doc.sections.length} sections</span>
+      </div>
+      ${cardsHTML}
+      <div class="opt-stitch-row">
+        <button class="opt-btn primary" id="opt-stitch-btn" style="padding:8px 24px;font-size:12px">
+          ${optState.stitched ? 'Copied ✓' : `Stitch all ${doc.sections.length} sections → copy`}
+        </button>
+      </div>
+    `;
+
+    document.getElementById('opt-tb-prompt').addEventListener('click', () => {
+      optState.mode = 'prompt'; if (optState.doc) optState.doc.mode = 'prompt'; renderOptimizer();
+    });
+    document.getElementById('opt-tb-plan').addEventListener('click', () => {
+      optState.mode = 'plan'; if (optState.doc) optState.doc.mode = 'plan'; renderOptimizer();
+    });
+    document.getElementById('opt-new-btn').addEventListener('click', () => {
+      optState.doc = null; optState.drafts = {}; optState.suggestions = {};
+      optState.sectionBusy = {}; optState.versions = []; optState.error = '';
+      optState._rawInput = '';
+      saveOptDoc(); saveOptVersions(); renderOptimizer();
+    });
+    document.getElementById('opt-stitch-btn').addEventListener('click', handleOptStitch);
+
+    // Content textarea: update draft + show/hide save row without full re-render
+    panel.querySelectorAll('.opt-content-ta').forEach(ta => {
+      const sid     = ta.dataset.sid;
+      const section = doc.sections.find(s => s.id === sid);
+      ta.addEventListener('input', e => {
+        optState.drafts[sid] = e.target.value;
+        const isDirty = e.target.value !== section.content;
+        ta.style.borderColor = isDirty ? 'rgba(92,255,195,0.4)' : 'var(--border)';
+        let saveRow = ta.closest('.opt-card-left').querySelector('.opt-save-row');
+        if (isDirty && !saveRow) {
+          saveRow = document.createElement('div');
+          saveRow.className = 'opt-save-row';
+          saveRow.innerHTML = `
+            <button class="opt-btn primary opt-save-btn" data-sid="${sid}" style="margin-top:0">Save</button>
+            <button class="opt-discard-btn" data-sid="${sid}">Discard</button>
+            <span style="font-size:10px;color:var(--dim)">or ⌘↵</span>`;
+          ta.after(saveRow);
+          saveRow.querySelector('.opt-save-btn').addEventListener('click', () => handleOptSave(sid));
+          saveRow.querySelector('.opt-discard-btn').addEventListener('click', () => {
+            optState.drafts[sid] = section.content;
+            ta.value = section.content;
+            ta.style.borderColor = 'var(--border)';
+            saveRow.remove();
+          });
+        } else if (!isDirty && saveRow) {
+          saveRow.remove();
+        }
+      });
+      ta.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); handleOptSave(sid); }
+      });
+    });
+
+    // Saved via initial save-row buttons (when dirty on render)
+    panel.querySelectorAll('.opt-save-btn').forEach(btn => {
+      btn.addEventListener('click', () => handleOptSave(btn.dataset.sid));
+    });
+    panel.querySelectorAll('.opt-discard-section').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const s = doc.sections.find(s => s.id === btn.dataset.sid);
+        if (s) { optState.drafts[btn.dataset.sid] = s.content; renderOptimizer(); }
+      });
+    });
+
+    // Suggestion textarea: update state + apply button, no re-render on input
+    panel.querySelectorAll('.opt-sugg-ta').forEach(ta => {
+      const sid = ta.dataset.sid;
+      ta.addEventListener('input', e => {
+        optState.suggestions[sid] = e.target.value;
+        const btn = ta.closest('.opt-card-right').querySelector('.opt-apply-section');
+        if (btn) btn.disabled = !e.target.value.trim() || !!optState.sectionBusy[sid];
+      });
+      ta.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if ((optState.suggestions[sid] || '').trim() && !optState.sectionBusy[sid]) handleOptApply(sid);
+        }
+      });
+    });
+
+    panel.querySelectorAll('.opt-apply-section').forEach(btn => {
+      btn.addEventListener('click', () => { if (!btn.disabled) handleOptApply(btn.dataset.sid); });
+    });
+  }
+
+  // ── API handlers ──────────────────────────────────────────────────────────────
+
+  async function handleOptExtract() {
+    const raw = optState.contextRaw.trim();
+    if (!raw) return;
+    optState.busy = 'extracting'; optState.error = '';
+    renderOptimizer();
+    try {
+      const res  = await fetch('/optimizer/extract_context', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw }),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      optState.projectContext = await res.json();
+      saveOptContext();
+    } catch (e) { optState.error = e.message; }
+    optState.busy = '';
+    renderOptimizer();
+  }
+
+  async function handleOptAnalyze() {
+    const rawTa = document.getElementById('opt-raw-ta');
+    const raw   = (rawTa ? rawTa.value : optState._rawInput).trim();
+    if (!raw) return;
+    optState._rawInput = raw;
+    optState.busy = 'analyzing'; optState.error = '';
+    renderOptimizer();
+    try {
+      const res  = await fetch('/optimizer/detect_sections', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ raw_input: raw, mode: optState.mode }),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      optState.doc      = { mode: optState.mode, rawInput: raw, sections: data.sections };
+      optState.drafts   = {};
+      optState.suggestions = {};
+      optState.sectionBusy = {};
+      optState.versions = [];
+      data.sections.forEach(s => { optState.drafts[s.id] = s.content; });
+      saveOptDoc(); saveOptVersions();
+    } catch (e) { optState.error = e.message; }
+    optState.busy = '';
+    renderOptimizer();
+  }
+
+  function handleOptSave(sectionId) {
+    const section = optState.doc?.sections.find(s => s.id === sectionId);
+    if (!section) return;
+    const newContent = optState.drafts[sectionId] ?? section.content;
+    if (newContent === section.content) return;
+    section.history = section.history || [];
+    section.history.push({
+      timestamp: Date.now(), userMessage: 'manual edit',
+      oldContent: section.content, newContent, reasoning: 'User edited directly',
+    });
+    section.content = newContent;
+    optState.versions.push({ timestamp: Date.now(), sectionId });
+    saveOptDoc(); saveOptVersions();
+    renderOptimizer();
+  }
+
+  async function handleOptApply(sectionId) {
+    const section = optState.doc?.sections.find(s => s.id === sectionId);
+    const sugg    = (optState.suggestions[sectionId] || '').trim();
+    if (!section || !sugg) return;
+    optState.sectionBusy[sectionId] = true; optState.error = '';
+    renderOptimizer();
+    try {
+      const fullDoc = optState.doc.sections
+        .map(s => `[§${s.id} ${s.title}]\n${s.content}`).join('\n\n');
+      const res = await fetch('/optimizer/iterate_section', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode:            optState.doc.mode,
+          section:         { id: section.id, title: section.title, kind: section.kind, content: section.content, rationale: section.rationale },
+          full_document:   fullDoc,
+          project_context: optState.projectContext?.extracted || null,
+          user_message:    sugg,
+          guide_prompt:    optState.guidePrompt,
+        }),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      if (data.rewritten_content && data.rewritten_content !== section.content) {
+        section.history = section.history || [];
+        section.history.push({
+          timestamp: Date.now(), userMessage: sugg,
+          oldContent: section.content, newContent: data.rewritten_content,
+          reasoning: data.reasoning,
+        });
+        section.content = data.rewritten_content;
+        optState.drafts[sectionId] = data.rewritten_content;
+        optState.versions.push({ timestamp: Date.now(), sectionId, reasoning: data.reasoning });
+        saveOptDoc(); saveOptVersions();
+      }
+      optState.suggestions[sectionId] = '';
+    } catch (e) { optState.error = e.message; }
+    optState.sectionBusy[sectionId] = false;
+    renderOptimizer();
+  }
+
+  async function handleOptStitch() {
+    if (!optState.doc) return;
+    const text = optState.doc.sections.map(s => s.content).join('\n\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      optState.stitched = true; renderOptimizer();
+      setTimeout(() => { optState.stitched = false; renderOptimizer(); }, 2000);
+    } catch {}
+  }
+</script>
+</body>
+</html>

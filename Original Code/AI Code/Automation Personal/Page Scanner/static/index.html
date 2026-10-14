@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Highlight Grabber — Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=DM+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/review.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="mark"></span>
+      <div>
+        <div class="batch" id="batch">—</div>
+        <input class="author-input" id="author" type="text" placeholder="Author…" />
+        <div class="book-meta" id="book-meta" hidden></div>
+      </div>
+    </div>
+
+    <div class="center">
+      <div class="counter"><span id="counter">0 / 0</span></div>
+      <div class="status-pill" id="status-pill" data-status="new">new</div>
+    </div>
+
+    <div class="right">
+      <button id="pick-color" class="pick-btn" type="button" title="Sample the highlighter color, then copy it into process.py --hsv">
+        <span class="swatch" id="pick-swatch"></span>Pick color
+      </button>
+      <code id="hsv-readout" class="hsv-readout" hidden title="Click to copy"></code>
+      <button id="export-csv" class="pick-btn" type="button" title="Download Readwise CSV for reviewed highlights" hidden>Export CSV</button>
+      <label class="pageno">
+        <span>page</span>
+        <input id="page-number" type="number" inputmode="numeric" min="0" placeholder="—" />
+      </label>
+    </div>
+  </header>
+
+  <main class="split" id="split" hidden>
+    <section class="pane image-pane">
+      <div class="image-wrap" id="image-wrap">
+        <img id="page-img" alt="page" />
+        <canvas id="overlay"></canvas>
+      </div>
+    </section>
+
+    <section class="pane text-pane">
+      <div class="passages" id="passages"></div>
+      <div class="hint-bar">
+        <kbd>⌘↵</kbd> accept
+        <kbd>→</kbd> skip
+        <kbd>←</kbd> back
+        <kbd>Tab</kbd> next field
+        <kbd>d</kbd> discard
+        <kbd>f</kbd> retake
+      </div>
+    </section>
+  </main>
+
+  <div class="curtain" id="curtain">
+    <div class="curtain-inner" id="curtain-inner">Loading review queue…</div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="/static/review.js"></script>
+</body>
+</html>

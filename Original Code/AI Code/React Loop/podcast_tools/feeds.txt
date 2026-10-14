@@ -1,0 +1,62 @@
+# Curated podcast RSS feeds.
+# Format: slug = rss_url   (blank lines and lines starting with '#' are ignored)
+# Use the slug (e.g. "dwarkesh" or "joe rogan") OR a raw https RSS URL anywhere a
+# feed is expected (podcast_list_rss, list_rss_episodes). Matching is fuzzy, so
+# "lex", "the tim ferriss show", and minor typos all resolve — see feeds.py.
+#
+# To add a show: append `slug = rss_url`. To find a show's RSS URL without an API at
+# runtime, look it up once via Apple: https://itunes.apple.com/search?media=podcast&term=<name>
+# and copy the returned feedUrl here.
+
+# --- originals ---
+joe_rogan                = https://feeds.megaphone.fm/GLT1412515089
+founders (david senra)   = https://feeds.megaphone.fm/DSLLC6297708582
+dwarkesh (dwarkesh patel) = https://api.substack.com/feed/podcast/69345.rss
+diary_of_a_ceo (steven bartlett, doac) = https://rss2.flightcast.com/xmsftuzjjykcmqwolaqn6mdn
+rest_is_politics (rory stewart, alastair campbell) = https://feeds.megaphone.fm/GLT9190936013
+
+# --- interviews / long-form ---
+lex_fridman              = https://lexfridman.com/feed/podcast/
+tim_ferriss              = https://rss.art19.com/tim-ferriss-show
+conversations_with_tyler (tyler cowen) = https://rss.libsyn.com/shows/137081/destinations/850607.xml
+the_knowledge_project (shane parrish, farnam street) = https://feeds.megaphone.fm/FSMI7575968096
+modern_wisdom (chris williamson) = https://feeds.megaphone.fm/SIXMSB5088139739
+making_sense (sam harris) = https://rss.libsyn.com/shows/94577/destinations/480596.xml
+the_tim_dillon_show      = https://audioboom.com/channels/5093219.rss
+
+# --- science / health ---
+huberman_lab (andrew huberman) = https://feeds.megaphone.fm/hubermanlab
+the_drive (peter attia)  = https://rss.libsyn.com/shows/121729/destinations/713489.xml
+hidden_brain             = https://feeds.simplecast.com/kwWc0lhf
+radiolab                 = https://feeds.simplecast.com/EmVW7VGp
+
+# --- business / startups / tech ---
+acquired                 = https://feeds.transistor.fm/acquired
+all_in                   = https://rss.libsyn.com/shows/254861/destinations/1928300.xml
+my_first_million (sam parr, shaan puri, mfm) = https://feeds.megaphone.fm/HS2300184645
+lennys_podcast (lenny rachitsky) = https://anchor.fm/s/5baf5d24/podcast/rss
+invest_like_the_best (patrick oshaughnessy) = https://feeds.megaphone.fm/CLS2859450455
+how_i_built_this (guy raz) = https://rss.art19.com/how-i-built-this
+a16z (andreessen horowitz) = https://feeds.simplecast.com/JGE3yC0V
+the_prof_g_pod (scott galloway) = https://feeds.megaphone.fm/WWO6655869236
+pivot (kara swisher, scott galloway) = https://feeds.megaphone.fm/pivot
+hard_fork                = https://feeds.simplecast.com/6HKOhNgS
+sway (kara swisher, on with kara swisher) = https://feeds.megaphone.fm/VMP1684715893
+sharp_tech (ben thompson) = https://sharptech.fm/feed/podcast
+
+# --- AI ---
+no_priors                = https://feeds.megaphone.fm/nopriors
+cognitive_revolution     = https://feeds.megaphone.fm/RINTP3108857801
+latent_space             = https://api.substack.com/feed/podcast/1084089.rss
+twiml                    = https://feeds.megaphone.fm/MLN2155636147
+
+# --- economics / news / narrative ---
+freakonomics             = https://feeds.simplecast.com/Y8lFbOT4
+planet_money             = https://feeds.npr.org/510289/podcast.xml
+the_daily                = https://feeds.simplecast.com/Sl5CSM3S
+the_ezra_klein_show (ezra klein) = https://feeds.simplecast.com/kEKXbjuJ
+this_american_life       = https://www.thisamericanlife.org/podcast/rss.xml
+eighty_thousand_hours (80000 hours) = https://feeds.transistor.fm/80000-hours-podcast
+
+# --- history ---
+hardcore_history (dan carlin) = https://feeds.feedburner.com/dancarlin/history?format=xml

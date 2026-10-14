@@ -1,0 +1,12 @@
+.observability-section-title {
+  margin: 6px 0 14px;
+}
+
+.observability-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.observability-table-scroll code {
+  overflow-wrap: anywhere;
+}

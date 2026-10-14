@@ -1,0 +1,12 @@
+Recorded: 2026-09-06 16:15:11 +0530
+Source repository: /Users/aryamanchandak/Documents/AI Code/Final Gateway/glc_v5
+Inherited HEAD: 8373f2bc46784464ec9c8afde2a3232c3490e021
+Inherited remote:
+  origin https://github.com/theschoolofai/glc_v5.git (fetch)
+  origin https://github.com/theschoolofai/glc_v5.git (push)
+Initial working tree:
+  M glc/config.py
+  M glc/providers.py
+  ?? glc/local_models.yaml
+  ?? tests/test_local_models.py
+No unrelated modifications were present.

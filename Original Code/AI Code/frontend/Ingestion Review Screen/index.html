@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>Ingestion Review</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/review.css">
+    <script src="/static/review.js" defer></script>
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Ingestion review home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span><strong>Ingestion</strong><small>Review cockpit</small></span>
+      </a>
+      <div class="run-status" id="run-status">
+        <span class="status-light"></span>
+        <span id="status-copy">Connecting</span>
+      </div>
+    </header>
+
+    <main id="app" tabindex="-1" aria-live="polite">
+      <section class="empty-state panel">
+        <span class="eyebrow">Repository run</span>
+        <h1>Preparing the next decision.</h1>
+        <p>The coordinator is reconnecting to durable pipeline state.</p>
+        <div class="loader" aria-label="Loading"><span></span><span></span><span></span></div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="assertive" hidden></div>
+    <div id="sr-announcer" class="sr-only" aria-live="polite"></div>
+  </body>
+</html>

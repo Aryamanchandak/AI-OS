@@ -1,0 +1,45 @@
+# Trusted sources for political/current events research.
+# Web search results are filtered to these domains only.
+# Add or remove based on your preferences.
+
+domains:
+  # Wire services (most neutral, primary sourcing)
+  - reuters.com
+  - apnews.com
+  - afp.com
+
+  # Quality press
+  - ft.com
+  - economist.com
+  - nytimes.com
+  - washingtonpost.com
+  - theguardian.com
+  - bbc.com
+  - bbc.co.uk
+
+  # Data and fact-checking
+  - factcheck.org
+  - politifact.com
+  - ourworldindata.org
+  - statista.com
+
+  # Primary / government sources
+  - who.int
+  - cdc.gov
+  - nih.gov
+  - imf.org
+  - worldbank.org
+  - congress.gov
+  - federalreserve.gov
+  - un.org
+
+  # Academic aggregators
+  - scholar.google.com
+  - jstor.org
+  - ssrn.com
+
+  # Indian sources (relevant for you)
+  - thehindu.com
+  - livemint.com
+  - scroll.in
+  - thewire.in

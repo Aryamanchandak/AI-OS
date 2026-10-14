@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Secrets
+.env
+
+# Scratch logs
+*.log
+
+# Generated data (re-downloadable / re-derivable)
+podcast_tools/data/audio/
+podcast_tools/data/chats/
+podcast_tools/data/generated_ui/
+podcast_tools/data/dashboard/
+podcast_tools/data/summaries/
+podcast_tools/data/transcripts/
+examples/sample_trajectory.txt
+.DS_Store

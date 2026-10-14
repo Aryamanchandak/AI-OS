@@ -1,0 +1,87 @@
+# trusted_sources.yaml
+# Starter trusted-source whitelist for Brave domain-filtered search (Research MCP, Phase 1).
+#
+# WHAT THIS IS: an opinionated STARTING POINT, not ground truth. "Trusted" is contextual.
+# Curate it to your own judgment — this is a config file you own, not a fixed list.
+#
+# HOW THE ENGINE USES IT (ties to trusted_sources_only tri-state):
+#   None  -> engine decides by claim domain. Default to trusted-only for:
+#            finance, health_medical, legal_regulatory. Open web for the rest.
+#   True  -> restrict Brave to the relevant category + cross_domain tier.
+#   False -> ignore this list entirely, search open web.
+#
+# TIERS (per category): `primary` = official / authoritative / peer-reviewed bodies;
+#   `press` = reputable journalism / trade press. Provenance weight should follow tier
+#   (a .gov statistic outranks a news write-up of it).
+#
+# KNOWN LIMITS:
+#   - Recency: official/academic sources lag. For live data (stock prices, breaking news)
+#     this list does NOT help — that's a known Phase-1 gap, not a whitelist failure.
+#   - Paywalls: FT, WSJ, NEJM etc. are strong but gated; Brave snippets may suffice for a
+#     verdict but not full-text. Flag low-confidence when only a snippet was available.
+#   - News/politics: inclusion below reflects editorial-standards + reach and deliberately
+#     spans the spectrum. It is NOT an endorsement. Wire services (Reuters, AP) are listed
+#     first because they editorialize least; curate the rest to your own standard.
+
+version: 1
+updated: 2026-05-26
+
+# Applied across ALL claim domains — highest-trust, low-bias references.
+cross_domain:
+  - reuters.com
+  - apnews.com
+  - factcheck.org
+  - politifact.com
+  - fullfact.org
+  - snopes.com
+  - en.wikipedia.org
+  - britannica.com   # Wikipedia also hit directly via API
+
+categories:
+
+  science_general:
+    primary: [nature.com, science.org, pnas.org, cell.com, sciencedirect.com, plos.org]
+    press: [scientificamerican.com, quantamagazine.org, newscientist.com]
+    # arXiv + Semantic Scholar are handled as direct API sources, not via Brave.
+
+  health_medical:
+    primary: [who.int, cdc.gov, nih.gov, ncbi.nlm.nih.gov, fda.gov, cochrane.org,
+              nice.org.uk, medlineplus.gov, thelancet.com, nejm.org, bmj.com, jamanetwork.com]
+    press: [mayoclinic.org, clevelandclinic.org, statnews.com]
+
+  finance_economics:
+    primary: [sec.gov, federalreserve.gov, treasury.gov, bls.gov, imf.org, worldbank.org,
+              bis.org, oecd.org, ecb.europa.eu, eurostat.ec.europa.eu]
+    press: [reuters.com, bloomberg.com, ft.com, wsj.com, economist.com]
+
+  geopolitics_policy:
+    primary: [un.org, state.gov, gov.uk, europa.eu, crisisgroup.org]
+    # Think tanks span the spectrum by design — include a range, weight none as neutral truth:
+    think_tanks: [cfr.org, brookings.edu, carnegieendowment.org, csis.org,
+                  chathamhouse.org, rand.org, cato.org, heritage.org]
+    press: [reuters.com, apnews.com, bbc.com, economist.com, foreignaffairs.com]
+
+  technology:
+    primary: [ieee.org, acm.org, w3.org, ietf.org, nist.gov]
+    press: [arstechnica.com, theverge.com, wired.com, technologyreview.com]
+
+  legal_regulatory:
+    primary: [supremecourt.gov, courtlistener.com, eur-lex.europa.eu, legislation.gov.uk,
+              govinfo.gov, ftc.gov]
+    press: [scotusblog.com, reuters.com]
+
+  fashion_industry:
+    # "fashion" as you flagged it — trade/industry claims, not styling opinion.
+    primary: [statista.com, mckinsey.com]                 # State of Fashion report, market data
+    press: [businessoffashion.com, wwd.com, voguebusiness.com, drapersonline.com]
+
+  general_news:
+    # Broadest fallback for claims that don't fit a domain. Wire services first.
+    primary: [reuters.com, apnews.com]
+    press: [bbc.com, npr.org, pbs.org, theguardian.com, nytimes.com, washingtonpost.com,
+            wsj.com, economist.com]
+
+# Domains the engine should down-weight or drop even if returned.
+# Left empty deliberately — populate from your own experience (content farms,
+# SEO-spam aggregators, known-unreliable outlets). Trust is contextual; you author this.
+deny: []

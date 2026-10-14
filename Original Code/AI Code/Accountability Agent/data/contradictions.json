@@ -1,0 +1,7 @@
+[
+  { "from": "influence-002", "to": "bets-001", "reason": "Consistency can preserve follow-through, but outcome-independent review must still permit correction." },
+  { "from": "influence-004", "to": "bets-003", "reason": "Expert authority speeds resolution while structured dissent guards against deference to the wrong expert." },
+  { "from": "influence-005", "to": "bets-005", "reason": "Real scarcity favors speed; irreversible downside favors a premortem before commitment." },
+  { "from": "influence-001", "to": "gty-002", "reason": "Reciprocal concession favors engagement; a superior BATNA sets the point where engagement should stop." },
+  { "from": "gty-004", "to": "bets-002", "reason": "Option generation expands the field while explicit probabilities force a later ranking." }
+]

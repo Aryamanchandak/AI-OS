@@ -1,0 +1,311 @@
+<article class="analysis-result animate-in" data-result-brief="{{ analysis.brief }}">
+  <header class="result-header">
+    <div>
+      <p class="section-label">Completed analysis</p>
+      <h2>{{ analysis.brief }}</h2>
+    </div>
+    <span class="mode-badge">{{ analysis.mode|capitalize }} research</span>
+  </header>
+
+  <section class="metric-strip" aria-label="Analysis totals">
+    <div><span>Sources</span><strong>{{ analysis.sources|length }}</strong></div>
+    <div><span>Claims</span><strong>{{ analysis.claims|length }}</strong></div>
+    <div><span>Causal edges</span><strong>{{ graph.edges|length }}</strong></div>
+    <div><span>Verified support</span><strong>{{ supported_edges }}</strong></div>
+  </section>
+
+  <aside class="cost-disclosure" aria-label="Model cost for this analysis">
+    <div>
+      <p class="section-label">Model usage</p>
+      <strong>₹{{ "%.2f"|format(analysis.usage.cost_inr) }}</strong>
+      <span>estimated run cost</span>
+    </div>
+    <dl>
+      <div><dt>Gemini calls</dt><dd>{{ analysis.usage.calls }}</dd></div>
+      <div><dt>Input tokens</dt><dd>{{ "{:,}".format(analysis.usage.input_tokens) }}</dd></div>
+      <div><dt>Output + thinking</dt><dd>{{ "{:,}".format(analysis.usage.output_tokens + analysis.usage.thinking_tokens) }}</dd></div>
+      <div><dt>USD estimate</dt><dd>${{ "%.4f"|format(analysis.usage.cost_usd) }}</dd></div>
+    </dl>
+    <p>{{ analysis.usage.pricing_note }} Conversion uses ₹{{ "%.2f"|format(analysis.usage.usd_to_inr) }} per USD.</p>
+  </aside>
+
+  <section class="result-section">
+    <div class="section-heading">
+      <p class="section-label">Outcome comparison</p>
+      <h3>Four scenarios</h3>
+    </div>
+    <div class="table-shell" role="region" aria-label="Scenario outcome comparison" tabindex="0">
+      <table class="scenario-matrix">
+        <thead>
+          <tr>
+            <th scope="col">Scenario</th>
+            {% for outcome in outcome_nodes %}
+              <th scope="col">{{ outcome.label }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in matrix_rows %}
+            <tr>
+              <th scope="row">{{ row.name }}</th>
+              {% for outcome in row.outcomes %}
+                <td>
+                  <span class="impact {{ impact_class(outcome.resolved) }}">
+                    {{ cell(outcome.resolved) }}
+                  </span>
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="matrix-legend">↑↑ high up · ↑ up · ▴ slight up · · flat · ▾ slight down · ↓ down · ↓↓ high down · ⚠ contested</p>
+  </section>
+
+  <section class="result-section">
+    <div class="section-heading">
+      <p class="section-label">Scenario notes</p>
+      <h3>Briefs and reasoning</h3>
+    </div>
+    <div class="scenario-grid">
+      {% for scenario in scenario_cards %}
+        <article class="scenario-card">
+          <div class="scenario-number">{{ "%02d"|format(scenario.index) }}</div>
+          <h4>{{ scenario.name }}</h4>
+          <p class="scenario-narrative">{{ scenario.narrative }}</p>
+          <div class="outcome-strip">
+            {% for outcome in scenario.outcomes %}
+              <span>{{ outcome.definition.label }} <strong>{{ cell(outcome.resolved) }}</strong></span>
+            {% endfor %}
+          </div>
+          <details>
+            <summary>Inspect outcome reasoning</summary>
+            <div class="details-body">
+              {% for outcome in scenario.outcomes %}
+                <div class="trace-block">
+                  <h5>{{ outcome.definition.label }} · {{ cell(outcome.resolved) }}</h5>
+                  {% if outcome.resolved.trace %}
+                    {% for line in outcome.resolved.trace %}
+                      <code>{{ line }}</code>
+                    {% endfor %}
+                  {% else %}
+                    <p class="muted">No upstream drivers.</p>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </details>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="result-section artifact-section">
+    <div class="section-heading">
+      <p class="section-label">Evidence</p>
+      <h3>Research grounding</h3>
+    </div>
+    {% if analysis.research_error %}
+      <div class="notice notice-warning">
+        Research degraded gracefully: {{ analysis.research_error }}. The graph was built from the brief alone.
+      </div>
+    {% endif %}
+    {% if analysis.sources %}
+      <details>
+        <summary>Sources · {{ analysis.sources|length }} retrieved</summary>
+        <div class="artifact-grid details-body">
+          {% for source in analysis.sources %}
+            <article class="source-card">
+              <div class="badge-row">
+                <span>{{ source.authority }} authority</span>
+                <span>{{ source.recency }} freshness</span>
+                <span>{{ source.relevance }} relevance</span>
+              </div>
+              <h4>{{ source.title }}</h4>
+              <p>{{ source.publisher }} · retrieved {{ source.retrieved_at[:10] }}</p>
+              {% set source_url = safe_source_url(source.url) %}
+              {% if source_url %}
+                <a href="{{ source_url }}" target="_blank" rel="noopener noreferrer">Open source ↗</a>
+              {% endif %}
+            </article>
+          {% endfor %}
+        </div>
+      </details>
+      <details>
+        <summary>Evidence ledger · {{ analysis.claims|length }} claims</summary>
+        <div class="claim-list details-body">
+          {% for item in claims_with_sources %}
+            <article class="claim-row">
+              <div class="badge-row">
+                <span class="badge-{{ item.claim.claim_type }}">{{ item.claim.claim_type }}</span>
+                <span>{{ item.claim.stance }}</span>
+              </div>
+              <h4>{{ item.claim.text }}</h4>
+              <p>{{ item.source_name }} · {{ item.claim.confidence }} confidence · {{ item.claim.id }}</p>
+              <blockquote>{{ item.claim.supporting_passage }}</blockquote>
+            </article>
+          {% endfor %}
+        </div>
+      </details>
+    {% else %}
+      <p class="muted">No retrieved sources are attached to this run.</p>
+    {% endif %}
+  </section>
+
+  <section class="result-section debate-section">
+    <div class="section-heading">
+      <p class="section-label">Challenge</p>
+      <h3>Analyst debate</h3>
+    </div>
+    {% if analysis.debate_error %}
+      <div class="notice notice-warning">{{ analysis.debate_error }}</div>
+    {% endif %}
+    <span class="role-badge">{{ analysis.critique.role if analysis.critique else "unavailable" }} critic</span>
+    {% if analysis.critique %}
+      <p class="debate-summary">{{ analysis.critique.summary }}</p>
+      <details>
+        <summary>Structured findings · {{ analysis.critique.findings|length }}</summary>
+        <div class="details-body">
+          {% if analysis.critique.findings %}
+            {% for finding in analysis.critique.findings %}
+              <article class="finding-row">
+                <h4>{{ finding.src }} → {{ finding.dst }} · {{ finding.severity }}</h4>
+                <p>{{ finding.issue }}</p>
+                <p class="muted">Recommended: {{ finding.recommendation }}</p>
+              </article>
+            {% endfor %}
+          {% else %}
+            <p class="muted">No material finding was returned.</p>
+          {% endif %}
+        </div>
+      </details>
+    {% endif %}
+
+    <div class="decision-grid">
+      <div>
+        <h4>Adjudication</h4>
+        {% for label, values in (("Accepted", analysis.report.accepted), ("Changed", analysis.report.changed), ("Rejected", analysis.report.rejected)) %}
+          <h5>{{ label }}</h5>
+          {% if values %}<ul>{% for value in values %}<li>{{ value }}</li>{% endfor %}</ul>{% else %}<p class="muted">None recorded.</p>{% endif %}
+        {% endfor %}
+      </div>
+      <div>
+        <h4>Graph diff</h4>
+        {% for label, values in (("Added", analysis.diff.added), ("Removed", analysis.diff.removed), ("Changed", analysis.diff.changed)) %}
+          <h5>{{ label }}</h5>
+          {% if values %}<ul>{% for value in values %}<li>{{ value }}</li>{% endfor %}</ul>{% else %}<p class="muted">None.</p>{% endif %}
+        {% endfor %}
+      </div>
+      <div>
+        <h4>Unresolved</h4>
+        {% if analysis.report.unresolved %}
+          <ul>{% for value in analysis.report.unresolved %}<li>{{ value }}</li>{% endfor %}</ul>
+        {% else %}
+          <p class="muted">No unresolved disagreements.</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="result-section">
+    <div class="section-heading">
+      <p class="section-label">Structure</p>
+      <h3>Causal model</h3>
+    </div>
+    {% if analysis.verification_error %}
+      <div class="notice notice-warning">
+        Load-bearing verification remained unverified: {{ analysis.verification_error }}
+      </div>
+    {% endif %}
+
+    <div class="graph-shell" data-graphviz>
+      <script type="application/json" class="graph-dot">{{ graph_dot|tojson }}</script>
+      <div class="graph-output" aria-label="Causal graph visualization">
+        <p class="muted">Rendering causal graph…</p>
+      </div>
+      <pre class="graph-fallback" hidden>{{ graph_dot }}</pre>
+    </div>
+    <p class="graph-legend">Dark: intervention · White: intermediate · Sage: outcome · Gold dashed: unknown · Blue: positive · Red: inverse</p>
+
+    <details>
+      <summary>Audit details</summary>
+      <div class="details-body audit-tables">
+        <h4>Nodes</h4>
+        <div class="table-shell" tabindex="0">
+          <table>
+            <thead><tr><th>Id</th><th>Type</th><th>Label</th></tr></thead>
+            <tbody>
+              {% for node in graph.nodes %}
+                <tr><td>{{ node.id }}</td><td>{{ node.node_type }}</td><td>{{ node.label }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Edges, evidence, and mechanisms</h4>
+        <div class="table-shell" tabindex="0">
+          <table>
+            <thead>
+              <tr><th>From</th><th>To</th><th>Sign</th><th>Strength</th><th>Confidence</th><th>Lag</th><th>Evidence</th><th>Claims</th><th>Mechanism</th></tr>
+            </thead>
+            <tbody>
+              {% for edge in graph.edges %}
+                <tr>
+                  <td>{{ edge.src }}</td>
+                  <td>{{ edge.dst }}</td>
+                  <td>{{ "%+d"|format(edge.sign) }}</td>
+                  <td>{{ edge.strength }}</td>
+                  <td>{{ edge.confidence }}</td>
+                  <td>{{ edge.time_lag }}</td>
+                  <td>{{ edge.evidence_status }}</td>
+                  <td>{{ edge.supporting_claim_ids|join(", ") }}</td>
+                  <td>{{ edge.mechanism }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <h4>Unknowns</h4>
+        <div class="table-shell" tabindex="0">
+          <table>
+            <thead><tr><th>Id</th><th>Affects</th><th>Question</th></tr></thead>
+            <tbody>
+              {% for unknown in graph.unknowns %}
+                <tr><td>{{ unknown.id }}</td><td>{{ unknown.affects_node_id }}</td><td>{{ unknown.question }}</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="result-section sensitivity-section">
+    <div class="section-heading">
+      <p class="section-label">Robustness</p>
+      <h3>Structural sensitivity</h3>
+    </div>
+    <details>
+      <summary>Open exact-edge audit</summary>
+      <div class="details-body">
+        <p class="muted">Each named edge is flipped once. Only links that change a conclusion are verification targets.</p>
+        {% if robustness_rows %}
+          <div class="table-shell" tabindex="0">
+            <table>
+              <thead><tr><th>Edge</th><th>Mechanism</th><th>Changed outcomes</th><th>Evidence</th></tr></thead>
+              <tbody>
+                {% for row in robustness_rows %}
+                  <tr><td>{{ row.Edge }}</td><td>{{ row.Mechanism }}</td><td>{{ row["Changed outcomes"] }}</td><td>{{ row.Evidence }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p>No single edge flip changes an outcome in this scenario.</p>
+        {% endif %}
+      </div>
+    </details>
+  </section>
+</article>

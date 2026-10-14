@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>CANVAS-GAME: READY</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #10141c; color: #e8ecf3;
+               font: 16px/1.5 -apple-system, system-ui, sans-serif; }
+  .wrap { display: flex; flex-direction: column; align-items: center;
+          justify-content: center; height: 100%; gap: 18px; }
+  canvas { background: #1a2030; border-radius: 12px; box-shadow: 0 8px 40px #0008; }
+  p { opacity: .65; margin: 0; }
+</style>
+<div class="wrap">
+  <canvas id="c" width="720" height="440"></canvas>
+  <p>Click the orange square.</p>
+</div>
+<script>
+// A deliberately inaccessible target: everything meaningful is painted into
+// a <canvas>, so the accessibility tree exposes nothing to aim at. Layers 1,
+// 2a and 2b have no way to locate the square — only pixels reveal it, which
+// is what forces the cascade to escalate to Layer 3.
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+
+// Fixed position, not random: a recorded trajectory should be reproducible,
+// and a moving target would make a failed run ambiguous between "vision
+// missed it" and "it moved".
+const target = { x: 470, y: 120, w: 110, h: 110 };
+let hit = false;
+
+function draw() {
+  ctx.clearRect(0, 0, c.width, c.height);
+  // Distractors, same shape, different colour — so the model must resolve
+  // the *orange* square rather than just finding any rectangle.
+  ctx.fillStyle = '#3b4a66';
+  ctx.fillRect(90, 250, 110, 110);
+  ctx.fillRect(280, 60, 110, 110);
+  ctx.fillStyle = hit ? '#34c759' : '#ff9500';
+  ctx.fillRect(target.x, target.y, target.w, target.h);
+  ctx.fillStyle = '#e8ecf3';
+  ctx.font = '600 22px system-ui';
+  ctx.fillText(hit ? 'HIT' : 'find the orange square', 40, 50);
+}
+draw();
+
+c.addEventListener('click', (e) => {
+  const r = c.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  if (x >= target.x && x <= target.x + target.w &&
+      y >= target.y && y <= target.y + target.h) {
+    hit = true;
+    // The window title is the verification channel. It is readable via
+    // AppleScript without any vision call, so the *check* that the task
+    // succeeded is independent of the model that performed it — a model
+    // cannot mark its own homework by claiming done().
+    document.title = 'CANVAS-GAME: HIT';
+    draw();
+  } else {
+    document.title = 'CANVAS-GAME: MISS';
+  }
+});
+</script>

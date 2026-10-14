@@ -1,0 +1,13 @@
+# Agentic Podcast Summariser — MCP + Gemini + Prefab
+#
+# Install:  uv pip install -r requirements.txt   (or: pip install -r requirements.txt)
+
+fastmcp[apps]        # MCP server framework; [apps] pulls in prefab-ui (Prefab UI)
+mcp                  # MCP client (ClientSession / stdio) used by the agent
+google-genai         # Gemini SDK: transcription, summarisation, grounded YouTube search, agent loop
+yt-dlp               # YouTube audio download (RSS fallback source)
+feedparser           # RSS parsing
+mutagen              # Audio duration probing
+requests             # Direct audio-enclosure download
+PyYAML               # podcasts.yaml
+python-dotenv        # .env loading

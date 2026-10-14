@@ -1,0 +1,295 @@
+<title>T16 — Page Scanner Absorption Workflow</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --surface: #ffffff;
+    --ink: #232323;
+    --ink-soft: #5b5b56;
+    --hairline: #dedad2;
+    --accent: #4a5a6b;      /* slate-blue, ties to "pipeline/ingestion" */
+    --amber: #a8712c;
+    --amber-bg: #f6e6c8;
+    --green: #3f6b4d;
+    --green-bg: #dcead9;
+    --slate: #445;
+    --slate-bg: #e4e7ec;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --serif: "Iowan Old Style", "Georgia", serif;
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1b19;
+    --surface: #262421;
+    --ink: #ece8e0;
+    --ink-soft: #a8a49a;
+    --hairline: #3a3733;
+    --accent: #9db3c9;
+    --amber: #e0b268;
+    --amber-bg: #3d3320;
+    --green: #9bcaa6;
+    --green-bg: #223b28;
+    --slate: #c4cbd6;
+    --slate-bg: #2c313a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1b19;
+      --surface: #262421;
+      --ink: #ece8e0;
+      --ink-soft: #a8a49a;
+      --hairline: #3a3733;
+      --accent: #9db3c9;
+      --amber: #e0b268;
+      --amber-bg: #3d3320;
+      --green: #9bcaa6;
+      --green-bg: #223b28;
+      --slate: #c4cbd6;
+      --slate-bg: #2c313a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--serif);
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 5rem;
+    line-height: 1.55;
+  }
+  h1, h2, h3 { font-family: var(--serif); text-wrap: balance; }
+  h1 {
+    font-size: 1.9rem;
+    margin: 0 0 0.3rem;
+    letter-spacing: 0.01em;
+  }
+  .subtitle {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 2rem;
+  }
+  h2 {
+    font-size: 1.25rem;
+    margin: 3rem 0 0.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+  h2 .tag {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    margin-left: 0.6rem;
+  }
+  p.lede {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    margin: 0.4rem 0 1.4rem;
+    max-width: 62ch;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.1rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    margin: 1.2rem 0 0.5rem;
+  }
+  .legend .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .legend .swatch {
+    width: 0.7rem; height: 0.7rem;
+    border-radius: 2px;
+    display: inline-block;
+  }
+  .sw-green { background: var(--green-bg); border: 1px solid var(--green); }
+  .sw-slate { background: var(--slate-bg); border: 1px solid var(--slate); }
+  .sw-amber { background: var(--amber-bg); border: 1px solid var(--amber); }
+
+  .diagram-frame {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 1.2rem 0.8rem;
+    overflow-x: auto;
+    margin: 1rem 0 1.6rem;
+  }
+  .diagram-frame pre.mermaid { margin: 0; min-width: 640px; }
+
+  .gaps {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 1.1rem 1.4rem;
+    margin-top: 0.6rem;
+  }
+  .gaps h3 {
+    font-size: 0.95rem;
+    margin: 0 0 0.6rem;
+    color: var(--amber);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .gaps ol { margin: 0; padding-left: 1.2rem; }
+  .gaps li { margin: 0.45rem 0; }
+  .gaps code, p code, li code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: var(--slate-bg);
+    padding: 0.05em 0.35em;
+    border-radius: 4px;
+  }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--hairline);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+  }
+  footer p { margin: 0.3rem 0; }
+</style>
+
+<h1>Bringing Page Scanner Into Ingestion</h1>
+<p class="subtitle">T16 — rough workflow · drawn from the code as it exists today + the T16 component plans · 2026-07-31</p>
+
+<p class="lede">
+  Two diagrams: what the code actually does right now, standalone, and where it
+  currently breaks — then the target shape once the five T16 components land.
+  Nothing here is decided beyond what the component docs already confirm; open
+  gaps are marked amber and listed at the end of each section.
+</p>
+
+<div class="legend">
+  <span class="chip"><span class="swatch sw-green"></span>built today / moves unchanged</span>
+  <span class="chip"><span class="swatch sw-slate"></span>new code, design settled</span>
+  <span class="chip"><span class="swatch sw-amber"></span>open design gap / not decided</span>
+</div>
+
+<h2>Today, as built<span class="tag">Automation Personal/Page Scanner/</span></h2>
+<p class="lede">
+  A standalone app you run by hand. Everything works end to end except the
+  very last step — approving a page in the cockpit throws, because the shared
+  library it calls into no longer exists.
+</p>
+
+<div class="diagram-frame">
+<pre class="mermaid">
+flowchart TD
+    A["📷 photos in\n~/Desktop/Page Scanner/&lt;Book&gt;/"] --> B["ingest.py\nhand-run, one hardcoded folder"]
+    B --> META["core/metadata.py\nOpen Library → Google Books\ncached to .book.json"]
+    B --> PROC["process.py — process_image()"]
+
+    PROC --> L1["load image + EXIF/HEIC\n(core/images.py)"]
+    L1 --> L2["OCR the page\n(core/ocr.py — Apple Vision, on-device)"]
+    L2 --> L3["yellow-highlight mask\n(core/detect.py)"]
+    L3 --> L4["keep words sitting on yellow;\nfilter facing-page bleed + ink-leak"]
+    L4 --> L5["group kept words into passages\n(vertical-gap split)"]
+    L5 --> QG{"quality gate\n(core/quality.py)\nblur / glare / OCR confidence"}
+    QG -- fails --> RETAKE["flag RETAKE\nfile kept, just marked"]
+    QG -- passes --> OK["status = new"]
+    L5 -.optional, off by default.-> CLEAN["spellcheck pass\n(core/cleanup.py, LLM)"]
+
+    RETAKE --> DB[("processed.db")]
+    OK --> DB
+    DB --> COCKPIT["server.py cockpit (FastAPI)\nphoto next to text"]
+    COCKPIT --> DECIDE["you edit / approve / reject\neach passage"]
+    DECIDE --> EXPORT["export.py\nwrite local markdown"]
+    DECIDE --> PUB["core/publish.py — publish_page()"]
+    PUB --> BROKEN["lib.capture()\nremoved in the Data Layout reorg\n❌ BROKEN — this is the bug T16 fixes"]
+
+    classDef built fill:#dcead9,stroke:#3f6b4d,color:#20331f,stroke-width:1px;
+    classDef broken fill:#f6e6c8,stroke:#a8712c,color:#3a2a10,stroke-width:1.5px;
+    class A,B,META,PROC,L1,L2,L3,L4,L5,QG,RETAKE,OK,CLEAN,DB,COCKPIT,DECIDE,EXPORT built;
+    class PUB,BROKEN broken;
+</pre>
+</div>
+
+<h2>Target shape<span class="tag">merged-ingestion/, per Components 0–5</span></h2>
+<p class="lede">
+  Photos, PDFs, Word docs and stray <code>.md</code> files all get an earlier
+  entry gate before the point where the existing, unchanged Obsidian pipeline
+  already begins. The pipeline itself never learns about photos or PDFs — it
+  only ever sees a finished markdown note sitting in the vault.
+</p>
+
+<div class="diagram-frame">
+<pre class="mermaid">
+flowchart TD
+    subgraph DROP["shared drop folder — [C1] intake/funnel.py"]
+        P1["photos"]
+        P2["PDFs"]
+        P3["Word .docx"]
+        P4["plain .md\n(non-Obsidian)"]
+    end
+
+    P1 --> ROUTE{"route_file()\nby extension"}
+    P2 --> ROUTE
+    P3 --> ROUTE
+    P4 --> ROUTE
+
+    ROUTE --> EXIMG["[C1] extractors/image.py\nwraps [C2] OCR + highlight pipeline\n(unchanged internals, see diagram above)"]
+    ROUTE --> EXPDF["[C1] extractors/pdf.py\nPyMuPDF text layer;\nOCR fallback if scanned"]
+    ROUTE --> EXWORD["[C1] extractors/word.py\npython-docx"]
+    ROUTE --> EXMD["[C1] extractors/markdown_passthrough.py"]
+
+    BOOKMETA["[C3] book metadata service\nOpen Library → Google Books\n.book.json cache — closes T18"] -.feeds.-> EXIMG
+
+    EXIMG --> GATE{"needs_approval?"}
+    EXPDF --> GATE
+    EXWORD --> GATE
+    EXMD --> GATE
+
+    GATE -- "yes — photos always;\nscanned/image-only PDF" --> PARK["parked, awaiting review\n⚠ staging location not designed"]
+    PARK --> COCKPIT["[C5] server.py cockpit, re-pointed\nmandatory pre-vault quality gate"]
+    COCKPIT --> APPROVED["you approve"]
+
+    GATE -- "no — DOCX, native-text PDF,\nplain .md + auto sanity check" --> WRITE
+    APPROVED --> WRITE["[C4] write markdown note\n+ metadata block into vault\n⚠ folder placement not designed\n⚠ metadata-block parsing not designed"]
+
+    RETAKE2["RETAKE photos\nstay in source folder,\nnever moved"] -.-> COCKPIT
+
+    WRITE --> LANDS["note lands in Obsidian vault"]
+    LANDS --> OBS["sources/obsidian.py\ncapture_obsidian_vault() — UNCHANGED"]
+    OBS --> CAP["pipeline.capture()\nimmutable bronze write"]
+    CAP --> PARSE["pipeline.parse_source()\nnormalize → segment highlights\n→ LLM semantic extraction"]
+    PARSE --> REVIEW["review_policy / resolve_review\nhuman review of KG + vector proposals"]
+    REVIEW --> DISPATCH["dispatch()\nKG store · vector store · content store"]
+
+    classDef built fill:#dcead9,stroke:#3f6b4d,color:#20331f,stroke-width:1px;
+    classDef newcode fill:#e4e7ec,stroke:#445,color:#1c1f24,stroke-width:1px;
+    classDef gap fill:#f6e6c8,stroke:#a8712c,color:#3a2a10,stroke-width:1.5px;
+
+    class OBS,CAP,PARSE,REVIEW,DISPATCH,EXIMG,BOOKMETA,COCKPIT,RETAKE2 built;
+    class DROP,P1,P2,P3,P4,ROUTE,EXPDF,EXWORD,EXMD,LANDS newcode;
+    class PARK,WRITE,GATE gap;
+</pre>
+</div>
+
+<div class="gaps">
+  <h3>What's still open, blocking a full end-to-end build</h3>
+  <ol>
+    <li><strong>Gate-by-extraction-method recommendation</strong> — DOCX / native-text PDF / plain <code>.md</code> skip the cockpit; scanned PDF and photos require it. Recommended in Component 1, awaiting your sign-off.</li>
+    <li><strong>Pending-approval staging</strong> — where a <code>needs_approval=True</code> extraction result lives between <code>run_funnel</code> producing it and the cockpit approving it later, in a different process. Not designed.</li>
+    <li><strong>Vault folder placement</strong> — where these notes land in the vault, naming, collision handling. Not designed.</li>
+    <li><strong>Metadata-block parsing</strong> — once the human-readable metadata block's shape is picked, something on the ingestion side has to read it back out during <code>parse_source()</code>. Not designed.</li>
+    <li><strong>Cockpit layout for scanned PDFs</strong> — if scanned PDFs share the photo gate, does the review UI need its own shape, or is "page image next to text" enough? Not decided.</li>
+    <li>Two smaller open notes carried from the full plan: the cut-off quality-check sentence (§8 Q4) and whether to open real ticket numbers now for underline support / local-cost spellcheck / hand-edit highlight box (§8 Q5).</li>
+  </ol>
+</div>
+
+<footer>
+  <p>Sources: integration/to_do_plans/page_scanner_absorption/{00_INDEX, PLAN_T16_*}.md · Automation Personal/Page Scanner/{ingest,process,server}.py + core/*.py</p>
+  <p>Build order per Component 0: 1 → 2 → 3 (independent, parallel-safe) → 4 → 5.</p>
+</footer>

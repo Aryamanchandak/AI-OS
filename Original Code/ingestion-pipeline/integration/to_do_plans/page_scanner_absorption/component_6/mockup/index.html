@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ingestion Review Workspace — Complete Foundation Sketch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    * { margin: 0; }
+    :root {
+      --bg-0: #071018;
+      --bg-1: #10243a;
+      --glass: rgba(244, 249, 255, 0.11);
+      --glass-strong: rgba(244, 249, 255, 0.18);
+      --glass-solid: #17283a;
+      --line: rgba(228, 240, 255, 0.18);
+      --line-strong: rgba(228, 240, 255, 0.34);
+      --text: #f7fbff;
+      --text-2: #c8d4df;
+      --text-3: #91a2b1;
+      --aqua: #73e8d1;
+      --aqua-soft: rgba(115, 232, 209, 0.14);
+      --amber: #ffc76b;
+      --amber-soft: rgba(255, 199, 107, 0.14);
+      --rose: #ff8e9e;
+      --rose-soft: rgba(255, 142, 158, 0.14);
+      --blue: #92bfff;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --ease: cubic-bezier(.16, 1, .3, 1);
+      --sans: "Plus Jakarta Sans", "Avenir Next", "Segoe UI", sans-serif;
+      --serif: "Instrument Serif", Georgia, serif;
+    }
+    html { color-scheme: dark; font-family: var(--sans); background: var(--bg-0); }
+    body {
+      min-width: 320px;
+      min-height: 100svh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 11% 8%, rgba(58, 154, 200, .40), transparent 31rem),
+        radial-gradient(circle at 90% 18%, rgba(107, 87, 213, .26), transparent 27rem),
+        radial-gradient(circle at 54% 105%, rgba(45, 170, 149, .26), transparent 38rem),
+        linear-gradient(145deg, var(--bg-0), var(--bg-1));
+      background-attachment: fixed;
+      line-height: 1.5;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .04;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(115, 232, 209, .58);
+      outline-offset: 2px;
+    }
+    .app { width: min(1800px, 100%); margin: 0 auto; padding: 18px; }
+    .glass {
+      background: linear-gradient(145deg, rgba(255,255,255,.14), rgba(255,255,255,.065));
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.12);
+      backdrop-filter: blur(28px) saturate(135%);
+      -webkit-backdrop-filter: blur(28px) saturate(135%);
+    }
+    .topbar {
+      min-height: 72px;
+      display: grid;
+      grid-template-columns: minmax(210px, 1fr) auto minmax(210px, 1fr);
+      align-items: center;
+      gap: 18px;
+      padding: 13px 16px 13px 20px;
+      border-radius: var(--radius-lg);
+      animation: rise .5s var(--ease) both;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .mark {
+      width: 38px; height: 38px; border-radius: 13px;
+      display: grid; place-items: center;
+      background: linear-gradient(150deg, rgba(146,191,255,.86), rgba(115,232,209,.72));
+      color: #0b1a24; font-weight: 800;
+      box-shadow: 0 8px 30px rgba(86,202,207,.24), inset 0 1px 0 rgba(255,255,255,.7);
+    }
+    .brand-copy strong { display: block; font-size: .91rem; letter-spacing: -.02em; }
+    .brand-copy span { display: block; color: var(--text-3); font-size: .72rem; margin-top: 2px; }
+    .run-state { text-align: center; }
+    .eyebrow { color: var(--text-3); font-size: .67rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .run-state h1 { font-size: .96rem; margin-top: 3px; letter-spacing: -.02em; }
+    .run-state h1 span { color: var(--aqua); }
+    .top-actions { display: flex; justify-content: flex-end; align-items: center; gap: 9px; }
+    .health, .icon-btn, .text-btn, .preview-button {
+      border: 1px solid var(--line);
+      background: rgba(3, 12, 20, .25);
+      border-radius: 999px;
+    }
+    .health { display: flex; align-items: center; gap: 7px; padding: 8px 11px; color: var(--text-2); font-size: .72rem; }
+    .health-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--aqua); box-shadow: 0 0 14px var(--aqua); }
+    .icon-btn { width: 36px; height: 36px; cursor: pointer; transition: .18s var(--ease); }
+    .icon-btn:hover { background: var(--glass-strong); transform: translateY(-1px); }
+    .sequence {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin: 13px 4px 15px;
+      padding: 0 8px;
+      animation: rise .5s .06s var(--ease) both;
+    }
+    .sequence-step { position: relative; padding: 10px 8px 6px 26px; color: var(--text-3); font-size: .68rem; }
+    .sequence-step::before {
+      content: ""; position: absolute; left: 7px; top: 13px; width: 8px; height: 8px; border-radius: 50%;
+      background: #567; box-shadow: 0 0 0 5px rgba(255,255,255,.035);
+    }
+    .sequence-step::after {
+      content: ""; position: absolute; height: 1px; top: 17px; left: 20px; right: -8px; background: var(--line);
+    }
+    .sequence-step:last-child::after { display: none; }
+    .sequence-step.done { color: var(--text-2); }
+    .sequence-step.done::before { background: var(--aqua); }
+    .sequence-step.current { color: var(--text); font-weight: 700; }
+    .sequence-step.current::before { background: var(--amber); box-shadow: 0 0 0 5px var(--amber-soft), 0 0 16px rgba(255,199,107,.5); }
+    .workspace {
+      min-height: calc(100svh - 184px);
+      display: grid;
+      grid-template-columns: minmax(0, 1.36fr) minmax(390px, .84fr);
+      overflow: hidden;
+      border-radius: 28px;
+      animation: rise .55s .11s var(--ease) both;
+    }
+    .evidence-pane { min-width: 0; padding: clamp(18px, 2vw, 30px); border-right: 1px solid var(--line); background: rgba(2,9,16,.18); }
+    .decision-pane { min-width: 0; display: flex; flex-direction: column; background: rgba(255,255,255,.035); }
+    .pane-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+    .pane-head h2 { font-family: var(--serif); font-weight: 400; font-size: clamp(1.7rem, 2.4vw, 2.5rem); letter-spacing: -.025em; line-height: 1.05; }
+    .pane-head p { color: var(--text-3); font-size: .75rem; margin-top: 6px; }
+    .source-badge { flex: 0 0 auto; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 7px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-2); font-size: .67rem; background: rgba(4,13,22,.28); }
+    .visual-stage { min-height: 530px; height: calc(100svh - 310px); position: relative; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 20px; overflow: auto; background: rgba(2, 8, 15, .38); }
+    .page-photo {
+      width: min(74%, 620px); min-height: 700px; margin: 34px; padding: 64px 70px;
+      position: relative; color: #2b2925; background: #f4f0e5;
+      border-radius: 5px 10px 9px 4px; box-shadow: 0 28px 70px rgba(0,0,0,.5), inset -12px 0 24px rgba(82,61,36,.06);
+      transform: rotate(-.45deg);
+    }
+    .page-photo::after { content: "164"; position: absolute; bottom: 25px; left: 50%; color: #988f82; font: 14px Georgia, serif; }
+    .book-kicker { font: italic 15px Georgia, serif; color: #7c7468; text-align: center; margin-bottom: 32px; }
+    .page-photo p { font: 18px/1.72 Georgia, serif; margin-bottom: 19px; }
+    .ink-highlight { background: linear-gradient(transparent 42%, rgba(255,213,73,.64) 42%, rgba(255,213,73,.64) 88%, transparent 88%); }
+    .region { position: absolute; left: 10%; width: 80%; border: 2px solid #32a58e; border-radius: 5px; box-shadow: 0 0 0 4px rgba(50,165,142,.16); }
+    .region.one { top: 216px; height: 68px; }
+    .region.two { top: 430px; height: 101px; border-color: #e3a33d; box-shadow: 0 0 0 4px rgba(227,163,61,.15); }
+    .region-label { position: absolute; top: -24px; left: -2px; padding: 3px 7px; border-radius: 6px; color: #06231e; background: var(--aqua); font: 700 10px var(--sans); }
+    .region.two .region-label { color: #332006; background: var(--amber); }
+    .zoom-tools { position: sticky; z-index: 3; bottom: 14px; justify-self: center; align-self: end; display: flex; gap: 3px; padding: 4px; border-radius: 999px; background: rgba(8,18,27,.76); border: 1px solid var(--line); backdrop-filter: blur(15px); }
+    .zoom-tools button { border: 0; background: transparent; min-width: 34px; height: 30px; border-radius: 999px; cursor: pointer; }
+    .zoom-tools button:hover { background: var(--glass-strong); }
+    .decision-head { padding: 26px 26px 19px; border-bottom: 1px solid var(--line); }
+    .stage-line { display: flex; justify-content: space-between; gap: 14px; align-items: center; }
+    .stage-chip { display: inline-flex; align-items: center; gap: 7px; border-radius: 999px; padding: 7px 10px; color: var(--amber); background: var(--amber-soft); border: 1px solid rgba(255,199,107,.22); font-size: .68rem; font-weight: 700; }
+    .item-count { color: var(--text-3); font-size: .7rem; }
+    .decision-head h2 { font-family: var(--serif); font-size: clamp(1.8rem, 2.5vw, 2.55rem); font-weight: 400; line-height: 1.04; margin-top: 15px; }
+    .blocking { display: flex; gap: 9px; margin-top: 12px; padding: 10px 12px; border-left: 2px solid var(--amber); color: var(--text-2); background: rgba(255,199,107,.07); font-size: .75rem; border-radius: 0 8px 8px 0; }
+    .decision-scroll { flex: 1; min-height: 0; padding: 20px 26px 30px; overflow: auto; }
+    .meta-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+    .meta-cell { padding: 10px; border: 1px solid var(--line); border-radius: 11px; background: rgba(4,12,20,.22); }
+    .meta-cell span { display: block; color: var(--text-3); font-size: .59rem; text-transform: uppercase; letter-spacing: .08em; }
+    .meta-cell strong { display: block; margin-top: 4px; font-size: .73rem; overflow-wrap: anywhere; }
+    .quality-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 17px; }
+    .metric { padding: 6px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--text-2); font-size: .65rem; }
+    .metric.warn { color: var(--amber); border-color: rgba(255,199,107,.26); background: var(--amber-soft); }
+    .passage-card, .proposal-card, .metadata-card {
+      padding: 16px; border: 1px solid var(--line); border-radius: var(--radius-md); background: rgba(6,15,24,.28); margin-bottom: 12px;
+      transition: border-color .18s var(--ease), transform .18s var(--ease);
+    }
+    .passage-card.active { border-color: rgba(115,232,209,.5); box-shadow: 0 0 0 3px rgba(115,232,209,.08); }
+    .card-top { display: flex; justify-content: space-between; gap: 14px; align-items: center; margin-bottom: 12px; }
+    .card-title { display: flex; align-items: center; gap: 8px; font-size: .74rem; font-weight: 700; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--aqua); }
+    .card-top button { border: 0; background: transparent; color: var(--text-3); font-size: .67rem; cursor: pointer; }
+    .diff-label { color: var(--text-3); font-size: .62rem; margin: 10px 0 5px; }
+    .original { color: var(--text-3); text-decoration: line-through; font-family: var(--serif); font-size: 1.05rem; }
+    textarea, .field input {
+      width: 100%; border: 1px solid var(--line); border-radius: 10px; background: rgba(245,249,255,.075); color: var(--text); padding: 11px 12px;
+    }
+    textarea { resize: vertical; min-height: 86px; font-family: var(--serif); font-size: 1.08rem; line-height: 1.5; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; margin-bottom: 6px; color: var(--text-3); font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+    .signal-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .signal { padding: 6px 8px; border-radius: 8px; color: var(--amber); background: var(--amber-soft); border: 1px solid rgba(255,199,107,.24); font-size: .63rem; }
+    .signal.bad { color: var(--rose); background: var(--rose-soft); border-color: rgba(255,142,158,.25); }
+    .evidence-quote { padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(2,9,15,.35); color: var(--text-2); font-family: var(--serif); font-size: 1.05rem; line-height: 1.6; }
+    .evidence-quote mark { color: var(--text); background: rgba(115,232,209,.24); border-bottom: 1px solid var(--aqua); }
+    .confidence { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; margin-top: 13px; color: var(--text-3); font-size: .65rem; }
+    .confidence-track { height: 4px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
+    .confidence-fill { width: 61%; height: 100%; background: linear-gradient(90deg, var(--amber), var(--aqua)); }
+    .decision-actions { padding: 15px 20px; display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; border-top: 1px solid var(--line); background: rgba(4,12,20,.34); }
+    .action { border: 1px solid var(--line); border-radius: 11px; padding: 11px 14px; background: rgba(255,255,255,.055); cursor: pointer; transition: .18s var(--ease); font-size: .73rem; font-weight: 700; }
+    .action:hover { transform: translateY(-1px); background: var(--glass-strong); }
+    .action.reject { color: var(--rose); }
+    .action.approve { color: #05231c; border-color: transparent; background: linear-gradient(145deg, #91f2df, #65cfbe); box-shadow: 0 9px 28px rgba(71,201,178,.19); }
+    .key { opacity: .58; font-size: .58rem; margin-left: 6px; }
+    .save-state { align-self: center; justify-self: end; color: var(--text-3); font-size: .63rem; padding-right: 4px; }
+    .preview {
+      position: fixed; z-index: 20; left: 50%; bottom: 16px; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 4px; padding: 5px; max-width: calc(100vw - 24px); overflow-x: auto;
+      border-radius: 999px; background: rgba(5,14,22,.82); border: 1px solid var(--line-strong); box-shadow: 0 14px 50px rgba(0,0,0,.5); backdrop-filter: blur(22px);
+    }
+    .preview-label { padding: 0 10px; color: var(--text-3); font-size: .59rem; white-space: nowrap; text-transform: uppercase; letter-spacing: .08em; }
+    .preview-button { padding: 8px 11px; color: var(--text-2); font-size: .65rem; cursor: pointer; white-space: nowrap; }
+    .preview-button.active { color: #06221c; background: var(--aqua); border-color: transparent; }
+    .coverage {
+      position: fixed; z-index: 30; right: 18px; top: 18px; bottom: 18px; width: min(410px, calc(100vw - 36px));
+      padding: 22px; border-radius: 22px; transform: translateX(calc(100% + 30px)); opacity: 0; pointer-events: none;
+      transition: .32s var(--ease); overflow: auto;
+    }
+    .coverage.open { transform: translateX(0); opacity: 1; pointer-events: auto; }
+    .coverage h2 { font-family: var(--serif); font-size: 2rem; font-weight: 400; }
+    .coverage > p { color: var(--text-3); font-size: .72rem; margin: 7px 0 19px; }
+    .coverage-section { padding: 14px 0; border-top: 1px solid var(--line); }
+    .coverage-section h3 { font-size: .72rem; margin-bottom: 8px; }
+    .coverage-section ul { padding-left: 18px; color: var(--text-2); font-size: .69rem; }
+    .coverage-section li + li { margin-top: 5px; }
+    .close-coverage { position: absolute; top: 15px; right: 15px; }
+    .empty-visual, .complete-visual { width: min(600px, 86%); padding: 38px; text-align: center; }
+    .orb { width: 110px; height: 110px; margin: 0 auto 24px; border-radius: 50%; display: grid; place-items: center; color: #09251f; font-size: 2.2rem; background: radial-gradient(circle at 34% 26%, #d8fff7, var(--aqua) 42%, #3d9d8b); box-shadow: 0 22px 80px rgba(77,226,198,.24); }
+    .empty-visual h3, .complete-visual h3 { font-family: var(--serif); font-size: 2.5rem; font-weight: 400; }
+    .empty-visual p, .complete-visual p { color: var(--text-3); font-size: .78rem; margin-top: 9px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 20px; }
+    .summary-grid div { padding: 12px; text-align: left; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.04); }
+    .summary-grid strong { display: block; font-size: 1.25rem; }
+    .summary-grid span { color: var(--text-3); font-size: .61rem; }
+    [hidden] { display: none !important; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 980px) {
+      .topbar { grid-template-columns: 1fr auto; }
+      .run-state { display: none; }
+      .workspace { grid-template-columns: 1fr; min-height: auto; overflow: visible; }
+      .evidence-pane { border-right: 0; border-bottom: 1px solid var(--line); }
+      .visual-stage { height: auto; min-height: 480px; }
+      .decision-pane { min-height: 650px; }
+      .page-photo { width: min(82%, 570px); }
+    }
+    @media (max-width: 640px) {
+      .app { padding: 9px; }
+      .topbar { border-radius: 18px; padding: 11px; }
+      .brand-copy span, .health span { display: none; }
+      .sequence { overflow-x: auto; grid-template-columns: repeat(5, minmax(100px, 1fr)); }
+      .workspace { border-radius: 20px; }
+      .evidence-pane, .decision-head, .decision-scroll { padding: 17px; }
+      .visual-stage { min-height: 400px; }
+      .page-photo { width: 92%; min-height: 560px; padding: 44px 38px; margin: 20px; }
+      .page-photo p { font-size: 15px; }
+      .decision-actions { grid-template-columns: 1fr 1fr; padding-bottom: 68px; }
+      .save-state { display: none; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .preview-label { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .glass, .preview, .coverage { background: var(--glass-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar glass">
+      <div class="brand">
+        <div class="mark">I</div>
+        <div class="brand-copy"><strong>Ingestion</strong><span>Sequential review workspace</span></div>
+      </div>
+      <div class="run-state">
+        <div class="eyebrow">Run 08AUG–1842</div>
+        <h1>Paused for <span id="header-reason">image approval</span></h1>
+      </div>
+      <div class="top-actions">
+        <div class="health"><i class="health-dot"></i><span>All systems ready</span></div>
+        <button class="icon-btn" id="coverage-open" aria-label="Open complete feature inventory">☷</button>
+        <button class="icon-btn" aria-label="Keyboard shortcuts">⌘</button>
+      </div>
+    </header>
+
+    <nav class="sequence" aria-label="Run sequence. Steps are status only and cannot be selected.">
+      <div class="sequence-step done">Preflight</div>
+      <div class="sequence-step current">Intake images</div>
+      <div class="sequence-step">Obsidian capture</div>
+      <div class="sequence-step">Knowledge review</div>
+      <div class="sequence-step">Complete</div>
+    </nav>
+
+    <section class="workspace glass">
+      <div class="evidence-pane">
+        <div class="pane-head">
+          <div><h2 id="evidence-title">Source evidence</h2><p id="evidence-subtitle">The original stays visible while you decide.</p></div>
+          <div class="source-badge" id="source-badge">IMG_4821.HEIC · Atomic Habits</div>
+        </div>
+        <div class="visual-stage" id="visual-stage">
+          <article class="page-photo" id="page-photo">
+            <div class="book-kicker">Atomic Habits · Chapter 6</div>
+            <p>You do not rise to the level of your goals. <span class="ink-highlight">You fall to the level of your systems.</span></p>
+            <p>Every action you take is a vote for the type of person you wish to become. No single instance will transform your beliefs, but as the votes build up, so does the evidence of your new identity.</p>
+            <p><span class="ink-highlight">The most practical way to change who you are is to change what you do.</span></p>
+            <div class="region one"><span class="region-label">Passage 1</span></div>
+            <div class="region two"><span class="region-label">Passage 2</span></div>
+          </article>
+          <div class="zoom-tools" id="zoom-tools"><button aria-label="Zoom out">−</button><button>100%</button><button aria-label="Zoom in">＋</button><button>Draw region</button></div>
+        </div>
+      </div>
+
+      <div class="decision-pane">
+        <div class="decision-head">
+          <div class="stage-line"><span class="stage-chip" id="stage-chip">● Image &amp; OCR review</span><span class="item-count" id="item-count">Image 2 of 7 · Passage 1 of 2</span></div>
+          <h2 id="decision-title">Confirm the text before it enters Obsidian</h2>
+          <div class="blocking" id="blocking">This image blocks the run until it is approved, discarded, or marked for retake.</div>
+        </div>
+        <div class="decision-scroll" id="decision-content">
+          <div class="meta-grid">
+            <div class="meta-cell"><span>Book</span><strong>Atomic Habits</strong></div>
+            <div class="meta-cell"><span>Page</span><strong>164</strong></div>
+            <div class="meta-cell"><span>Source</span><strong>IMG_4821.HEIC</strong></div>
+          </div>
+          <div class="quality-row"><span class="metric">Blur 0.08</span><span class="metric">Glare 0.03</span><span class="metric warn">OCR confidence 86%</span><span class="metric">Auto-correct guarded</span></div>
+          <article class="passage-card active">
+            <div class="card-top"><div class="card-title"><i class="dot"></i>Passage 1 · linked region</div><button>Remove</button></div>
+            <div class="diff-label">Original OCR</div><p class="original">You fall to the level of your systerns.</p>
+            <div class="diff-label">Automatic correction · 1 guarded change</div>
+            <textarea aria-label="Final text for passage 1">You fall to the level of your systems.</textarea>
+          </article>
+          <article class="passage-card">
+            <div class="card-top"><div class="card-title"><i class="dot" style="background:var(--amber)"></i>Passage 2 · linked region</div><button>Remove</button></div>
+            <textarea aria-label="Final text for passage 2">The most practical way to change who you are is to change what you do.</textarea>
+          </article>
+        </div>
+        <footer class="decision-actions">
+          <button class="action">Back <span class="key">←</span></button>
+          <button class="action reject" id="reject-action">Retake <span class="key">F</span></button>
+          <span class="save-state">✓ Saved 4 seconds ago</span>
+          <button class="action approve" id="approve-action">Approve &amp; continue <span class="key">⌘↵</span></button>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <aside class="coverage glass" id="coverage" aria-label="Complete mockup coverage">
+    <button class="icon-btn close-coverage" id="coverage-close" aria-label="Close feature inventory">×</button>
+    <h2>Foundation coverage</h2>
+    <p>This inventory prevents visual polish from hiding a missing capability. The bottom switcher previews representative states only; it is not product navigation.</p>
+    <section class="coverage-section"><h3>Run integrity</h3><ul><li>Preflight health and retry</li><li>Fixed, non-clickable sequence</li><li>Blocking reason and durable resume point</li><li>Empty-stage skip, failure, retry, and completion</li><li>Run and item progress, save state, audit trail</li></ul></section>
+    <section class="coverage-section"><h3>Book identity</h3><ul><li>Needs-cover blank state</li><li>Proposed title, author, year, confidence</li><li>Confirm, edit, and re-run lookup</li><li>Clear state skips automatically</li></ul></section>
+    <section class="coverage-section"><h3>Image &amp; OCR</h3><ul><li>Zoomable source image and linked regions</li><li>Multiple passages</li><li>Raw OCR, automatic correction, final edit</li><li>Blur, glare, confidence, retake</li><li>Drag-select missed text</li><li>Publish progress and failure state</li></ul></section>
+    <section class="coverage-section"><h3>Component 8 cleanup</h3><ul><li>Abbreviation match preview and remembered mapping</li><li>Regex whole-word safety and match count</li><li>Independent spelling accept/reject</li><li>Context, proposal source, guards, and undo</li><li>Zero-suggestion skip differs from checker failure</li></ul></section>
+    <section class="coverage-section"><h3>T19 proposals</h3><ul><li>Concept, claim, and relation field shapes</li><li>Evidence quote and exact offset highlight</li><li>Readable flag plus literal signal code</li><li>Proposal and overall confidence</li><li>Independent approve, edit, reject decisions</li><li>Resolver note and partial-envelope progress</li></ul></section>
+    <section class="coverage-section"><h3>Component 7</h3><ul><li>On-screen region entry point</li><li>Highlight vs. surrounding-context display</li><li>Multiple independent selections</li><li>Permission, empty-selection, and OCR errors</li></ul></section>
+  </aside>
+
+  <div class="preview" aria-label="Design-review state switcher. Not proposed product navigation.">
+    <span class="preview-label">Sketch states only</span>
+    <button class="preview-button" data-view="preflight">System states</button>
+    <button class="preview-button" data-view="metadata">Book identity</button>
+    <button class="preview-button active" data-view="ocr">Image &amp; OCR</button>
+    <button class="preview-button" data-view="cleanup">Text cleanup</button>
+    <button class="preview-button" data-view="proposal">T19 proposal</button>
+    <button class="preview-button" data-view="capture">On-screen capture</button>
+    <button class="preview-button" data-view="complete">Run complete</button>
+  </div>
+
+  <script>
+    const $ = (selector) => document.querySelector(selector);
+    const els = {
+      headerReason: $("#header-reason"), evidenceTitle: $("#evidence-title"), evidenceSubtitle: $("#evidence-subtitle"),
+      sourceBadge: $("#source-badge"), visual: $("#visual-stage"), stageChip: $("#stage-chip"), itemCount: $("#item-count"),
+      decisionTitle: $("#decision-title"), blocking: $("#blocking"), content: $("#decision-content"), reject: $("#reject-action"), approve: $("#approve-action")
+    };
+    const pageVisual = () => `<article class="page-photo"><div class="book-kicker">Atomic Habits · Chapter 6</div><p>You do not rise to the level of your goals. <span class="ink-highlight">You fall to the level of your systems.</span></p><p>Every action you take is a vote for the type of person you wish to become. No single instance will transform your beliefs, but as the votes build up, so does the evidence of your new identity.</p><p><span class="ink-highlight">The most practical way to change who you are is to change what you do.</span></p><div class="region one"><span class="region-label">Passage 1</span></div><div class="region two"><span class="region-label">Passage 2</span></div></article><div class="zoom-tools"><button>−</button><button>100%</button><button>＋</button><button>Draw region</button></div>`;
+    const views = {
+      preflight: {
+        reason: "preflight repair", evidenceTitle: "System readiness", evidenceSubtitle: "No state changes occur until every required dependency passes.", source: "Run 08AUG–1842 · attempt 2",
+        visual: `<div class="empty-visual"><div class="orb" style="background:radial-gradient(circle at 34% 26%,#ffe6e9,var(--rose) 48%,#a94657);color:#351017">!</div><h3>One dependency needs attention</h3><p>The run remains safely at the start. Fix the failure, then retry this same preflight.</p></div>`,
+        chip: "● Preflight · blocked", count: "4 of 5 checks passed", title: "Restore the model gateway before starting", block: "The shared gateway at localhost:8107 did not respond. No intake or vault state has changed.", reject: "Cancel run", approve: "Retry preflight",
+        content: `<div class="quality-row"><span class="metric">✓ Storage paths</span><span class="metric">✓ SQLite</span><span class="metric">✓ Neo4j</span><span class="metric">✓ Obsidian vault</span><span class="metric warn">× Model gateway</span></div><article class="proposal-card"><div class="card-top"><div class="card-title"><i class="dot" style="background:var(--rose)"></i>ConnectionError · retryable</div></div><div class="evidence-quote">Could not reach the shared model gateway at localhost:8107. Verify the service, then retry. The ordered run has not started.</div></article><div class="blocking" style="border-color:var(--blue)">This same pattern covers loading, offline/reconnect, API failure, retry-in-progress, and successful preflight states.</div>`
+      },
+      metadata: {
+        reason: "book confirmation", evidenceTitle: "Identify this book", evidenceSubtitle: "The run could not safely resolve the source.", source: "Folder · 7 unprocessed images",
+        visual: `<div class="empty-visual"><div class="orb">?</div><h3>Cover needed</h3><p>Add a cover image or enter only what you know. The system must not fabricate a guess.</p></div>`,
+        chip: "● Book identity", count: "Before image 1 of 7", title: "Resolve the source before OCR review", block: "Book identity is required before these images can be published.", reject: "Pause run", approve: "Confirm & continue",
+        content: `<article class="metadata-card"><div class="field"><label>Book title</label><input placeholder="Required — currently unknown"></div><div class="field"><label>Author</label><input placeholder="Unknown"></div><div class="field"><label>Publication year</label><input placeholder="Optional"></div><div class="quality-row"><span class="metric warn">needs_cover · unresolved</span><span class="metric">Lookup · Open Library + Google Books</span></div><button class="action">Re-run lookup</button></article><article class="metadata-card"><div class="card-top"><div class="card-title"><i class="dot" style="background:var(--amber)"></i>needs_confirm · proposed result</div></div><div class="meta-grid"><div class="meta-cell"><span>Title</span><strong>Atomic Habits</strong></div><div class="meta-cell"><span>Author</span><strong>James Clear</strong></div><div class="meta-cell"><span>Year</span><strong>2018</strong></div></div><div class="quality-row"><span class="metric">Confidence · probable</span><span class="metric">Provenance · Google Books</span></div></article><div class="blocking">clear · no screen is shown; the workflow advances automatically.</div>`
+      },
+      ocr: {
+        reason: "image approval", evidenceTitle: "Source evidence", evidenceSubtitle: "The original stays visible while you decide.", source: "IMG_4821.HEIC · Atomic Habits", visual: pageVisual(), chip: "● Image & OCR review", count: "Image 2 of 7 · Passage 1 of 2", title: "Confirm the text before it enters Obsidian", block: "This image blocks the run until it is approved, discarded, or marked for retake.", reject: "Retake", approve: "Approve & continue",
+        content: `<div class="meta-grid"><div class="meta-cell"><span>Book</span><strong>Atomic Habits</strong></div><div class="meta-cell"><span>Page</span><strong>164</strong></div><div class="meta-cell"><span>Source</span><strong>IMG_4821.HEIC</strong></div></div><div class="quality-row"><span class="metric">Blur 0.08</span><span class="metric">Glare 0.03</span><span class="metric warn">OCR confidence 86%</span><span class="metric">Auto-correct guarded</span><span class="metric">Color sample 27,181,224</span></div><article class="passage-card active"><div class="card-top"><div class="card-title"><i class="dot"></i>Passage 1 · linked region</div><button>Remove</button></div><div class="diff-label">Original OCR</div><p class="original">You fall to the level of your systerns.</p><div class="diff-label">Automatic correction · 1 guarded change</div><textarea>You fall to the level of your systems.</textarea></article><article class="passage-card"><div class="card-top"><div class="card-title"><i class="dot" style="background:var(--amber)"></i>Passage 2 · linked region</div><button>Remove</button></div><textarea>The most practical way to change who you are is to change what you do.</textarea></article><div class="blocking" style="border-color:var(--rose)">Publication state preview · if the vault write fails, show the exact error and Retry publication here; do not advance to Obsidian capture.</div>`
+      },
+      cleanup: {
+        reason: "text cleanup", evidenceTitle: "Draft text and match context", evidenceSubtitle: "Abbreviations run before independently reviewed spelling suggestions.", source: "strategy-notes.docx · DOCX XML",
+        visual: `<article class="page-photo" style="min-height:590px"><div class="book-kicker">Extracted draft · line 14</div><p>The team measures <span class="ink-highlight">dur</span> against the expected cash-flow timing.</p><p>The revised assumptoin should be checked before the note enters the vault.</p><div class="region one" style="top:142px;height:58px"><span class="region-label">1 abbreviation match</span></div><div class="region two" style="top:228px;height:58px"><span class="region-label">Spelling suggestion</span></div></article>`,
+        chip: "● Component 8 · Text cleanup", count: "File 3 of 6 · 1 mapping · 1 suggestion", title: "Apply only the changes you intend", block: "Final publication waits until the abbreviation preview and spelling suggestion are resolved.", reject: "Skip suggestion", approve: "Accept & continue",
+        content: `<article class="metadata-card"><div class="card-top"><div class="card-title"><i class="dot"></i>Abbreviation expansion</div><span class="metric">Regex · exact whole word</span></div><div class="meta-grid"><div class="field"><label>Shorthand</label><input value="dur"></div><div class="field"><label>Expansion</label><input value="Duration"></div><div class="meta-cell"><span>Matches</span><strong>1 location</strong></div></div><div class="evidence-quote"><mark>dur</mark> → Duration</div><div class="quality-row" style="margin-top:12px"><button class="action">Apply once</button><button class="action">Apply + remember</button><span class="metric">Case-sensitive</span></div></article><article class="proposal-card"><div class="card-top"><div class="card-title"><i class="dot" style="background:var(--amber)"></i>Spelling suggestion · line 15</div><span class="signal">Edit distance 2</span></div><div class="meta-grid"><div class="meta-cell"><span>Original</span><strong>assumptoin</strong></div><div class="meta-cell"><span>Suggested</span><strong>assumption</strong></div><div class="meta-cell"><span>Source</span><strong>Model + guards</strong></div></div><div class="evidence-quote">The revised <mark>assumptoin</mark> should be checked before the note enters the vault.</div><div class="quality-row" style="margin-top:12px"><button class="action reject">Reject</button><button class="action approve">Accept suggestion</button><button class="action">Undo</button></div></article><div class="blocking" style="border-color:var(--blue)">Zero suggestions skips automatically. Checker unavailable is a retryable failure, never reported as “clean.”</div>`
+      },
+      proposal: {
+        reason: "knowledge review", evidenceTitle: "Evidence in source", evidenceSubtitle: "Character range 183–254 · exact match shown.", source: "Atomic Habits · p164 · Highlight 2", visual: `<article class="page-photo" style="min-height:560px"><div class="book-kicker">Captured Obsidian note</div><p>Every action you take is a vote for the type of person you wish to become.</p><p><span class="ink-highlight">The most practical way to change who you are is to change what you do.</span></p><p>The effect of one action is small, but repeated votes accumulate into evidence for an identity.</p><div class="region two" style="top:238px"><span class="region-label">Evidence · 183–254</span></div></article>`, chip: "● T19 · Relation proposal", count: "Envelope 4 of 9 · Proposal 2 of 3", title: "Review the flagged knowledge", block: "This proposal cannot dispatch until you approve, edit, or reject it.", reject: "Reject", approve: "Approve proposal",
+        content: `<div class="signal-row"><span class="signal bad" title="evidence_quote_mismatch">Quote differs from source · evidence_quote_mismatch</span><span class="signal" title="proposal_model_confidence_below_threshold">Confidence below threshold · proposal_model_confidence_below_threshold</span></div><article class="proposal-card"><div class="field"><label>Subject</label><input value="Identity change"></div><div class="field"><label>Relationship</label><input value="is reinforced by"></div><div class="field"><label>Object</label><input value="repeated action"></div><div class="diff-label">Evidence quote</div><div class="evidence-quote">“The most practical way to <mark>change who you are is to change what you do</mark>.”</div><div class="confidence"><div class="confidence-track"><div class="confidence-fill"></div></div><strong>61% proposal · 78% overall</strong></div></article><div class="meta-grid"><div class="meta-cell"><span>Concept shape</span><strong>Label + aliases</strong></div><div class="meta-cell"><span>Claim shape</span><strong>Editable claim text</strong></div><div class="meta-cell"><span>Relation shape</span><strong>Subject / predicate / object</strong></div></div><div class="field"><label>Reviewer note · optional</label><textarea style="min-height:64px" placeholder="Why you changed or rejected this proposal"></textarea></div><div class="quality-row"><span class="metric">Resolver · Aryaman</span><span class="metric">1 approved</span><span class="metric warn">2 unresolved</span></div>`
+      },
+      capture: {
+        reason: "on-screen selection", evidenceTitle: "Screen capture & context", evidenceSubtitle: "Component 7 extends this pane without creating a new app.", source: "Preview.app · research-paper.pdf", visual: `<article class="page-photo" style="min-height:590px"><div class="book-kicker">On-screen document · selection mode</div><p style="opacity:.55">The preceding paragraph provides the assumptions and terminology needed to interpret the selected statement.</p><p><span class="ink-highlight">A robust ingestion boundary preserves both the selected claim and the context in which it was made.</span></p><p style="opacity:.55">The following paragraph qualifies the claim and identifies its intended scope.</p><div class="region one" style="top:222px;height:105px"><span class="region-label">Highlight</span></div></article><div class="zoom-tools"><button>− context</button><button>2 lines each side</button><button>＋ context</button></div>`, chip: "● T45 · On-screen capture", count: "Selection 1 of 2", title: "Confirm the highlight and its context", block: "The selection remains local until its text, context, and provenance are approved.", reject: "Discard", approve: "Add highlight",
+        content: `<div class="quality-row"><span class="metric">Source · Preview.app</span><span class="metric">Boundary · user_selection</span><span class="metric">Context · 2 lines each side</span></div><article class="passage-card active"><div class="diff-label">Selected highlight</div><textarea>A robust ingestion boundary preserves both the selected claim and the context in which it was made.</textarea><div class="diff-label">Captured surrounding context</div><textarea style="min-height:125px">The preceding paragraph provides the assumptions and terminology needed to interpret the selected statement.\n\nThe following paragraph qualifies the claim and identifies its intended scope.</textarea></article><div class="meta-grid"><div class="meta-cell"><span>Selections</span><strong>2 independent</strong></div><div class="meta-cell"><span>Capture</span><strong>Screen region</strong></div><div class="meta-cell"><span>Permission</span><strong>Granted</strong></div></div><div class="blocking" style="border-color:var(--rose)">Error coverage · permission denied, empty selection, OCR failure, duplicate capture, and retry all use this blocking slot without losing the selection.</div>`
+      },
+      complete: {
+        reason: "nothing", evidenceTitle: "Run complete", evidenceSubtitle: "Every mandatory stage is clear.", source: "Run 08AUG–1842", visual: `<div class="complete-visual"><div class="orb">✓</div><h3>Everything made the crossing</h3><p>No unresolved gate or failed mandatory action remains.</p><div class="summary-grid"><div><strong>7</strong><span>images approved</span></div><div><strong>7</strong><span>notes published</span></div><div><strong>23</strong><span>highlights extracted</span></div><div><strong>4 / 1 / 0</strong><span>proposals approved / edited / rejected</span></div></div></div>`, chip: "● Run complete", count: "Finished in 12m 44s", title: "The ingestion run completed cleanly", block: "No blocked items or retryable failures remain.", reject: "View audit", approve: "Start new run",
+        content: `<div class="meta-grid"><div class="meta-cell"><span>Intake</span><strong>7 approved · 0 retake</strong></div><div class="meta-cell"><span>Obsidian</span><strong>7 captured</strong></div><div class="meta-cell"><span>Dispatch</span><strong>All targets done</strong></div></div><article class="proposal-card"><div class="card-top"><div class="card-title"><i class="dot"></i>Run integrity</div></div><div class="quality-row"><span class="metric">0 unresolved</span><span class="metric">0 failed</span><span class="metric">2 stages skipped empty</span></div><div class="evidence-quote">A run only reaches this state after every mandatory decision and write has a recorded terminal result.</div></article><button class="action">Open complete audit trail</button>`
+      }
+    };
+    function render(viewName) {
+      const view = views[viewName];
+      els.headerReason.textContent = view.reason;
+      els.evidenceTitle.textContent = view.evidenceTitle;
+      els.evidenceSubtitle.textContent = view.evidenceSubtitle;
+      els.sourceBadge.textContent = view.source;
+      els.visual.innerHTML = view.visual;
+      els.stageChip.textContent = view.chip;
+      els.itemCount.textContent = view.count;
+      els.decisionTitle.textContent = view.title;
+      els.blocking.textContent = view.block;
+      els.content.innerHTML = view.content;
+      els.reject.childNodes[0].textContent = `${view.reject} `;
+      els.approve.childNodes[0].textContent = `${view.approve} `;
+      document.querySelectorAll(".preview-button").forEach(button => button.classList.toggle("active", button.dataset.view === viewName));
+      document.querySelectorAll(".sequence-step").forEach((step, index) => {
+        step.classList.remove("done", "current");
+        const current = viewName === "preflight" ? 0 : viewName === "metadata" || viewName === "ocr" || viewName === "cleanup" || viewName === "capture" ? 1 : viewName === "proposal" ? 3 : 4;
+        if (index < current) step.classList.add("done");
+        if (index === current) step.classList.add("current");
+      });
+    }
+    document.querySelectorAll(".preview-button").forEach(button => button.addEventListener("click", () => render(button.dataset.view)));
+    $("#coverage-open").addEventListener("click", () => $("#coverage").classList.add("open"));
+    $("#coverage-close").addEventListener("click", () => $("#coverage").classList.remove("open"));
+    document.addEventListener("keydown", event => { if (event.key === "Escape") $("#coverage").classList.remove("open"); });
+  </script>
+</body>
+</html>

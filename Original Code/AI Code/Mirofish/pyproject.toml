@@ -1,0 +1,42 @@
+[project]
+name = "mirfish"
+version = "0.1.0"
+description = "MIRFISH — Event Transmission Mapping System. Hypothesis generator, never a signal."
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7",
+    "anthropic>=0.60",
+    "typer>=0.12",
+    "jinja2>=3.1",
+    "pyyaml>=6.0",
+    "rapidfuzz>=3.9",
+]
+
+[project.scripts]
+mirfish = "mirfish.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mirfish"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: tests that hit the real Anthropic API (skipped in CI)",
+]

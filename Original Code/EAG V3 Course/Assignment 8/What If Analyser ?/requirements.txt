@@ -1,0 +1,16 @@
+# LLM extraction and scenario-narrative client.
+google-genai>=1.51.0
+# Direct structured-output dependency (do not rely on SDK transitivity).
+pydantic>=2.0
+# Directed-graph validation, traversal, and topological ordering.
+networkx>=3.0
+# Loads local development credentials from .env.
+python-dotenv>=1.0
+# Serves the HTML UI, background-job endpoints, and SSE progress stream.
+fastapi>=0.115
+uvicorn>=0.34
+jinja2>=3.1
+# Retained for the legacy main.py rendering shell.
+streamlit>=1.50
+# Direct tabular UI dependency (do not rely on Streamlit transitivity).
+pandas>=2.0

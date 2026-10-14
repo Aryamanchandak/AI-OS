@@ -1,0 +1,2 @@
+Short feedback cycles increase learning speed. Faster learning improves decision quality.
+Long review delays reduce iteration speed. These effects weaken when teams cannot act on feedback.

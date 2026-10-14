@@ -1,0 +1,24 @@
+# Obsidian ingestion filters — edit this file to control WHAT gets ingested.
+#
+# Format (one rule per line, globs are relative to the vault root):
+#   exclude <glob>   never ingest matching paths
+#   include <glob>   if ANY include lines exist, ONLY matching paths are considered
+#                    (excludes still apply on top)
+#
+# A bare folder name like "Notion" matches the folder and everything under it.
+# Only .md files are ever ingested, regardless of these rules.
+# Any other non-blank, non-comment line is a configuration error, not a
+# silently skipped rule.
+
+# --- Always excluded: app internals and trash ---
+exclude .obsidian
+exclude .trash
+
+# --- Excluded by default: bulk imports / archives that aren't personal notes.
+#     Delete a line if you DO want that folder ingested. ---
+exclude Notion
+exclude Readwise
+
+# --- Example: to switch to an allowlist instead, add include lines, e.g.
+# include Daily Notes
+# include Projects

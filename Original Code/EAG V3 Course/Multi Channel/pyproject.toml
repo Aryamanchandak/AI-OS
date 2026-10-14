@@ -1,0 +1,29 @@
+[project]
+name = "switchboard"
+version = "0.1.0"
+description = "Human-in-the-loop multi-channel AI assistant"
+requires-python = ">=3.12"
+dependencies = [
+    "anthropic>=0.40",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "jinja2>=3.1",
+    "apscheduler>=3.10",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
+    # Gmail + Calendar
+    "google-api-python-client>=2.150",
+    "google-auth-oauthlib>=1.2",
+    # Channels (added per phase)
+    "slack-sdk>=3.33",
+    "twilio>=9.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "ruff>=0.7"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

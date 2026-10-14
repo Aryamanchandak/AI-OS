@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "study_system"
+version = "0.1.0"
+description = "CFA L1 study engine: headless card generation and FSRS review state, consumed by mcp_server's study tool group"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.25.0",
+    "openai>=1.30.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+# NOTE: networkx and chromadb moved with kg/ and vector/ into the
+# knowledge_graph and vector_db packages respectively — no longer needed
+# here. Runtime access to final KG/vector data goes through the repository
+# interfaces in study_system.repositories.
+#
+# NOTE: the mcp SDK dependency and study_system.mcp/ package moved to the
+# mcp_server project (2026-07-18) — that project's `study` tool group is
+# this system's sole MCP surface now. See plans/09_MCP_ADAPTER_RELOCATION.md.
+#
+# NOTE: study_system.automation/ and scripts/run_study_automation.sh moved to
+# the sibling study-automation project (2026-07-18) — that project imports
+# this package as a library the same way mcp_server does. This repo has no
+# adapter code of its own anymore. See plans/10_AUTOMATION_ADAPTER_RELOCATION_PLAN.md.
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "mypy>=1.8",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

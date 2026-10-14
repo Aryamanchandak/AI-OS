@@ -1,0 +1,70 @@
+MODEL FORGE — SETUP AND CAPABILITY RUNBOOK
+==========================================
+
+Requires Python 3.10 or newer.
+
+Install everything:
+  python3.11 -m pip install -e .
+
+Offline/local mode:
+  MODEL_FORGE_MODE=mock model-forge serve
+
+OpenAI-assisted extraction and audio transcription:
+  OPENAI_API_KEY=... MODEL_FORGE_MODE=openai model-forge serve
+
+Open http://127.0.0.1:8765. The web workspace can paste text, upload TXT/Markdown/
+PDF/audio, fetch a URL, ingest live news, inspect collisions, Steelman any edge,
+run a model forward on news, and resolve predictions to update calibration.
+
+CLI WALKTHROUGH
+---------------
+Forge and run every honing pass:
+  model-forge forge --file examples/feedback-loop.txt --predictions 4 --transfer-domain "software delivery"
+
+Other inputs:
+  model-forge forge --url https://example.com/article
+  model-forge forge --news "semiconductor supply constraints"
+  model-forge forge --text "Competition increases innovation. Delay reduces learning."
+
+Library and collision workflow:
+  model-forge list
+  model-forge show MODEL_ID
+  model-forge collisions MODEL_ID
+
+AI OS workflow:
+  model-forge harden MODEL_ID EDGE_ID
+  model-forge run-forward MODEL_ID "Observed evidence text"
+  model-forge watch-news MODEL_ID "relevant live-news query"
+  model-forge score MODEL_ID PREDICTION_ID 1 --note "Observed outcome"
+
+Use --library PATH on any command to select a library. The default is
+./model-library. Each accepted model creates authoritative JSON and a Markdown
+rendering. Rejected zero-prediction models are returned but are not admitted.
+
+HTTP API
+--------
+GET  /api/models
+GET  /api/models/{id}
+GET  /api/models/{id}/collisions
+POST /api/forge
+POST /api/models/{id}/hone
+POST /api/models/{id}/harden
+POST /api/models/{id}/run-forward
+POST /api/models/{id}/run-news
+POST /api/models/{id}/score
+
+Requests and responses use JSON. Browser uploads send kind=file, filename, and
+base64 content. Source files are capped at 25 MB; the server's 35 MB request limit
+accounts for base64 expansion.
+
+REMOTE ADAPTERS
+---------------
+The local integrations are the defaults. Independently deployed projects can use:
+  STEELMAN_ENDPOINT=https://host/adapter
+  MIRFISH_ENDPOINT=https://host/adapter
+  DECISION_TRACKER_ENDPOINT=https://host/adapter
+  MODEL_FORGE_ADAPTER_TOKEN=...
+
+Every request is a model-forge.adapter/v1 envelope. Remote responses must echo the
+same schema. If no endpoint is set, the complete persistent local implementation
+runs without network services.

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "hello",
+    "project_id": "basic",
+    "prompt": "Say hello."
+  },
+  {
+    "id": "shannon",
+    "project_id": "web-research",
+    "prompt": "Fetch https://en.wikipedia.org/wiki/Claude_Shannon and tell me his birth date, death date, and three key contributions to information theory."
+  },
+  {
+    "id": "tokyo_weather",
+    "project_id": "web-research",
+    "prompt": "Find 3 family-friendly things to do in Tokyo this weekend. Check Saturday's weather forecast there and tell me which one is most appropriate."
+  },
+  {
+    "id": "birthday_write",
+    "project_id": "birthday",
+    "prompt": "My mom's birthday is 15 May 2026. Remember that and give me a calendar reminder for two weeks before and on the day."
+  },
+  {
+    "id": "birthday_read",
+    "project_id": "birthday",
+    "prompt": "When is mom's birthday?"
+  },
+  {
+    "id": "asyncio_research",
+    "project_id": "web-research",
+    "prompt": "Search for 'Python asyncio best practices', read the top 3 results, and give me a short numbered list of the advice they agree on."
+  },
+  {
+    "id": "attention_index",
+    "project_id": "papers",
+    "prompt": "Index the file papers/attention.txt and tell me what the three key contributions of the Transformer architecture are according to this paper."
+  },
+  {
+    "id": "corpus_index",
+    "project_id": "papers",
+    "prompt": "Index every .txt file under papers/. Confirm how many chunks were indexed in total."
+  },
+  {
+    "id": "corpus_cot",
+    "project_id": "papers",
+    "prompt": "Across the papers I have indexed, what do they say about chain-of-thought reasoning?"
+  },
+  {
+    "id": "credit_assignment",
+    "project_id": "papers",
+    "prompt": "Across these papers, how do they handle the credit assignment problem?"
+  },
+  {
+    "id": "react_vs_cot",
+    "project_id": "papers",
+    "prompt": "Compare how the ReAct paper and the Chain-of-Thought paper differ in their treatment of intermediate reasoning."
+  },
+  {
+    "id": "populations",
+    "project_id": "parallel-research",
+    "prompt": "Find the populations of London, Paris, Berlin and tell me which two are closest in size."
+  },
+  {
+    "id": "graceful_failure",
+    "project_id": "failure",
+    "prompt": "Read /nonexistent/path.txt and tell me what's in it."
+  },
+  {
+    "id": "structured_growth",
+    "project_id": "parallel-research",
+    "prompt": "Compare the populations of Mumbai, Cairo, and Lagos and identify which is growing fastest. Return structured fields per city."
+  }
+]

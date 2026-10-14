@@ -1,0 +1,47 @@
+MODEL FORGE — IMPLEMENTATION DECISIONS
+======================================
+
+Status: accepted for the initial cohesive build on 2026-08-07
+
+1. Scope
+The complete vision in Ideas.md is implemented. The v0 paragraph is treated as
+sequencing guidance: typed flat-file artifacts and prediction extraction form the
+foundation, with the remaining honing passes, collision detection, calibration,
+and integrations layered on the same core.
+
+2. Product shape
+Model Forge is a local web application and a command-line application. Both call
+one Python service layer so behavior and artifacts do not diverge.
+
+3. Model provider
+OpenAI's Responses API is used when OPENAI_API_KEY is present. MODEL_FORGE_MODE=mock
+selects a deterministic local engine for offline use and tests. Auto mode selects
+OpenAI when a key exists and otherwise falls back to the local engine.
+
+4. Ingestion
+The system accepts pasted text, TXT/Markdown, PDFs, audio, and URLs. Live news is
+available through an RSS search source. PDF and audio support are standard project
+dependencies; audio transcription requires the configured OpenAI API key.
+
+5. External AI OS projects
+Steelman, Mirfish, and Decision Tracker are assumed to be independently evolving
+services. Integration uses a small versioned JSON envelope (model-forge.adapter/v1)
+and injectable Python adapter protocols. Local fallback implementations harden an
+edge, run a model against observations, and score predictions, keeping this repo
+fully useful without those projects.
+
+6. Persistence and identity
+Each model is stored as canonical JSON plus a Markdown rendering in a flat library.
+Entities carry normalized namespace keys, model records have UUIDs and revisions,
+and writes are atomic. JSON is authoritative; prose is always a rendering.
+
+7. No deferred integrations
+Steelman, Mirfish, and Decision Tracker run locally and persist their results by
+default. Setting STEELMAN_ENDPOINT, MIRFISH_ENDPOINT, or DECISION_TRACKER_ENDPOINT
+switches that capability to the same versioned contract over HTTP. Local behavior
+is a complete product path, not a placeholder for the remote projects.
+
+8. Browser files
+Browser uploads are base64 JSON requests capped at 25 MB and processed through a
+temporary private file that is deleted immediately. This makes PDF and audio paths
+available from both CLI and web without retaining uploaded source material.

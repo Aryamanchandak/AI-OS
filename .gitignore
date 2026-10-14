@@ -1,11 +1,40 @@
 # Excluded for now — not ready to push
-/Original Code/
 /Persistent Memory Chats Storage/
+
+# Original Code: code only — no documents, archives or secrets
+/Original Code/**/*.md
+/Original Code/**/*.pdf
+/Original Code/**/*.doc
+/Original Code/**/*.docx
+/Original Code/**/*.xls
+/Original Code/**/*.xlsx
+/Original Code/**/*.ppt
+/Original Code/**/*.pptx
+/Original Code/**/*.zip
+/Original Code/**/.uv-cache/
+/Original Code/**/*.mp3
+/Original Code/**/*.m4a
+/Original Code/**/*.wav
+/Original Code/**/*.db
+/Original Code/**/*.bin
+/Original Code/**/*.task
+
+# Secrets (keep .env.example so variable names stay documented)
+.env
+.env.*
+!.env.example
+
+# Virtual environments and packaging output
+.venv/
+venv/
+*.egg-info/
+
+# Accidental macOS duplicates like "file 2.yaml"
+* 2.*
 
 # Own git repos / large data / out of scope for this migration — see migration/baseline/
 /Database/
 /AI Agent/
-/shell/
 
 # OS
 .DS_Store

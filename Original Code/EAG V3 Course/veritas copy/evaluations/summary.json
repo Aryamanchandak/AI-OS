@@ -1,0 +1,61 @@
+{
+  "judge": "openai/gpt-4o",
+  "v1": {
+    "scores": {
+      "explicit_reasoning_instructions": "partial",
+      "structured_output_format": "yes",
+      "separation_of_reasoning_and_tools": "partial",
+      "conversation_loop_support": "no",
+      "instructional_framing": "partial",
+      "internal_self_checks": "yes",
+      "reasoning_type_awareness": "no",
+      "error_handling_fallbacks": "partial",
+      "overall_clarity": "yes"
+    },
+    "justifications": {
+      "explicit_reasoning_instructions": "The prompt suggests a process but does not explicitly instruct step-by-step reasoning.",
+      "structured_output_format": "The prompt specifies returning the answer in JSON format.",
+      "separation_of_reasoning_and_tools": "The prompt combines reasoning tasks with tool usage but does not clearly separate them.",
+      "conversation_loop_support": "The prompt does not account for iterative or multi-turn interactions.",
+      "instructional_framing": "The prompt defines a role but lacks specific behavior examples.",
+      "internal_self_checks": "The prompt instructs the model to verify its own work.",
+      "reasoning_type_awareness": "The prompt does not require the model to identify reasoning types.",
+      "error_handling_fallbacks": "It suggests not making things up but lacks detailed error handling instructions.",
+      "overall_clarity": "The prompt is clear in conveying its intent and format requirements."
+    },
+    "total_yes": 3,
+    "critical_gaps": [
+      "explicit_reasoning_instructions",
+      "conversation_loop_support",
+      "reasoning_type_awareness"
+    ],
+    "verdict": "The prompt is adequately designed with emphasis on self-checking and structured output but lacks support for iterative interaction and explicit reasoning steps."
+  },
+  "v2": {
+    "scores": {
+      "explicit_reasoning_instructions": "yes",
+      "structured_output_format": "yes",
+      "separation_of_reasoning_and_tools": "yes",
+      "conversation_loop_support": "yes",
+      "instructional_framing": "yes",
+      "internal_self_checks": "yes",
+      "reasoning_type_awareness": "yes",
+      "error_handling_fallbacks": "yes",
+      "overall_clarity": "yes"
+    },
+    "justifications": {
+      "explicit_reasoning_instructions": "The prompt explicitly requires reasoning in a 'reasoning' field before providing an output, with mandatory tagging of inference type.",
+      "structured_output_format": "It clearly defines a JSON object with specific keys as the output format.",
+      "separation_of_reasoning_and_tools": "The prompt separates reasoning (in the 'reasoning' field) from action (in the 'output' field).",
+      "conversation_loop_support": "It includes mechanisms for handling iterative interactions and re-invocations in a pipeline loop.",
+      "instructional_framing": "The prompt provides a detailed role definition and how to behave as Veritas with defined skills.",
+      "internal_self_checks": "It includes a checklist to verify outputs before final submission.",
+      "reasoning_type_awareness": "The prompt requires tagging each reasoning step with a specific type of inference.",
+      "error_handling_fallbacks": "The prompt includes specific error handling and fallback strategies for various issues.",
+      "overall_clarity": "The prompt is comprehensive and unambiguous, with clear instructions."
+    },
+    "total_yes": 9,
+    "critical_gaps": [],
+    "verdict": "The prompt is exceptionally well-constructed, addressing all criteria thoroughly."
+  }
+}

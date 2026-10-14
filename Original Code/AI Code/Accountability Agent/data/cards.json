@@ -1,0 +1,167 @@
+[
+  {
+    "id": "influence-001",
+    "claim": "A meaningful concession creates pressure for a reciprocal concession.",
+    "mechanism": "Norm of reciprocity plus perceptual contrast between the first and second ask.",
+    "cues": ["negotiation", "you_move_first", "one_shot", "trust_not_low"],
+    "move": "Make a plausible larger request, then retreat once to the actual target.",
+    "preconditions": "The opening request is credible and the target is a genuine concession.",
+    "failure_mode": "An absurd opening reads as manipulation and destroys trust.",
+    "replication": "strong",
+    "source": "Cialdini, Influence, Reciprocity chapter"
+  },
+  {
+    "id": "influence-002",
+    "claim": "A voluntary, visible commitment increases follow-through.",
+    "mechanism": "People seek consistency with positions they have actively chosen and made public.",
+    "cues": ["repeated_game", "audience_present", "commitment_missing", "relationship_matters"],
+    "move": "Ask for a small written commitment with a named owner and date.",
+    "preconditions": "The commitment must be freely chosen rather than coerced.",
+    "failure_mode": "Pressure produces compliance without durable ownership.",
+    "replication": "strong",
+    "source": "Cialdini, Influence, Commitment and Consistency chapter"
+  },
+  {
+    "id": "influence-003",
+    "claim": "Visible behavior from relevant peers reduces social uncertainty.",
+    "mechanism": "Under uncertainty, people use similar others as evidence of appropriate action.",
+    "cues": ["social_uncertainty", "ambiguity", "audience_present", "status_peer"],
+    "move": "Show one concrete example of a comparable peer taking the target action successfully.",
+    "preconditions": "The example is truthful, specific, and genuinely comparable.",
+    "failure_mode": "Generic popularity claims trigger skepticism or point to the wrong norm.",
+    "replication": "strong",
+    "source": "Cialdini, Influence, Social Proof chapter"
+  },
+  {
+    "id": "influence-004",
+    "claim": "Credible expertise can resolve uncertainty faster than additional argument.",
+    "mechanism": "People defer to signals of relevant knowledge when they cannot cheaply verify the issue themselves.",
+    "cues": ["information_asymmetry", "ambiguity", "objective_standard_missing", "time_pressure"],
+    "move": "Put the decision in front of the narrowest credible expert and ask for a falsifiable judgment.",
+    "preconditions": "Expertise is relevant, independent, and legible to the decision-makers.",
+    "failure_mode": "Status masquerading as expertise produces blind deference.",
+    "replication": "contested",
+    "source": "Cialdini, Influence, Authority chapter"
+  },
+  {
+    "id": "influence-005",
+    "claim": "A real constraint makes delayed action more costly and can break inertia.",
+    "mechanism": "Potential loss of access is weighted more heavily than an equivalent gain.",
+    "cues": ["time_pressure", "scarcity_real", "reversible", "multiple_options"],
+    "move": "State the real expiration condition and require a decision before it closes.",
+    "preconditions": "The constraint exists independently of the attempt to persuade.",
+    "failure_mode": "Manufactured urgency destroys credibility and encourages reactance.",
+    "replication": "strong",
+    "source": "Cialdini, Influence, Scarcity chapter"
+  },
+  {
+    "id": "bets-001",
+    "claim": "A good decision can produce a bad outcome, so judge process separately from result.",
+    "mechanism": "Outcome bias causes known results to contaminate evaluation of prior reasoning.",
+    "cues": ["outcome_known", "risk", "repeated_game", "decision_review"],
+    "move": "Re-score the decision using only information available at the time it was made.",
+    "preconditions": "The original information set and alternatives can be reconstructed.",
+    "failure_mode": "Reconstruction after the fact smuggles outcome knowledge back into the review.",
+    "replication": "strong",
+    "source": "Duke, Thinking in Bets, Life Is Poker, Not Chess"
+  },
+  {
+    "id": "bets-002",
+    "claim": "Expressing confidence as a probability exposes disagreement and improves updating.",
+    "mechanism": "Numeric confidence separates belief strength from identity and invites calibration.",
+    "cues": ["ambiguity", "risk", "multiple_options", "disagreement"],
+    "move": "Assign a probability to the key claim and name the evidence that would move it by twenty points.",
+    "preconditions": "The claim and time horizon are specific enough to resolve.",
+    "failure_mode": "False precision turns an unsupported guess into decorative math.",
+    "replication": "strong",
+    "source": "Duke, Thinking in Bets, Wanna Bet?"
+  },
+  {
+    "id": "bets-003",
+    "claim": "A truth-seeking review works only when dissent is rewarded rather than punished.",
+    "mechanism": "Accountability to accuracy and exposure to alternative views counter motivated reasoning.",
+    "cues": ["group_decision", "status_differential", "disagreement", "repeated_game"],
+    "move": "Assign one credible dissenter to state the strongest case against the favored choice before commitment.",
+    "preconditions": "The dissenter has psychological safety and access to the same evidence.",
+    "failure_mode": "A ceremonial devil's advocate hardens the majority instead of testing it.",
+    "replication": "contested",
+    "source": "Duke, Thinking in Bets, The Buddy System"
+  },
+  {
+    "id": "bets-004",
+    "claim": "Working backward from a desired future reveals dependencies hidden by forward storytelling.",
+    "mechanism": "Prospective hindsight makes intermediate causes and failure points easier to identify.",
+    "cues": ["multiple_steps", "ambiguity", "reversible", "planning"],
+    "move": "Assume the desired result already happened and list the three events that had to precede it.",
+    "preconditions": "The desired outcome and time horizon are explicit.",
+    "failure_mode": "One imagined path becomes a plan without testing alternatives.",
+    "replication": "contested",
+    "source": "Duke, Thinking in Bets, Adventures in Mental Time Travel"
+  },
+  {
+    "id": "bets-005",
+    "claim": "Imagining failure before acting surfaces risks that enthusiasm suppresses.",
+    "mechanism": "Prospective hindsight legitimizes doubt and broadens the search for causal threats.",
+    "cues": ["irreversible", "planning", "group_decision", "risk"],
+    "move": "Assume the choice failed; name the likeliest cause and remove that cause before committing.",
+    "preconditions": "The exercise occurs before resources and identities are locked in.",
+    "failure_mode": "An unranked risk list becomes paralysis rather than prevention.",
+    "replication": "contested",
+    "source": "Duke, Thinking in Bets, Adventures in Mental Time Travel"
+  },
+  {
+    "id": "gty-001",
+    "claim": "A positional conflict becomes tractable when the underlying interests are separated from stated demands.",
+    "mechanism": "Different interests can support options that fixed positions conceal.",
+    "cues": ["negotiation", "disagreement", "relationship_matters", "multiple_options"],
+    "move": "Ask what concrete constraint the other side's position protects, then negotiate that constraint directly.",
+    "preconditions": "At least one side can discuss motives without increasing exposure.",
+    "failure_mode": "Treating a declared position as the real interest locks both sides into a binary contest.",
+    "replication": "never-tested-outside-lab",
+    "source": "Fisher, Ury, Patton, Getting to Yes, Focus on Interests, Not Positions"
+  },
+  {
+    "id": "gty-002",
+    "claim": "A credible alternative to agreement determines the point at which walking away is rational.",
+    "mechanism": "A BATNA replaces wishful minimums with the value of an executable outside option.",
+    "cues": ["negotiation", "one_shot", "power_imbalance", "irreversible"],
+    "move": "Name the best executable alternative and reject any deal that leaves you worse off than it does.",
+    "preconditions": "The alternative is concrete, lawful, and available on the relevant timeline.",
+    "failure_mode": "An imaginary alternative produces bluffing instead of leverage.",
+    "replication": "never-tested-outside-lab",
+    "source": "Fisher, Ury, Patton, Getting to Yes, What If They Are More Powerful?"
+  },
+  {
+    "id": "gty-003",
+    "claim": "An external standard can convert a willpower contest into a testable comparison.",
+    "mechanism": "Legitimate criteria let both sides yield to principle without yielding to each other.",
+    "cues": ["negotiation", "objective_standard_available", "disagreement", "trust_low"],
+    "move": "Choose one independent benchmark both sides would accept before revealing which side it favors.",
+    "preconditions": "The standard is relevant, verifiable, and not selected only for its convenient outcome.",
+    "failure_mode": "Competing cherry-picked standards recreate the positional fight one level higher.",
+    "replication": "never-tested-outside-lab",
+    "source": "Fisher, Ury, Patton, Getting to Yes, Insist on Using Objective Criteria"
+  },
+  {
+    "id": "gty-004",
+    "claim": "Generating options before evaluating them increases the chance of a mutually beneficial trade.",
+    "mechanism": "Separating invention from commitment prevents premature criticism from shrinking the option set.",
+    "cues": ["negotiation", "multiple_options", "relationship_matters", "reversible"],
+    "move": "Create three packages that trade differently valued terms before choosing or pricing any one package.",
+    "preconditions": "Options are explicitly nonbinding during generation.",
+    "failure_mode": "Treating brainstormed options as offers causes anchoring and defensive bargaining.",
+    "replication": "never-tested-outside-lab",
+    "source": "Fisher, Ury, Patton, Getting to Yes, Invent Options for Mutual Gain"
+  },
+  {
+    "id": "gty-005",
+    "claim": "Addressing the relationship problem separately prevents it from corrupting the substantive decision.",
+    "mechanism": "Separating identity and emotion from the issue reduces threat while preserving disagreement.",
+    "cues": ["emotional_heat", "relationship_matters", "disagreement", "repeated_game"],
+    "move": "Acknowledge the relationship rupture in one sentence, then state the substantive question as a shared problem.",
+    "preconditions": "The acknowledgment is specific and does not demand immediate absolution.",
+    "failure_mode": "Using empathy as a tactic without changing behavior intensifies distrust.",
+    "replication": "never-tested-outside-lab",
+    "source": "Fisher, Ury, Patton, Getting to Yes, Separate the People from the Problem"
+  }
+]

@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# One stable entry point for local development.  Always run from the project
+# root so relative files and SQLite data resolve the same way on every machine.
+set -eu
+
+PROJECT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$PROJECT_DIR"
+
+# Keep uv's cache with the project by default. Some managed environments do
+# not allow writes to the user's global cache, which previously made the
+# documented one-command launch fail before the application could start.
+: "${UV_CACHE_DIR:=$PROJECT_DIR/.uv-cache}"
+export UV_CACHE_DIR
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "Consequence Radar needs uv, but it is not installed." >&2
+    echo "Install it from https://docs.astral.sh/uv/ and run ./radar again." >&2
+    exit 1
+fi
+
+if [ ! -f .env ]; then
+    cp .env.example .env
+    echo "Created .env from .env.example. Add GEMINI_API_KEY there for live runs."
+fi
+
+# Source imports avoid editable installs, which are unreliable when the parent
+# directory contains a literal '?'.  uv still installs locked dependencies.
+PYTHONPATH="$PROJECT_DIR/src${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONPATH
+
+command_name=${1:-start}
+if [ "$#" -gt 0 ]; then
+    shift
+fi
+
+case "$command_name" in
+    start|run)
+        exec uv run --frozen --no-editable python -m consequence_radar "$@"
+        ;;
+    test)
+        exec uv run --frozen --no-editable --extra dev pytest "$@"
+        ;;
+    setup)
+        exec uv sync --frozen --no-editable --extra dev "$@"
+        ;;
+    help|-h|--help)
+        echo "Usage: ./radar [start|test|setup|help]"
+        echo
+        echo "  ./radar          Start the app (setup happens automatically)"
+        echo "  ./radar test     Run the offline test suite"
+        echo "  ./radar setup    Install locked dependencies without starting"
+        ;;
+    *)
+        echo "Unknown command: $command_name" >&2
+        echo "Run ./radar help for available commands." >&2
+        exit 2
+        ;;
+esac

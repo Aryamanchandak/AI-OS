@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Daily Brief — Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #F46523;
+    --yellow: #FFD06C;
+    --red: #8F1D1C;
+    --ink: #1a1614;
+    --ink2: #4a423d;
+    --paper: #ffffff;
+    --bg: #f6f3ee;
+    --line: #e6e1d8;
+    --mute: #8a807a;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Mulish', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 20px;
+  }
+
+  .sheet {
+    width: 720px;
+    max-width: 100%;
+    margin: 0 auto;
+    background: var(--paper);
+    box-shadow: 0 1px 3px rgba(26,22,20,0.06), 0 12px 40px rgba(26,22,20,0.08);
+  }
+
+  .accent-bar { display: flex; }
+  .accent-bar > div { height: 5px; }
+  .accent-bar .a1 { flex: 2; background: var(--red); }
+  .accent-bar .a2 { flex: 3; background: var(--orange); }
+  .accent-bar .a3 { flex: 2; background: var(--yellow); }
+
+  .pad { padding: 36px 48px 0; }
+
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
+  .brand-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .logo-mark {
+    width: 26px; height: 26px;
+    background: var(--ink);
+    position: relative;
+    flex: 0 0 auto;
+  }
+  .logo-mark::after {
+    content: "";
+    position: absolute;
+    right: -6px; bottom: -6px;
+    width: 14px; height: 14px;
+    background: var(--orange);
+  }
+  .brand-name { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
+  .dot { width: 4px; height: 4px; border-radius: 99px; background: var(--mute); }
+  .brand-sub { font-size: 11px; font-weight: 500; color: var(--mute); }
+  .headline-main { font-size: 30px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.1; margin: 0; }
+  .dateline { margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--mute); }
+  .issue-no { text-align: right; flex: 0 0 auto; }
+  .issue-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--mute); }
+  .issue-num { font-size: 28px; font-weight: 800; color: var(--ink); }
+
+  .funnel {
+    display: flex; align-items: stretch;
+    background: var(--bg); padding: 14px 18px;
+    border-radius: 6px; margin-bottom: 28px;
+  }
+  .funnel-step { flex: 1; }
+  .funnel-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--mute); }
+  .funnel-num { margin-top: 2px; font-size: 20px; font-weight: 800; color: var(--ink); }
+  .funnel-arrow { display: flex; align-items: center; padding: 0 6px; color: var(--mute); font-size: 14px; }
+
+  .lead {
+    position: relative;
+    padding: 22px 24px 22px 28px;
+    background: var(--ink); color: var(--paper);
+    border-radius: 6px; margin-bottom: 36px; overflow: hidden;
+  }
+  .lead::before {
+    content: "";
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 5px; background: var(--orange);
+  }
+  .lead-tags { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .tag {
+    display: inline-block; padding: 3px 8px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; border-radius: 2px; color: #fff;
+  }
+  .tag-orange { background: var(--orange); }
+  .lead-cat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--yellow); }
+  .lead-headline { font-size: 19px; font-weight: 700; line-height: 1.35; letter-spacing: -0.2px; color: var(--paper); margin: 0; }
+  .lead-why {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid #3a342f;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  }
+  .lead-why-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--yellow); }
+  .lead-why-text { font-size: 12px; font-weight: 400; color: #d8d0c6; flex: 1; min-width: 200px; line-height: 1.5; }
+  .lead-meta { margin-top: 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .lead-meta .sep { width: 1px; height: 12px; background: #3a342f; }
+  .src-outline {
+    padding: 4px 10px; border-radius: 999px;
+    background: transparent; color: var(--paper);
+    font-size: 11px; font-weight: 600;
+    border: 1px solid #4a423d; text-decoration: none;
+  }
+
+  .conviction { display: inline-flex; gap: 2px; align-items: center; }
+  .conviction span { width: 5px; height: 5px; border-radius: 99px; background: var(--line); }
+  .conviction.on-dark span { background: #4a423d; }
+  .conviction span.fill { background: var(--orange); }
+
+  .jumpnav {
+    display: flex; margin-bottom: 36px;
+    border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+  }
+  .jump-item { flex: 1; padding: 12px 14px; position: relative; }
+  .jump-item + .jump-item { border-left: 1px solid var(--line); }
+  .jump-item .bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .jump-head { display: flex; align-items: baseline; gap: 6px; }
+  .jump-num { font-size: 10px; font-weight: 700; color: var(--mute); }
+  .jump-name { font-size: 13px; font-weight: 800; }
+  .jump-count { margin-top: 2px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--mute); }
+
+  .section { margin-bottom: 36px; }
+  .section-head { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .section-badge {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; font-weight: 800; flex: 0 0 auto;
+  }
+  .section-title { font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px; }
+  .section-sub { font-size: 11px; font-weight: 500; color: var(--mute); }
+  .section-count { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+
+  .signal {
+    display: flex; gap: 18px;
+    padding: 16px 0; border-top: 1px solid var(--line);
+    align-items: flex-start;
+  }
+  .signal-tagcol { flex: 0 0 64px; }
+  .signal-tag {
+    display: inline-block; padding: 3px 8px;
+    background: #fff; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.8px; text-transform: uppercase; border-radius: 2px;
+  }
+  .signal-body { flex: 1; min-width: 0; }
+  .signal-headline { font-size: 14px; font-weight: 600; color: var(--ink); line-height: 1.45; margin: 0; }
+  .signal-meta { display: flex; align-items: center; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .signal-meta .sep { width: 1px; height: 12px; background: var(--line); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 999px;
+    background: #fff; color: var(--ink2);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.2px;
+    border: 1px solid var(--line); white-space: nowrap; text-decoration: none;
+  }
+  .chip .chip-dot { width: 5px; height: 5px; background: var(--orange); border-radius: 99px; }
+  .chip .chip-arrow { color: var(--mute); font-weight: 500; }
+
+  .watch {
+    margin-top: 8px; padding: 24px 26px;
+    background: var(--bg); border-radius: 6px;
+    border-left: 4px solid var(--red);
+  }
+  .watch-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.4px; color: var(--red); }
+  .watch-grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .watch-item-title { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 4px; }
+  .watch-item-desc { font-size: 11px; font-weight: 500; color: var(--mute); line-height: 1.45; }
+
+  .footer {
+    margin-top: 32px; padding: 22px 0 36px;
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .footer-name { font-size: 11px; font-weight: 700; color: var(--ink); }
+  .footer-sub { font-size: 10px; font-weight: 500; color: var(--mute); }
+  .footer-links { display: flex; gap: 18px; }
+  .footer-links a { font-size: 11px; font-weight: 600; color: var(--ink); text-decoration: none; }
+  .footer-links a.feedback { color: var(--orange); }
+
+  @media (max-width: 760px) {
+    .pad { padding: 28px 24px 0; }
+    .funnel, .jumpnav { flex-wrap: wrap; }
+    .watch-grid { grid-template-columns: 1fr; }
+    .signal-tagcol { flex-basis: 56px; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="accent-bar">
+    <div class="a1"></div>
+    <div class="a2"></div>
+    <div class="a3"></div>
+  </div>
+
+  <div class="pad">
+
+    <header class="masthead">
+      <div>
+        <div class="brand-row">
+          <div class="logo-mark"></div>
+          <span class="brand-name">The Daily Brief</span>
+          <span class="dot"></span>
+          <span class="brand-sub">Real Estate · India</span>
+        </div>
+        <h1 class="headline-main">What moved today.</h1>
+        <div class="dateline">Thursday, 4 June 2026 · 15 signals · 5 min read</div>
+      </div>
+      <div class="issue-no">
+        <div class="issue-label">Issue</div>
+        <div class="issue-num">001</div>
+      </div>
+    </header>
+
+    <div class="funnel">
+      <div class="funnel-step">
+        <div class="funnel-label">Scanned</div>
+        <div class="funnel-num">303</div>
+      </div>
+      <div class="funnel-arrow">›</div>
+      <div class="funnel-step">
+        <div class="funnel-label">Relevant</div>
+        <div class="funnel-num">28</div>
+      </div>
+      <div class="funnel-arrow">›</div>
+      <div class="funnel-step">
+        <div class="funnel-label">Deduped</div>
+        <div class="funnel-num">28</div>
+      </div>
+      <div class="funnel-arrow">›</div>
+      <div class="funnel-step">
+        <div class="funnel-label">Clustered</div>
+        <div class="funnel-num">15</div>
+      </div>
+      <div class="funnel-arrow">›</div>
+      <div class="funnel-step">
+        <div class="funnel-label">Ranked</div>
+        <div class="funnel-num">15</div>
+      </div>
+    </div>
+
+    <div class="lead">
+      <div class="lead-tags">
+        <span class="tag tag-orange">Lead Signal</span>
+        <span class="lead-cat">Policy · Highest priority</span>
+      </div>
+      <p class="lead-headline">Following a fire tragedy in Malviya Nagar, Delhi authorities, including the MCD and Delhi home minister, will seal unauthorized commercial buildings lacking fire safety NOCs and other approvals, withdraw the Bed & Breakfast policy, and conduct a month-long drive to check fire safety compliance at all hotels and nursing homes.</p>
+      <div class="lead-why">
+        <span class="lead-why-label">Why it matters</span>
+        <span class="lead-why-text">The sealing of unauthorized commercial buildings and the withdrawal of the Bed & Breakfast policy in Delhi will likely lead to demand compression for non-compliant properties, potentially creating a flight to quality for compliant assets and improving the alpha signal for well-managed, regulatory-adherent real estate developers and operators within the region.</span>
+      </div>
+      <div class="lead-meta">
+        <span class="conviction on-dark"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+        <span class="sep"></span>
+        <a class="src-outline" href="https://realty.economictimes.indiatimes.com/amp/news/commercial/mcd-to-seal-unauthorized-commercial-buildings-after-malviya-nagar-fire-tragedy/131495335" target="_blank">ET Realty ↗</a>
+        <a class="src-outline" href="https://realty.economictimes.indiatimes.com/news/industry/delhi-government-to-seal-buildings-lacking-fire-safety-approvals-post-malviya-nagar-fire/131495278" target="_blank">ET Realty ↗</a>
+        <a class="src-outline" href="https://realty.economictimes.indiatimes.com/amp/news/hospitality/delhi-to-withdraw-bed-breakfast-policy-following-malviya-nagar-fire-tragedy/131495613" target="_blank">ET Realty ↗</a>
+        <a class="src-outline" href="https://www.cnbctv18.com/india/delhi-lg-orders-month-long-drive-to-check-fire-safety-compliance-at-all-hotels-nursing-homes-ws-el-19919043.htm/amp" target="_blank">CNBC TV18 ↗</a>
+        
+      </div>
+    </div>
+
+    <nav class="jumpnav">
+      <div class="jump-item">
+        <div class="bar" style="background: var(--red);"></div>
+        <div class="jump-head"><span class="jump-num">01</span><span class="jump-name">Policy</span></div>
+        <div class="jump-count">2 signals</div>
+      </div>
+      <div class="jump-item">
+        <div class="bar" style="background: var(--orange);"></div>
+        <div class="jump-head"><span class="jump-num">02</span><span class="jump-name">Capital</span></div>
+        <div class="jump-count">2 signals</div>
+      </div>
+      <div class="jump-item">
+        <div class="bar" style="background: var(--orange);"></div>
+        <div class="jump-head"><span class="jump-num">03</span><span class="jump-name">Demand</span></div>
+        <div class="jump-count">3 signals</div>
+      </div>
+      <div class="jump-item">
+        <div class="bar" style="background: #b8861a;"></div>
+        <div class="jump-head"><span class="jump-num">04</span><span class="jump-name">Company</span></div>
+        <div class="jump-count">6 signals</div>
+      </div>
+      <div class="jump-item">
+        <div class="bar" style="background: #b8861a;"></div>
+        <div class="jump-head"><span class="jump-num">05</span><span class="jump-name">Infra</span></div>
+        <div class="jump-count">2 signals</div>
+      </div>
+    </nav>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-badge" style="background: var(--red); ">01</div>
+        <div style="flex: 1;">
+          <div class="section-title">Policy &amp; Regulation</div>
+          <div class="section-sub">Macro · highest weight in today's brief</div>
+        </div>
+        <div class="section-count" style="color: var(--red);">2 signals</div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid var(--red); color: var(--red);">Fire Safety</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Following a fire tragedy in Malviya Nagar, Delhi authorities, including the MCD and Delhi home minister, will seal unauthorized commercial buildings lacking fire safety NOCs and other approvals, withdraw the Bed & Breakfast policy, and conduct a month-long drive to check fire safety compliance at all hotels and nursing homes.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://realty.economictimes.indiatimes.com/amp/news/commercial/mcd-to-seal-unauthorized-commercial-buildings-after-malviya-nagar-fire-tragedy/131495335" target="_blank"><span class="chip-dot"></span>ET Realty<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://realty.economictimes.indiatimes.com/news/industry/delhi-government-to-seal-buildings-lacking-fire-safety-approvals-post-malviya-nagar-fire/131495278" target="_blank"><span class="chip-dot"></span>ET Realty<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://realty.economictimes.indiatimes.com/amp/news/hospitality/delhi-to-withdraw-bed-breakfast-policy-following-malviya-nagar-fire-tragedy/131495613" target="_blank"><span class="chip-dot"></span>ET Realty<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.cnbctv18.com/india/delhi-lg-orders-month-long-drive-to-check-fire-safety-compliance-at-all-hotels-nursing-homes-ws-el-19919043.htm/amp" target="_blank"><span class="chip-dot"></span>CNBC TV18<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid var(--red); color: var(--red);">Land Pooling</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Himachal Pradesh is set to implement a land pooling policy modeled after successful schemes in other states.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://realty.economictimes.indiatimes.com/news/industry/himachal-pradesh-introduces-land-pooling-policy-inspired-by-successful-state-models/131495730" target="_blank"><span class="chip-dot"></span>ET Realty<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-badge" style="background: var(--orange); ">02</div>
+        <div style="flex: 1;">
+          <div class="section-title">Capital Flows</div>
+          <div class="section-sub">PE deals · debt · funding moves</div>
+        </div>
+        <div class="section-count" style="color: var(--orange);">2 signals</div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid var(--orange); color: var(--orange);">Fund Close</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Kotak Alternate Asset Managers has achieved the final close of its fourteenth real estate fund, raising nearly $1 billion with fresh investments from ADIA and NPS Korea.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://realty.economictimes.indiatimes.com/news/industry/kotak-alts-secures-1-billion-for-14th-real-estate-fund-backed-by-global-investors/131481696" target="_blank"><span class="chip-dot"></span>ET Realty<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.business-standard.com/companies/news/kotak-alternate-asset-managers-closes-1-billion-real-estate-fund-126060301077_1.html" target="_blank"><span class="chip-dot"></span>Business Standard<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.business-standard.com/finance/personal-finance/kotak-alts-closes-1bn-real-estate-fund-as-adia-nps-korea-place-fresh-bets-126060400351_1.html" target="_blank"><span class="chip-dot"></span>Business Standard<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.livemint.com/companies/news/kotak-alts-adia-real-estate-fund-korea-nps-11780480088762.html" target="_blank"><span class="chip-dot"></span>Mint<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.cnbctv18.com/alternative-investment-fund/kotak-alts-final-close-of-14th-real-estate-fund-raises-dollar-1-billion-ws-el-19918709.htm" target="_blank"><span class="chip-dot"></span>CNBC TV18<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid var(--orange); color: var(--orange);">Mutual Fund</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Mutual funds are increasing their investments in REITs and InvITs.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.moneycontrol.com/news/business/personal-finance/why-mutual-funds-are-increasing-their-bets-on-reits-and-invits-13941148.html" target="_blank"><span class="chip-dot"></span>Moneycontrol.com<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-badge" style="background: var(--orange); ">03</div>
+        <div style="flex: 1;">
+          <div class="section-title">Demand Signals</div>
+          <div class="section-sub">Pre-sales · leasing · pricing</div>
+        </div>
+        <div class="section-count" style="color: var(--orange);">3 signals</div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid var(--orange); color: var(--orange);">Inventory</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">UP RERA has advised homebuyers against panic buying due to claims of inventory shortages and price hikes, stating that over 1.15 lakh housing and commercial units are currently available.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.hindustantimes.com/real-estate/up-rera-warns-homebuyers-against-inventory-shortage-price-hike-claims-says-1-15-lakh-real-estate-units-available-101780493343485.html" target="_blank"><span class="chip-dot"></span>Hindustan Times<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.moneycontrol.com/news/business/real-estate/over-1-15-lakh-housing-commercial-units-available-in-up-rera-advises-buyers-against-hasty-decisions-13940445.html/amp" target="_blank"><span class="chip-dot"></span>Moneycontrol.com<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.cnbctv18.com/real-estate/up-rera-cautions-against-panic-buying-of-homes-says-sufficient-inventory-available-for-sale-19918914.htm/amp" target="_blank"><span class="chip-dot"></span>CNBC TV18<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid var(--orange); color: var(--orange);">Premium Housing</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">The real estate market is experiencing uneven growth, with premium housing, particularly in Delhi-NCR, driving gains.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.moneycontrol.com/news/business/real-estate/realty-boom-gets-uneven-as-premium-housing-drives-gains-13940874.html/amp" target="_blank"><span class="chip-dot"></span>Moneycontrol.com<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.constructionworld.in/latest-construction-news/real-estate-news/delhi-ncr-leads-luxury-housing-growth/92754" target="_blank"><span class="chip-dot"></span>Construction World<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid var(--orange); color: var(--orange);">Office Lease</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Qualcomm has leased 2.56 lakh sq ft of office space in Bengaluru for a five-year rent of ",184 crore.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.msn.com/en-in/news/India/qualcomm-leases-256-lakh-sq-ft-office-space-in-bengaluru-for-184-cr-rent-over-five-years/ar-AA1PzQUx?apiversion=v2&domshim=1&noservercache=1&noservertelemetry=1&batchservertelemetry=1&renderwebcomponents=1&wcseo=1" target="_blank"><span class="chip-dot"></span>MSN<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-badge" style="background: #b8861a; color: var(--ink);">04</div>
+        <div style="flex: 1;">
+          <div class="section-title">Company Moves</div>
+          <div class="section-sub">Earnings · land acquisitions · launches</div>
+        </div>
+        <div class="section-count" style="color: #b8861a;">6 signals</div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">Funding</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Indiabulls will raise up to ",1,000 crore through a preferential issue of convertible warrants, leading to its share price reaching a 52-week high.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.moneycontrol.com/news/business/companies/indiabulls-to-raise-up-to-rs-1-000-crore-via-preferential-issue-of-convertible-warrants-13940476.html/amp" target="_blank"><span class="chip-dot"></span>Moneycontrol.com<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.livemint.com/market/stock-market-news/indiabulls-share-price-in-focus-real-estate-firm-raises-rs-1000-crore-through-issuance-of-convertible-warrants-11780541008967.html" target="_blank"><span class="chip-dot"></span>Mint<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.cnbctv18.com/market/stocks/indiabulls-share-price-to-raise-rs-1000-crore-via-preferential-issue-of-convertible-warrants-ws-l-19918843.htm" target="_blank"><span class="chip-dot"></span>CNBC TV18<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">JV Project</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Puravankara has formed a joint venture for a ",11 billion housing project in Bengaluru.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.constructionworld.in/latest-construction-news/real-estate-news/puravankara-forms-jv-for-rs-11-billion-bengaluru-housing-project/92766" target="_blank"><span class="chip-dot"></span>Construction World<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">Project Launch</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">OSHB plans to develop four new housing projects comprising 6,877 units.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.constructionworld.in/latest-construction-news/real-estate-news/oshb-plans-four-new-housing-projects-with-6877-units/92767" target="_blank"><span class="chip-dot"></span>Construction World<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">Order Win</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Capacite Infraprojects has secured a ",589 crore order from a Raymond Realty subsidiary.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.moneycontrol.com/news/business/stocks/capacite-infraprojects-in-focus-on-bagging-rs-589cr-order-from-raymond-realty-arm-13940522.html" target="_blank"><span class="chip-dot"></span>Moneycontrol.com<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">Construction Contract</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">Dalcore has awarded a "225 crore construction contract to BL Gupta Construction for its luxury project in Gurugram.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.hindustantimes.com/real-estate/dalcore-awards-construction-contract-worth-rs-225-crore-to-bl-gupta-construction-for-its-luxury-project-in-gurugram-101780495100868.html" target="_blank"><span class="chip-dot"></span>Hindustan Times<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">Order Win</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">NBCC has secured work orders totaling over ",83 crore for projects across Maharashtra, Delhi, and Odisha.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.business-standard.com/markets/capital-market-news/nbcc-gains-on-securing-projects-worth-over-rs-45-crore-126060400183_1.html" target="_blank"><span class="chip-dot"></span>Business Standard<span class="chip-arrow">↗</span></a>
+              <a class="chip" href="https://www.cnbctv18.com/market/stocks/nbcc-india-share-price-secures-rs-83-crore-work-orders-across-maharashtra-delhi-and-odisha-ws-l-19918816.htm" target="_blank"><span class="chip-dot"></span>CNBC TV18<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <div class="section-badge" style="background: #b8861a; color: var(--ink);">05</div>
+        <div style="flex: 1;">
+          <div class="section-title">Infrastructure</div>
+          <div class="section-sub">Metro · highways · TOD impact</div>
+        </div>
+        <div class="section-count" style="color: #b8861a;">2 signals</div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">Highway</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">The Cabinet has approved highway projects worth ",24,200 crore across four states to reduce travel time.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://www.cnbctv18.com/india/cabinet-approves-national-highway-projects-over-rs-24200-cr-odisha-telangana-bihar-madhya-pradesh-ws-el-19918719.htm/amp" target="_blank"><span class="chip-dot"></span>CNBC TV18<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="signal">
+        <div class="signal-tagcol">
+          <span class="signal-tag" style="border: 1px solid #b8861a; color: #b8861a;">New Cities</span>
+        </div>
+        <div class="signal-body">
+          <p class="signal-headline">The Uttar Pradesh cabinet has approved funds for the development of new cities in Agra, Bareilly, and Prayagraj.</p>
+          <div class="signal-meta">
+            <span class="conviction"><span class="fill"></span><span class="fill"></span><span class="fill"></span><span class="fill"></span><span></span></span>
+            <span class="sep"></span>
+            <div class="chips">
+              <a class="chip" href="https://realty.economictimes.indiatimes.com/news/infrastructure/uttar-pradesh-approves-rs-3500-crore-for-new-urban-development-in-agra-bareilly-and-prayagraj/131495360" target="_blank"><span class="chip-dot"></span>ET Realty<span class="chip-arrow">↗</span></a>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="watch">
+      <div class="watch-label">What to watch · tomorrow</div>
+      <div class="watch-grid">
+        <div>
+          <p class="watch-item-title">Delhi Fire Safety Drive Outcomes</p>
+          <div class="watch-item-desc">Watch for initial reports on unauthorized building sealing and B&B policy withdrawal enforcement.</div>
+        </div>
+        <div>
+          <p class="watch-item-title">Himachal Land Pooling Policy Details</p>
+          <div class="watch-item-desc">Look for specific policy guidelines and implementation timelines for Himachal Pradesh's new land pooling scheme.</div>
+        </div>
+        <div>
+          <p class="watch-item-title">UP New City Development Fund Release</p>
+          <div class="watch-item-desc">Monitor announcements regarding the official release of funds for new city development in Agra, Bareilly, and Prayagraj.</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div>
+        <div class="footer-name">Real Estate · India</div>
+        <div class="footer-sub">AMC · Equity Research · Real Estate</div>
+      </div>
+      <div class="footer-links">
+        <a href="#">Archive</a>
+        <a href="#">Preferences</a>
+        <a href="#" class="feedback">Feedback →</a>
+      </div>
+    </footer>
+
+  </div>
+</div>
+</body>
+</html>
