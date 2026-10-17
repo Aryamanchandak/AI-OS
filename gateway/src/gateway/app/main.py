@@ -23,7 +23,7 @@ from gateway.app.router_registry import (
     migrated_domain_registrations,
     register_routers,
 )
-from gateway.ingestion.setup import AI_OS_ROOT as AI_OS_ROOT
+from gateway.platform.configuration.glc import AI_OS_ROOT as AI_OS_ROOT
 from gateway.platform.service_registry import ServiceRegistry
 from gateway.platform.startup import StartupCheck
 
@@ -85,13 +85,11 @@ def create_app(
         """Preserve the old JSON health response on Gateway's configured port."""
         return {"ok": True, "port": service_registry.get("gateway").port}
 
-    ingestion, *other_domains = migrated_domain_registrations()
     register_routers(
         app,
         (
-            ingestion,
             _diagnostics_registration(),
-            *other_domains,
+            *migrated_domain_registrations(),
         ),
     )
 

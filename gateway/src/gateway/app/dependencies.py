@@ -18,8 +18,6 @@ from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
 from gateway.llm import LLMService
 from gateway.channels.service import ChannelService
-from gateway.ingestion.server import ReviewService
-from gateway.ingestion.http_client import configure_gateway_url
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,7 +36,6 @@ class DependencyContainer:
     control: ControlService
     llm: LLMService
     channels: ChannelService
-    ingestion: ReviewService
 
     async def close(self) -> None:
         """Close container-owned resources in reverse construction order.
@@ -47,8 +44,6 @@ class DependencyContainer:
         shutdown ownership explicit before Plans 04–06 add async clients and
         connection pools.
         """
-        self.ingestion.close()
-        configure_gateway_url(None)
         await self.channels.close()
         self.telemetry.close()
         await self.http.close()
@@ -89,9 +84,3 @@ def get_channel_service(
     container: Annotated[DependencyContainer, Depends(get_container)],
 ) -> ChannelService:
     return container.channels
-
-
-def get_ingestion_service(
-    container: Annotated[DependencyContainer, Depends(get_container)],
-) -> ReviewService:
-    return container.ingestion

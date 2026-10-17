@@ -9,8 +9,6 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from gateway.app.dependencies import DependencyContainer
-from gateway.ingestion.setup import build_review_service
-from gateway.ingestion.http_client import configure_gateway_url
 from gateway.platform.configuration import load_gateway_settings
 from gateway.platform.configuration import GLCPaths
 from gateway.platform.networking import OutboundHTTPClient
@@ -122,7 +120,6 @@ def build_container(
         bridge=S16AgentBridge(base_url=agent_url, client=http.client),
         services=services,
     )
-    ingestion = _construct("ingestion review service", build_review_service)
     try:
         run_startup_checks(
             (
@@ -136,10 +133,8 @@ def build_container(
             )
         )
     except BaseException:
-        ingestion.close()
         telemetry.close()
         raise
-    configure_gateway_url(services.url_for("gateway"))
     return DependencyContainer(
         settings=settings,
         service_registry=services,
@@ -153,7 +148,6 @@ def build_container(
         control=control,
         llm=llm,
         channels=channel_service,
-        ingestion=ingestion,
     )
 
 
