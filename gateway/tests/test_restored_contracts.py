@@ -33,7 +33,7 @@ HEADERS = {"Authorization": "Bearer test-token"}
 def test_every_baseline_operation_is_registered_or_has_explicit_ui_replacement():
     baseline = json.loads((Path(__file__).resolve().parents[2] / "migration/baseline/contracts/glc-openapi.json").read_text())
     current = create_app().openapi()
-    ui = {("/", "get"): "ingestion landing", ("/channels", "get"): "ChannelsAdmin", ("/help", "get"): "Help"}
+    ui = {("/", "get"): "shell landing", ("/channels", "get"): "ChannelsAdmin", ("/help", "get"): "Help"}
     methods = {"get", "post", "put", "patch", "delete", "head", "options"}
     missing = [(path, method) for path, operations in baseline["paths"].items()
                for method in operations if method in methods

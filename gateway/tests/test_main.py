@@ -5,7 +5,7 @@ from main import AI_OS_ROOT, SCHEMA_AND_DOCS_PATHS, SHELL_DIST, create_app
 
 
 PROTECTED_PATHS = ("/api/diagnostics/services", *sorted(SCHEMA_AND_DOCS_PATHS))
-OPEN_PATHS = ("/health", "/ingestion", "/")
+OPEN_PATHS = ("/health", "/")
 
 
 def test_local_application_folders_are_connected() -> None:

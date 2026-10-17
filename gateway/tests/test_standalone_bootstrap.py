@@ -9,7 +9,7 @@ import subprocess
 import sys
 
 
-def test_gateway_boots_without_glc_or_ingestion_submodules(tmp_path: Path) -> None:
+def test_gateway_boots_without_glc_submodules(tmp_path: Path) -> None:
     source = Path(__file__).resolve().parents[1]
     snapshot = tmp_path / "gateway"
     snapshot.mkdir()
@@ -19,7 +19,6 @@ def test_gateway_boots_without_glc_or_ingestion_submodules(tmp_path: Path) -> No
 
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(snapshot / "src")
-    environment["AI_OS_PREVIEW"] = "1"
     environment["AI_OS_TOKEN"] = "standalone-test-token"
     environment.pop("AI_OS_SERVICE_REGISTRY_PATH", None)
     for name in ("GLC_GATEWAY_DB", "GLC_AUDIT_DB", "GLC_CACHE_DB"):
