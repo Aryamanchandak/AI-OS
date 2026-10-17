@@ -10,14 +10,10 @@ from fastapi import Depends, Request
 from gateway.platform.configuration import GatewaySettings
 from gateway.platform.service_registry import ServiceRegistry
 from gateway.audit import AuditStore
-from gateway.control import ControlService
 from gateway.platform.networking import OutboundHTTPClient
-from gateway.policy import PolicyEngine
-from gateway.security import PairingStore, RateLimiter
 from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
 from gateway.llm import LLMService
-from gateway.channels.service import ChannelService
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,15 +23,10 @@ class DependencyContainer:
     settings: GatewaySettings
     service_registry: ServiceRegistry
     http: OutboundHTTPClient
-    policy: PolicyEngine
     audit: AuditStore
-    pairings: PairingStore
-    rate_limiter: RateLimiter
     ledger: CallLedger
     telemetry: Telemetry
-    control: ControlService
     llm: LLMService
-    channels: ChannelService
 
     async def close(self) -> None:
         """Close container-owned resources in reverse construction order.
@@ -44,7 +35,6 @@ class DependencyContainer:
         shutdown ownership explicit before Plans 04–06 add async clients and
         connection pools.
         """
-        await self.channels.close()
         self.telemetry.close()
         await self.http.close()
 
@@ -66,21 +56,9 @@ def get_service_registry(
     return container.service_registry
 
 
-def get_control_service(
-    container: Annotated[DependencyContainer, Depends(get_container)],
-) -> ControlService:
-    return container.control
-
-
 def get_llm_service(
     container: Annotated[DependencyContainer, Depends(get_container)],
 ) -> LLMService:
     """Expose LLMService only to Gateway's own LLM route module."""
 
     return container.llm
-
-
-def get_channel_service(
-    container: Annotated[DependencyContainer, Depends(get_container)],
-) -> ChannelService:
-    return container.channels

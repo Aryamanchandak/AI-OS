@@ -22,7 +22,7 @@ def test_gateway_boots_without_glc_or_ingestion_submodules(tmp_path: Path) -> No
     environment["AI_OS_PREVIEW"] = "1"
     environment["AI_OS_TOKEN"] = "standalone-test-token"
     environment.pop("AI_OS_SERVICE_REGISTRY_PATH", None)
-    for name in ("GLC_GATEWAY_DB", "GLC_AUDIT_DB", "GLC_PAIRING_DB", "GLC_CACHE_DB"):
+    for name in ("GLC_GATEWAY_DB", "GLC_AUDIT_DB", "GLC_CACHE_DB"):
         environment.pop(name, None)
 
     check = """

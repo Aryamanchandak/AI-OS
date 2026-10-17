@@ -36,10 +36,7 @@ or invalid required configuration still prevents Gateway from starting.
 
 Port 8000 is the deliberate stable Gateway entry point. `main.py` resolves its
 host and port from the validated service registry, including
-`AI_OS_SERVICE_GATEWAY_HOST` and `AI_OS_SERVICE_GATEWAY_PORT` overrides. Run one
-Gateway process for chat, ingestion, control, audit, and short webhooks. Enable
-long-running channel workers explicitly; Telegram's worker is started with
-`python -m gateway.channels.catalogue.telegram.worker` only when configured.
+`AI_OS_SERVICE_GATEWAY_HOST` and `AI_OS_SERVICE_GATEWAY_PORT` overrides. Run one Gateway process for chat, ingestion, and audit.
 
 If an external caller still needs port 8111, stop the standalone GLC server and
 start the forwarding listener in a second process:
@@ -71,9 +68,6 @@ never includes environment secrets.
   embeddings concurrently through the LLM service. Each probe has a 30-second
   deadline. The response reports each probe's result with redacted errors;
   model probes still use the normal budget and audit path.
-- `POST /v1/channels/{name}/send` sends a proactive `ChannelReply`. It accepts
-  the install token or configured `GLC_S16_BRIDGE_TOKEN`, rejects disabled or
-  unknown channels, and audits requests, successes, and failures.
 - `/api/observability/traces/recent`, `/traces/{trace_id}`, `/refusals`, and
   `/agent_trace/{run_id}` restore the observability reads. Their legacy aliases
   are `/v1/traces/recent`, `/v1/traces/{trace_id}`, `/v1/refusals`, and
@@ -92,52 +86,9 @@ unreachable runtime returns 503. Invalid upstream trace data returns 502.
 `/dashboard` redirects to the shell's `/observability` screen; `/` remains the
 ingestion landing page. `/healthz` preserves the old JSON health response.
 
-Gateway now owns the migrated GLC policy, security, audit, ledger, and control
-domains. Their SQLite files default to `../Database/sqlite/audit.sqlite`,
-`gateway.sqlite`, and `pairings.sqlite`; `GLC_AUDIT_DB`, `GLC_GATEWAY_DB`, and
-`GLC_PAIRING_DB` remain supported overrides. Audit writes are fail-closed.
-
-The compatibility control routes remain at `/v1/control/*` and use the GLC
-install token, not `AI_OS_TOKEN`. Policy reload is available at
-`POST /v1/control/reload-policy` and through SIGHUP; both call the same atomic
-`PolicyEngine.reload()`. Only the HTTP path is audited — the SIGHUP handler
-runs on the main thread inside the interpreter's signal-check point and
-deliberately avoids the SQLite write an audit record would require, so a
-signal-triggered reload (success or failure) does not appear in the audit
-log. In the unified process, `/v1/control/kill` suspends the GLC capability
-but deliberately does not terminate Gateway, ingestion, or the shell.
-
-## Channels and voice
-
-Gateway owns the shared envelope, all 15 channel packages, the injected S16
-bridge, and the request/response STT/TTS providers. Every adapter is registered
-but disabled by default in `config/channels.yaml`. Disabled channels do not
-mount a listener or start a poller; disabled voice providers return a clear 503.
-
-Open `/channels` in the shell to inspect health, save provider-local credentials
-and deliberately enable a channel. The API returns only credential-presence
-booleans and never returns secret values through presence, administration, or
-service diagnostics. Each provider has its own owner-only JSON file under
-`Database/sqlite/channel_secrets/` (overridable with
-`GLC_CHANNEL_SECRETS_DIR`) so credentials are isolated by adapter.
-
-Short webhook adapters run in Gateway. Long-poll, persistent-connection, and
-native-dependency adapters run as workers; each provider folder contains a
-`RUNTIME.md` explaining its boundary. Telegram is the first worker proof slice:
-
-```bash
-python -m gateway.channels.catalogue.telegram.worker
-```
-
-Its Gateway address comes from `config/services.yaml`, and its worker loop uses
-cancellation-safe shutdown plus bounded exponential restart backoff. Twilio SMS
-is the in-process proof slice at `POST /webhooks/twilio_sms`; its provider-local
-signature check rejects altered form bodies before identity translation.
-
-`GET /v1/control/presence` reports every channel and voice provider as
-`healthy`, `degraded`, or `disabled`, including its process boundary. Current
-voice routes remain `/v1/transcribe` and `/v1/speak`; real-time streaming voice
-is intentionally not part of this migration.
+Gateway owns the migrated GLC audit and ledger domains. Their SQLite files default to
+`../Database/sqlite/audit.sqlite` and `gateway.sqlite`; `GLC_AUDIT_DB` and `GLC_GATEWAY_DB`
+remain supported overrides. Audit writes are fail-closed.
 
 ## Regression commands
 

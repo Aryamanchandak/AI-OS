@@ -28,14 +28,11 @@ def register_routers(app: FastAPI, registrations: tuple[RouterRegistration, ...]
 def migrated_domain_registrations() -> tuple[RouterRegistration, ...]:
     """Return domain routers without exposing domain internals to app assembly."""
 
-    from gateway.control.routes import registration as control_registration
     from gateway.llm.api import alias_registration, registration as llm_registration
-    from gateway.channels.routes import registration as channels_registration
-    from gateway.voice.routes import registration as voice_registration
     from gateway.platform.observability.routes import registrations as observability_registrations
 
     return (
-        control_registration(), llm_registration(),
-        alias_registration(), channels_registration(), voice_registration(),
+        llm_registration(),
+        alias_registration(),
         *observability_registrations(),
     )

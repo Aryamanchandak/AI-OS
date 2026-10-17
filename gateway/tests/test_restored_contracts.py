@@ -11,7 +11,6 @@ import pytest
 
 from gateway.app.dependencies import get_llm_service
 from gateway.app.main import create_app
-from gateway.channels.envelope import ChannelReply
 from gateway.platform.observability import Telemetry
 from gateway.platform.observability.capture import RefusalLog
 
@@ -79,56 +78,6 @@ def test_preflight_both_probes_succeed(client):
     response = client.post("/api/llm/preflight", headers=HEADERS, json={})
     assert response.json()["ok"] is True
     assert response.json()["embedding"]["dim"] == 768
-
-
-def test_channel_send_auth_errors_success_and_failure_are_audited(client, monkeypatch):
-    service = client.app.state.container.channels
-    control = client.app.state.container.control
-    sent = []
-
-    class Adapter:
-        async def send(self, reply):
-            sent.append(reply)
-            if reply.text == "fail":
-                raise RuntimeError("Bearer provider-secret")
-            return {"id": "outbound-1"}
-
-    service.set_enabled("webhook", True)
-    monkeypatch.setattr(service, "instantiate", lambda name: Adapter())
-    headers = {"Authorization": f"Bearer {control.install_token}"}
-    body = ChannelReply(channel="webhook", channel_user_id="recipient", text="hi").model_dump()
-    assert client.post("/v1/channels/webhook/send", json=body).status_code == 401
-    assert client.post("/v1/channels/webhook/send", headers=headers, json={**body, "channel": "other"}).status_code == 422
-    assert client.post("/v1/channels/unknown/send", headers=headers, json={**body, "channel": "unknown"}).status_code == 404
-    response = client.post("/v1/channels/webhook/send", headers=headers, json=body)
-    assert response.json() == {"accepted": True, "channel": "webhook", "adapter_result": {"id": "outbound-1"}}
-    failed = client.post("/v1/channels/webhook/send", headers=headers, json={**body, "text": "fail"})
-    assert failed.status_code == 502 and "provider-secret" not in failed.text
-    events = service.audit.query(channel="webhook")
-    assert {row["event_type"] for row in events} >= {"outbound_message_requested", "outbound_message", "outbound_message_failed"}
-    assert "hi" not in repr(events) and "provider-secret" not in repr(events)
-    assert len(sent) == 2
-
-
-def test_channel_send_disabled_and_audit_failure_prevent_send(client, monkeypatch):
-    service = client.app.state.container.channels
-    control = client.app.state.container.control
-    body = {"channel": "webhook", "channel_user_id": "recipient", "text": "hi"}
-    headers = {"Authorization": f"Bearer {control.install_token}"}
-    assert client.post("/v1/channels/webhook/send", headers=headers, json=body).status_code == 503
-    service.set_enabled("webhook", True)
-    sent = []
-
-    class Adapter:
-        async def send(self, reply):
-            sent.append(reply)
-
-    monkeypatch.setattr(service, "instantiate", lambda _: Adapter())
-    def broken():
-        raise RuntimeError("disk unavailable")
-    monkeypatch.setattr(service.audit, "healthcheck", broken)
-    assert client.post("/v1/channels/webhook/send", headers=headers, json=body).status_code == 503
-    assert sent == []
 
 
 def test_real_http_traces_and_refusals_are_readable_without_content(client):
