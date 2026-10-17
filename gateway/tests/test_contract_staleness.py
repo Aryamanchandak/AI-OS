@@ -7,8 +7,8 @@ import subprocess
 from main import app
 
 
-AI_OS_ROOT = Path(__file__).resolve().parents[1]
-OPENAPI = Path(__file__).with_name("openapi.json")
+AI_OS_ROOT = Path(__file__).resolve().parents[2]
+OPENAPI = Path(__file__).resolve().parents[1] / "openapi.json"
 SCHEMA = AI_OS_ROOT / "shell" / "src" / "api" / "schema.d.ts"
 OPENAPI_TYPESCRIPT = (
     AI_OS_ROOT / "shell" / "node_modules" / ".bin" / "openapi-typescript"

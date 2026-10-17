@@ -74,7 +74,7 @@ Run these commands without any preconfigured environment variables:
 cd "/Users/aryamanchandak/Documents/AI OS/gateway"
 .venv/bin/python -m pytest
 .venv/bin/python export_openapi.py
-.venv/bin/python -m mypy --config-file mypy.ini main.py src/gateway
+.venv/bin/python -m mypy main.py src/gateway
 
 cd ../shell
 npm run types:generate

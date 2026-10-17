@@ -35,4 +35,6 @@ norecursedirs = [".venv", "build"]
 python_version = "3.12"
 strict = true
 ignore_missing_imports = true
-exclude = ["tests", "test_.*\\.py"]
+mypy_path = "src"
+cache_dir = "/tmp/ai-os-gateway-mypy-cache"
+exclude = ["/tests?/", "/test\\.py$", "test_.*\\.py$"]
