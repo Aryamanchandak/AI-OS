@@ -1,3 +1,32 @@
+# Provider adapters
+
+This folder defines the common provider contract, builds configured instances, and translates between gateway-neutral requests/results and vendor APIs. Adapters share the application's HTTP client; orchestration owns request-wide policy.
+
+## Shared files
+
+| File | Responsibility |
+| --- | --- |
+| `base.py` | Defines the provider protocol, capabilities, normalized results/usage/errors, the tool-delta marker, and buffered streaming helpers. |
+| `registry.py` | Constructs credential-enabled cloud instances and YAML-configured local models, applies capability overrides, and exposes deterministic explicit/ordered candidate lookup. |
+| `capabilities.py` | Resolves model-dependent feature flags using name hints and adapter defaults for diagnostics. |
+| `content.py` | Normalizes text/system/image blocks, tool definitions, arguments, and tool-result objects for adapter translation. |
+| `http.py` | Posts JSON with common timeout, HTTP error, retryability, and response-object checks. |
+| `__init__.py` | Re-exports the provider protocol and common value objects. |
+
+## Adapter folders
+
+- [openai](openai/README.md): native OpenAI request dialect.
+- [anthropic](anthropic/README.md): Messages API and schema adaptation.
+- [gemini](gemini/README.md): generateContent, embeddings, schemas, and remote context caching.
+- [ollama](ollama/README.md): local models, images, native/prompted tools, and embeddings.
+- [openai_compatible](openai_compatible/README.md): compatible cloud endpoints and incremental SSE parsing.
+
+Registry membership means an instance was configured, rather than that a live health probe succeeded. Candidate selection follows registry order unless a provider is explicitly pinned. Most adapters stream via a completed, buffered chat result; only the compatible family parses incremental SSE. Embedding selection follows declared capabilities: native OpenAI and compatible adapters have embedding methods but currently do not advertise that capability.
+
+See [orchestration](../orchestration/README.md) for retries, profile verification, budgets, finalization, and streaming differences. The original migration checklist and smoke instructions are preserved below; their coverage claims should be read alongside the current behavior described above.
+
+---
+
 # LLM provider migration map
 
 Every adapter uses the lifespan-owned `httpx.AsyncClient`; no adapter owns a

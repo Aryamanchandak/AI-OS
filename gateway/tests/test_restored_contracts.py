@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import json
 import asyncio
-from pathlib import Path
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
@@ -28,21 +26,6 @@ def client(tmp_path, monkeypatch):
 
 
 HEADERS = {"Authorization": "Bearer test-token"}
-
-
-def test_every_baseline_operation_is_registered_or_has_explicit_ui_replacement():
-    baseline = json.loads((Path(__file__).resolve().parents[2] / "migration/baseline/contracts/glc-openapi.json").read_text())
-    current = create_app().openapi()
-    ui = {("/", "get"): "shell landing", ("/channels", "get"): "ChannelsAdmin", ("/help", "get"): "Help"}
-    methods = {"get", "post", "put", "patch", "delete", "head", "options"}
-    missing = [(path, method) for path, operations in baseline["paths"].items()
-               for method in operations if method in methods
-               and method not in current["paths"].get(path, {}) and (path, method) not in ui]
-    assert missing == []
-    for path in ("/api/llm/preflight", "/v1/preflight"):
-        old_ref = baseline["paths"]["/v1/preflight"]["post"]["requestBody"]["content"]["application/json"]["schema"]["$ref"].split("/")[-1]
-        new_ref = current["paths"][path]["post"]["requestBody"]["content"]["application/json"]["schema"]["$ref"].split("/")[-1]
-        assert baseline["components"]["schemas"][old_ref] == current["components"]["schemas"][new_ref]
 
 
 def test_preflight_probes_and_redacts_partial_failure(client):

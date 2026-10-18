@@ -73,15 +73,14 @@ Run these commands without any preconfigured environment variables:
 ```bash
 cd "/Users/aryamanchandak/Documents/AI OS/gateway"
 .venv/bin/python -m pytest
-.venv/bin/python export_openapi.py
+.venv/bin/python scripts/export_openapi.py
 .venv/bin/python -m mypy main.py src/gateway
-
-cd ../shell
-npm run types:generate
-npx tsc -b
-npx vite build
-npx vitest run
 ```
 
-`pytest` checks both committed generated artifacts for staleness. Vitest uses
-its default `passWithNoTests: false`, so a missing UI test suite is a failure.
+`pytest` checks that the committed `contracts/openapi.json` is current. Tests never read
+files outside `gateway/`; keeping the shell's generated TypeScript types in
+sync with `contracts/openapi.json` is the shell's job (`npm run types:generate` there).
+
+Dependency documentation lives in [docs/dependencies.md](docs/dependencies.md).
+Graphiti integration requirements live in
+[docs/integrations/graphiti.md](docs/integrations/graphiti.md).

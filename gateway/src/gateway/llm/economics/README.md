@@ -1,0 +1,18 @@
+# Pricing, budgets, and usage accounting
+
+This folder converts token usage into configured USD costs, reserves spending capacity before chat calls, and reports usage by caller identity.
+
+| File | Responsibility |
+| --- | --- |
+| `pricing.py` | Loads version-1 `pricing.yaml`; resolves exact model prices, provider-prefixed model aliases, patterns, provider defaults, then an unpriced fallback. Projects costs and computes actual costs with cache/batch multipliers. |
+| `budget.py` | Loads version-1 `budgets.yaml`, merges runtime SQLite overrides, matches principal policies, atomically reserves projected costs, and reconciles or releases reservations. |
+| `meter.py` | Defines `Principal` and `Usage`, and a thread-safe in-memory `Meter` with recent calls, provider aggregates, and attribution rollups. |
+| `__init__.py` | Exports the main accounting objects. |
+
+## Chat accounting flow
+
+The orchestration budget stage projects the largest cost among candidate providers using estimated input size and the requested output limit. `BudgetController.admit()` checks matching tenant/project/user/agent/session policies inside a SQLite `BEGIN IMMEDIATE` transaction. A breached policy results in HTTP 402 before the chat provider is called; eligible semantic-cache lookups can already have made an embedding request at that point.
+
+Finalization uses the available provider result to calculate actual cost, reconciles the reservation, records the meter row, and appends an audit event. Without a provider result, it releases the reservation and records zero cost. Runtime limits and budget entries persist in the gateway database; meter records disappear on restart. Clearing a runtime override can reveal a policy still present in the YAML file.
+
+Periods use fixed epoch-aligned windows; `month` is a 30-day interval rather than a calendar month. Policy objects retain `include_errors`, but current finalization decides reconciliation from result availability rather than consulting that flag. Pricing is operator-configured data, not a live vendor-price feed. See [orchestration](../orchestration/README.md).
