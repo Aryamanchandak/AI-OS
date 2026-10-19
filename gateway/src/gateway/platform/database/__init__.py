@@ -21,6 +21,7 @@ class SQLiteDatabase:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         connection = sqlite3.connect(
             self.path,
+            timeout=30,
             isolation_level=None if autocommit else "DEFERRED",
             check_same_thread=False,
         )

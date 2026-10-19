@@ -8,4 +8,4 @@ The adapter uses `max_completion_tokens`, native function definitions, parallel 
 
 `embed()` implements the OpenAI embeddings request, but this adapter's declared capabilities currently leave `embeddings=False`. The service's normal embedding candidate loop therefore skips these instances.
 
-The [provider registry](../README.md) creates named OpenAI instances when the credential environment variable is present, using the shared application HTTP client. Cross-provider retries, budgets, cache, and audit belong to [orchestration](../../orchestration/README.md).
+The [provider registry](../README.md) creates named OpenAI instances when the credential environment variable is present, using the shared application HTTP client. Cross-provider retries, budgets, cache, and call logging belong to [orchestration](../../orchestration/README.md).

@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-import yaml
 
+from gateway.config import load_mapping
 from gateway.llm.providers.anthropic import AnthropicProvider
 from gateway.llm.providers.base import Provider
 from gateway.llm.providers.capabilities import resolve as capability_overrides
@@ -40,7 +40,7 @@ def build_provider_registry(client: httpx.AsyncClient, *, config_dir: Path) -> P
         providers["openai"] = OpenAIProvider("openai", key, os.getenv("OPENAI_MODEL", "gpt-5.4-nano"), client)
     if key := os.getenv("ANTHROPIC_API_KEY", "").strip():
         providers["anthropic"] = AnthropicProvider("anthropic", key, os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5"), client)
-    raw = yaml.safe_load((config_dir / "local_models.yaml").read_text(encoding="utf-8")) or {}
+    raw = load_mapping(config_dir / "local_models.yaml")
     ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
     for name, spec in (raw.get("models") or {}).items():
         model = os.getenv(spec.get("model_env", ""), spec["model"]) if spec.get("model_env") else spec["model"]

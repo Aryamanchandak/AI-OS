@@ -7,7 +7,7 @@ import fnmatch
 from pathlib import Path
 from typing import Any
 
-import yaml
+from gateway.config import load_mapping
 
 
 @dataclass(frozen=True, slots=True)
@@ -30,7 +30,7 @@ class PricingTable:
 
     @classmethod
     def from_yaml(cls, path: Path) -> "PricingTable":
-        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        raw = load_mapping(path)
         if raw.get("version") != 1: raise ValueError(f"{path}: version must be 1")
         return cls(raw)
 

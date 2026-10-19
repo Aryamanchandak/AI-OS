@@ -1,9 +1,7 @@
-# Persistent call ledger repository
+# Call ledger
 
-This folder defines the SQLite repository for per-call accounting history. `repository.py` implements `CallLedger`; `__init__.py` exports it.
+This folder holds the one record of every LLM call. `repository.py` implements `CallLedger`; `__init__.py` exports it.
 
-Construction creates the `calls` table and indexes, then adds missing columns needed by older database files. The schema includes provider/model, token usage, latency, errors, attribution dimensions, pricing, caching, profile, and legacy routing fields. `append()` accepts a subset of these fields and inserts a timestamped call row. `recent()` reads newest rows; `healthcheck()` verifies that the table can be queried.
+`COLUMNS` is the single column list; the table, the migration for older database files and every insert are built from it. Chat finalization and the embed path each `append()` one row per call. A failed write raises, so the call fails rather than leaving spend unlogged. `recent()` feeds `/api/llm/calls`, `rollup()` feeds `/cost/by_agent` and `/cost/by_principal`, and `by_provider()` feeds the `today` totals. Because rows live in SQLite, all of these survive a restart.
 
-The [application lifespan](../app/README.md) constructs and checks this repository using `GLCPaths.ledger_db`. The budget controller also stores its separate budget tables in that database file.
-
-The current LLM finalization path does **not** call `CallLedger.append()`: it writes usage into the in-memory `Meter` and durable `AuditStore`. Consequently, `/api/llm/calls` reads the meter rather than this repository. Having a ledger in the dependency container does not mean all current LLM calls are being inserted into `calls`.
+The [application lifespan](../app/README.md) builds it from `GLCPaths.ledger_db`. The budget controller keeps its own tables in the same database file.

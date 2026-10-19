@@ -11,8 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from gateway.app.dependencies import get_llm_service
 from gateway.app.router_registry import RouterRegistration
 from gateway.llm import LLMService
-from gateway.llm.economics.budget import BudgetConfigError, _parse_principal, _period_start
-from gateway.llm.economics.meter import DIMENSIONS
+from gateway.llm.economics.budget import DIMENSIONS, BudgetConfigError, _parse_principal, _period_start
 from gateway.llm.models import BudgetSetRequest, ChatRequest, EmbedRequest, PreflightRequest, PreflightResponse
 from gateway.llm.api.preflight import run_preflight
 from gateway.platform.observability.redaction import safe_error
@@ -58,7 +57,7 @@ async def embed(request: EmbedRequest, service: Annotated[LLMService, Depends(ge
 @router.get("/embedders")
 async def embedders(service: Annotated[LLMService, Depends(get_llm_service)]):
     values = {name: provider for name, provider in service.registry.providers.items() if provider.capabilities.embeddings}
-    return {"order": list(values), "models": {name: provider.model for name, provider in values.items()}, "today": service.meter.aggregate(), "profiles": service.profiles.all("embedding")}
+    return {"order": list(values), "models": {name: provider.model for name, provider in values.items()}, "today": await asyncio.to_thread(service.today), "profiles": service.profiles.all("embedding")}
 
 
 @router.get("/providers")
@@ -80,14 +79,12 @@ async def status(service: Annotated[LLMService, Depends(get_llm_service)]): retu
 
 
 @router.get("/calls")
-async def calls(service: Annotated[LLMService, Depends(get_llm_service)], limit: int = 100, provider: str | None = None, status: str | None = None): return service.meter.recent(limit, provider, status)
+async def calls(service: Annotated[LLMService, Depends(get_llm_service)], limit: int = 100, provider: str | None = None, status: str | None = None): return await asyncio.to_thread(service.ledger.recent, limit, provider, status)
 
 
 @router.get("/cost/by_agent")
 async def cost_by_agent(service: Annotated[LLMService, Depends(get_llm_service)], session: str | None = None, agent: str | None = None):
-    rows = service.meter.rollup("agent", value=agent)
-    if session: rows = [x for x in rows if x.get("session") == session]
-    return rows
+    return await asyncio.to_thread(lambda: service.ledger.rollup("agent", value=agent, session=session))
 
 
 @router.get("/budget")
@@ -125,9 +122,9 @@ async def cost_by_principal(service: Annotated[LLMService, Depends(get_llm_servi
     start = since if since is not None else _period_start(period)
     if dimension:
         if dimension not in DIMENSIONS: raise HTTPException(400, f"unknown dimension {dimension!r}; expected one of {list(DIMENSIONS)}")
-        rows = service.meter.rollup(dimension, since=start, value=value, group_by_provider=group_by_provider)
+        rows = await asyncio.to_thread(lambda: service.ledger.rollup(dimension, since=start, value=value, group_by_provider=group_by_provider))
         return {"period": period, "since": start, "dimension": dimension, "rows": rows, "total_usd": round(sum(x["dollars"] for x in rows), 8)}
-    values = service.meter.rollup_all(since=start)
+    values = await asyncio.to_thread(lambda: {name: service.ledger.rollup(name, since=start) for name in DIMENSIONS})
     return {"period": period, "since": start, "dimensions": list(DIMENSIONS), "by_dimension": values, "totals_usd": {key: round(sum(x["dollars"] for x in rows), 8) for key, rows in values.items()}}
 
 

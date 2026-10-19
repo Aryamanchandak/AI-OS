@@ -11,7 +11,6 @@ from gateway.app.dependencies import DependencyContainer
 from gateway.platform.configuration import GLCPaths
 from gateway.platform.networking import OutboundHTTPClient
 from gateway.platform.startup import StartupCheck, StartupDependencyError, run_startup_checks
-from gateway.audit import AuditStore
 from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
 from gateway.llm import LLMService
@@ -33,7 +32,6 @@ def build_container(
     """Construct and validate every long-lived dependency before serving."""
 
     paths = GLCPaths()
-    audit = _construct("audit database", lambda: AuditStore(paths.audit_db))
     ledger = _construct("call ledger database", lambda: CallLedger(paths.ledger_db))
     telemetry = Telemetry()
     _construct("telemetry export", telemetry.initialize)
@@ -43,15 +41,13 @@ def build_container(
         lambda: LLMService.build(
             client=http.client,
             config_dir=paths.config_dir,
-            database_path=paths.ledger_db,
-            audit=audit,
+            ledger=ledger,
         ),
     )
     llm.attach_tracer(telemetry.tracer)
     try:
         run_startup_checks(
             (
-                StartupCheck("audit database", audit.healthcheck),
                 StartupCheck("call ledger database", ledger.healthcheck),
                 StartupCheck("telemetry export", telemetry.healthcheck),
                 *startup_checks,
@@ -62,7 +58,6 @@ def build_container(
         raise
     return DependencyContainer(
         http=http,
-        audit=audit,
         ledger=ledger,
         telemetry=telemetry,
         llm=llm,

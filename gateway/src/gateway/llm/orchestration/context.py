@@ -3,8 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from gateway.llm.economics.budget import Admission
-from gateway.llm.economics.meter import Principal
+from gateway.llm.economics.budget import Admission, Principal
 from gateway.llm.models import ChatRequest
 from gateway.llm.providers.base import Provider, ProviderResult
 

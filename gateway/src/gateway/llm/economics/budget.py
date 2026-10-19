@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 import fnmatch
 from pathlib import Path
@@ -10,15 +11,27 @@ import time
 import uuid
 from typing import Any
 
-import yaml
+from gateway.config import load_mapping
+from gateway.platform.database import SQLiteDatabase
 
-from gateway.llm.economics.meter import DIMENSIONS, Principal
-
+DIMENSIONS = ("agent", "session")
 VALID_PERIODS = ("minute", "hour", "day", "month", "lifetime")
 BUDGET_EXCEEDED = "budget_exceeded"
 
 
 class BudgetConfigError(ValueError): pass
+
+
+@dataclass(frozen=True, slots=True)
+class Principal:
+    agent: str | None = None; session: str | None = None
+
+    @classmethod
+    def from_request(cls, request: Any) -> "Principal":
+        return cls(**{name: getattr(request, name, None) for name in DIMENSIONS})
+
+    def present(self) -> dict[str, str]:
+        return {name: value for name in DIMENSIONS if (value := getattr(self, name)) is not None}
 
 
 def _period_start(period: str, now: float | None = None) -> float:
@@ -71,18 +84,18 @@ CREATE INDEX IF NOT EXISTS idx_llm_budget_entries ON llm_budget_entries(dimensio
 
 class BudgetController:
     def __init__(self, path: Path, database_path: Path) -> None:
-        self.path, self.database_path = path, database_path
-        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        self.path, self.database = path, SQLiteDatabase(database_path)
+        raw = load_mapping(path)
         if raw.get("version") != 1: raise BudgetConfigError(f"{path}: version must be 1")
         self.defaults = raw.get("defaults") or {}
         entries = raw.get("policies") or []
         if not isinstance(entries, list): raise BudgetConfigError("budgets.yaml: policies must be a list")
         self.file_policies = [self._policy(x, str(path)) for x in entries]
-        self.database_path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as connection: connection.executescript(_SCHEMA)
+        self.database.migrate([_SCHEMA], autocommit=True)
 
-    def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.database_path, timeout=30, isolation_level=None, check_same_thread=False); connection.row_factory = sqlite3.Row; return connection
+    def _connect(self) -> AbstractContextManager[sqlite3.Connection]:
+        # Autocommit, so admit/reconcile control their own BEGIN IMMEDIATE transactions.
+        return self.database.connect(autocommit=True)
 
     def _policy(self, entry: dict[str, Any], source: str) -> BudgetPolicy:
         dimension, pattern = _parse_principal(str(entry.get("principal", ""))); limit = float(entry.get("limit_usd", -1)); period = str(entry.get("period", self.defaults.get("period", "day")))

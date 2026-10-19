@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 import pytest
 
 from gateway.app.main import create_app
-from gateway.audit import AuditStore
 from gateway.platform.configuration import GLCPaths
 from gateway.platform.startup import StartupCheck, StartupDependencyError
 from gateway.ledger import CallLedger
@@ -15,20 +14,18 @@ from gateway.ledger import CallLedger
 @pytest.fixture
 def glc_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str, Path | str]:
     values: dict[str, Path | str] = {
-        "audit": tmp_path / "audit.sqlite",
         "ledger": tmp_path / "gateway.sqlite",
     }
-    monkeypatch.setenv("GLC_AUDIT_DB", str(values["audit"]))
     monkeypatch.setenv("GLC_GATEWAY_DB", str(values["ledger"]))
     return values
 
 
 def test_database_defaults_are_centralized_under_database_sqlite() -> None:
     paths = GLCPaths(environment={})
-    for path in (paths.ledger_db, paths.audit_db):
-        assert path.parent.name == "sqlite"
-        assert path.parent.parent.name == "Database"
-        assert ".glc" not in str(path)
+    path = paths.ledger_db
+    assert path.parent.name == "sqlite"
+    assert path.parent.parent.name == "Database"
+    assert ".glc" not in str(path)
 
 
 def test_caller_supplied_startup_check_refuses_startup_and_names_it(
@@ -57,27 +54,12 @@ def test_configured_unreachable_telemetry_target_fails_real_startup(
             pass
 
 
-def test_audit_is_append_only_and_fail_closed(tmp_path: Path) -> None:
-    store = AuditStore(tmp_path / "audit.sqlite")
-    assert not hasattr(store, "update") and not hasattr(store, "delete")
-    store.database.path = tmp_path  # a directory cannot be opened as SQLite
-    with pytest.raises(Exception):
-        store.append(
-            channel="control",
-            channel_user_id="owner",
-            trust_level="owner_paired",
-            event_type="must-not-disappear",
-        )
-
-
-
-
 def test_call_ledger_keeps_its_own_schema_and_database(tmp_path: Path) -> None:
     ledger = CallLedger(tmp_path / "gateway.sqlite")
-    row_id = ledger.append(provider="test", model="model", agent="agent-1", usd=0.25)
+    row_id = ledger.append(kind="chat", provider="test", model="model", agent="agent-1", usd=0.25)
     assert row_id > 0
     assert ledger.recent(1)[0]["agent"] == "agent-1"
-    assert not (tmp_path / "audit.sqlite").exists()
+    assert [path.name for path in tmp_path.iterdir()] == ["gateway.sqlite"]
 
 
 def test_gateway_code_has_no_legacy_glc_imports() -> None:
@@ -91,6 +73,6 @@ def test_gateway_code_has_no_legacy_glc_imports() -> None:
     assert offenders == []
 
 
-def test_startup_creates_only_audit_and_ledger_databases(glc_environment, tmp_path) -> None:
+def test_startup_creates_only_the_ledger_database(glc_environment, tmp_path) -> None:
     with TestClient(create_app(token='gateway-token')):
-        assert {path.name for path in tmp_path.glob('*.sqlite')} == {'audit.sqlite', 'gateway.sqlite'}
+        assert {path.name for path in tmp_path.glob('*.sqlite')} == {'gateway.sqlite'}

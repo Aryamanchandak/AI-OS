@@ -1,7 +1,7 @@
 # AI OS Gateway
 
 The single entry point for all LLM calls. One FastAPI process that owns the
-LLM, audit and ledger domains, mounts their routers, and has no UI.
+LLM and ledger domains, mounts their routers, and has no UI.
 
 Gateway owns its Python environment. Set it up once with:
 
@@ -23,7 +23,7 @@ The Gateway listens on `127.0.0.1:8000`. `/health` needs no token; every
 - `POST /api/llm/preflight` probes chat and
   embeddings concurrently through the LLM service. Each probe has a 30-second
   deadline. The response reports each probe's result with redacted errors;
-  model probes still use the normal budget and audit path.
+  model probes still use the normal budget and ledger path.
 - `/api/observability/traces/recent`, `/traces/{trace_id}` and `/refusals`
   restore the observability reads. All of them require `AI_OS_TOKEN`.
 
@@ -33,9 +33,9 @@ Request and LLM-stage traces exclude prompts, completions, request headers,
 queries, and exception bodies. Successful chat responses include their trace
 and span IDs. Refusal details retain only redacted budget fields.
 
-Gateway owns the migrated GLC audit and ledger domains. Their SQLite files default to
-`../Database/sqlite/audit.sqlite` and `gateway.sqlite`; `GLC_AUDIT_DB` and `GLC_GATEWAY_DB`
-remain supported overrides. Audit writes are fail-closed.
+Every LLM call is written to the call ledger in `../Database/sqlite/gateway.sqlite`
+(override with `GLC_GATEWAY_DB`). Ledger writes are fail-closed: if the row cannot be
+written, the call fails.
 
 ## Regression commands
 

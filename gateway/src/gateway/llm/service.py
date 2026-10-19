@@ -10,8 +10,9 @@ from typing import Any
 from fastapi import HTTPException
 import httpx
 
-from gateway.audit import AuditStore
-from gateway.llm.economics import BudgetController, Meter, PricingTable
+from gateway.ledger import CallLedger
+from gateway.llm.economics import BudgetController, PricingTable
+from gateway.llm.economics.budget import _period_start
 from gateway.llm.models import ChatRequest, EmbedRequest
 from gateway.llm.orchestration.budget import BudgetReservationStage
 from gateway.llm.orchestration.finalization import FinalizationStage
@@ -29,23 +30,21 @@ from gateway.llm.providers.registry import ProviderRegistry, build_provider_regi
 
 class LLMService:
     def __init__(self, *, registry: ProviderRegistry, profiles: ProfileRegistry,
-                 pricing: PricingTable, budget: BudgetController, meter: Meter,
-                 audit: AuditStore) -> None:
+                 pricing: PricingTable, budget: BudgetController, ledger: CallLedger) -> None:
         self.registry, self.profiles, self.pricing = registry, profiles, pricing
-        self.budget, self.meter, self.audit = budget, meter, audit
+        self.budget, self.ledger = budget, ledger
         self.pipeline = LLMPipeline(validation=RequestValidationStage(), profiles=ProfileResolutionStage(profiles),
             normalization=NormalizationStage(), routing=RoutingStage(registry),
             budget=BudgetReservationStage(budget, pricing), provider_call=ProviderCallStage(),
-            structured=StructuredOutputStage(), finalization=FinalizationStage(meter, audit, budget, pricing))
+            structured=StructuredOutputStage(), finalization=FinalizationStage(ledger, budget, pricing))
 
     @classmethod
-    def build(cls, *, client: httpx.AsyncClient, config_dir: Path, database_path: Path, audit: AuditStore) -> "LLMService":
+    def build(cls, *, client: httpx.AsyncClient, config_dir: Path, ledger: CallLedger) -> "LLMService":
         registry = build_provider_registry(client, config_dir=config_dir)
         profiles = ProfileRegistry.from_yaml(config_dir / "profiles.yaml")
         pricing = PricingTable.from_yaml(config_dir / "pricing.yaml")
-        budget = BudgetController(config_dir / "budgets.yaml", database_path)
-        meter = Meter()
-        return cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, meter=meter, audit=audit)
+        budget = BudgetController(config_dir / "budgets.yaml", ledger.database.path)
+        return cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, ledger=ledger)
 
     def attach_tracer(self, tracer: Any) -> None:
         self.pipeline.tracer = tracer
@@ -75,13 +74,12 @@ class LLMService:
                     if selected: break
             raise HTTPException(502 if selected else 503, f"embedding providers unavailable. attempts: {attempts}")
         finally:
-            row: dict[str, Any] = {"provider": result["provider"] if result else selected or "(any)", "model": result["model"] if result else model or "(none)", "principal": {}, "input_tokens": max(1, len(request.text) // 4), "output_tokens": 0, "cost_usd": 0.0, "latency_ms": int((time.monotonic() - started) * 1000), "status": "error" if error else "ok", "error": str(error)[:500] if error else None, "attempted": attempts, "profile": request.profile, "call_role": "embed"}
-            self.meter.record(**row)
-            await asyncio.to_thread(self.audit.append, channel="llm", channel_user_id="anonymous", trust_level="internal", event_type="llm.embed", params={"profile": request.profile}, result=row)
+            await asyncio.to_thread(self.ledger.append, kind="embed", provider=result["provider"] if result else selected or "(any)", model=result["model"] if result else model or "(none)", input_tokens=max(1, len(request.text) // 4), latency_ms=int((time.monotonic() - started) * 1000), status="error" if error else "ok", error=str(error)[:500] if error else None, attempted=attempts, profile=request.profile)
 
 
     def providers(self) -> dict[str, Any]:
         return {"order": self.registry.order, "providers": list(self.registry.providers), "models": {name: p.model for name, p in self.registry.providers.items()}, "chat_profiles": {name: {**spec, "available": spec["provider"] in self.registry.providers} for name, spec in self.profiles.all("chat").items()}}
 
     def capabilities(self) -> dict[str, Any]: return self.registry.diagnostics()
-    def status(self) -> dict[str, Any]: return {"order": self.registry.order, "today": self.meter.aggregate()}
+    def today(self) -> dict[str, Any]: return self.ledger.by_provider(since=_period_start("day"))
+    def status(self) -> dict[str, Any]: return {"order": self.registry.order, "today": self.today()}

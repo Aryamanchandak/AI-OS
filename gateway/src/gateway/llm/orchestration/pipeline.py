@@ -6,7 +6,7 @@ from contextlib import nullcontext
 import time
 from typing import Any
 
-from gateway.llm.economics.meter import Principal
+from gateway.llm.economics.budget import Principal
 from gateway.llm.models import ChatRequest
 from gateway.llm.orchestration.budget import BudgetReservationStage
 from gateway.llm.orchestration.context import PipelineContext

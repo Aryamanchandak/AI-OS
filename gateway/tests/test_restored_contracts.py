@@ -15,7 +15,7 @@ from gateway.platform.observability.capture import RefusalLog
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     for key, filename in {
-        "GLC_GATEWAY_DB": "ledger", "GLC_AUDIT_DB": "audit",
+        "GLC_GATEWAY_DB": "ledger",
         "GLC_PAIRING_DB": "pairings",
         "GLC_INSTALL_TOKEN_FILE": "install-token",
     }.items():

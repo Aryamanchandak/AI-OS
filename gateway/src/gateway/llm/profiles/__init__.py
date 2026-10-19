@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-import yaml
+from gateway.config import load_mapping
 
 
 class ProfileError(ValueError):
@@ -18,7 +18,7 @@ class ProfileRegistry:
 
     @classmethod
     def from_yaml(cls, path: Path) -> "ProfileRegistry":
-        raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        raw = load_mapping(path)
         if raw.get("version") != 1:
             raise ProfileError(f"{path}: version must be 1")
         values: dict[str, dict[str, dict[str, Any]]] = {}

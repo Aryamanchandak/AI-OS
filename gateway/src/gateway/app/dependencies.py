@@ -7,7 +7,6 @@ from typing import Annotated, cast
 
 from fastapi import Depends, Request
 
-from gateway.audit import AuditStore
 from gateway.platform.networking import OutboundHTTPClient
 from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
@@ -19,7 +18,6 @@ class DependencyContainer:
     """The complete set of long-lived services owned by this application."""
 
     http: OutboundHTTPClient
-    audit: AuditStore
     ledger: CallLedger
     telemetry: Telemetry
     llm: LLMService

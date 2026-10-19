@@ -68,14 +68,14 @@ IMAGE_MESSAGES = [{'role': 'user', 'content': [
 @pytest.mark.parametrize('selector', ['provider', 'profile'])
 def test_image_is_rejected_for_a_text_only_selection(tmp_path: Path, selector: str) -> None:
     provider = SpyProvider('text-only')
-    service, audit = service_for(tmp_path, [provider])
+    service, ledger = service_for(tmp_path, [provider])
     request = ChatRequest(messages=IMAGE_MESSAGES, **{selector: 'pin' if selector == 'profile' else provider.name})
     with pytest.raises(HTTPException) as caught:
         asyncio.run(service.chat(request))
     assert caught.value.status_code == 400
     assert 'vision-capable' in caught.value.detail
     assert provider.calls == 0
-    assert len(audit.events) == 1
+    assert len(ledger.recent()) == 1
 
 
 def test_unpinned_image_uses_only_vision_capable_candidates(tmp_path: Path) -> None:

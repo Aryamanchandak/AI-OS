@@ -3,20 +3,18 @@ from __future__ import annotations
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import sqlite3
 from typing import Any
 
+import pytest
 
-from gateway.llm.economics import BudgetController, Meter, Principal, PricingTable
-from gateway.llm.models import ChatRequest
+from gateway.ledger import CallLedger
+from gateway.llm.economics import BudgetController, Principal, PricingTable
+from gateway.llm.models import ChatRequest, EmbedRequest
 from gateway.llm.profiles import ProfileRegistry
 from gateway.llm.providers.base import ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage
 from gateway.llm.providers.registry import ProviderRegistry
 from gateway.llm.service import LLMService
-
-
-class AuditSpy:
-    def __init__(self) -> None: self.events: list[dict[str, Any]] = []
-    def append(self, **event: Any) -> int: self.events.append(event); return len(self.events)
 
 
 class FakeProvider:
@@ -36,24 +34,25 @@ def budget_files(tmp_path: Path, *, limit: float | None = None) -> tuple[Path, P
     return path, tmp_path / "ledger.sqlite"
 
 
-def service_for(tmp_path: Path, providers: list[FakeProvider]) -> tuple[LLMService, AuditSpy]:
+def service_for(tmp_path: Path, providers: list[FakeProvider], *, price: float = 0) -> tuple[LLMService, CallLedger]:
     budget_path, database = budget_files(tmp_path)
-    audit = AuditSpy()
-    service = LLMService(registry=ProviderRegistry({x.name: x for x in providers}),
+    ledger = CallLedger(database)
+    service = LLMService(registry=ProviderRegistry({x.name: x for x in providers}),  # type: ignore[dict-item]
         profiles=ProfileRegistry({"chat": {"pin": {"provider": providers[-1].name, "model": providers[-1].model}}, "embedding": {"embed": {"provider": providers[-1].name, "model": providers[-1].model, "dim": 2}}}),
-        pricing=PricingTable({"models": {}, "providers": {}, "unpriced_default": {"input": 0, "output": 0}}),
-        budget=BudgetController(budget_path, database), meter=Meter(), audit=audit)  # type: ignore[arg-type]
-    return service, audit
+        pricing=PricingTable({"models": {}, "providers": {}, "unpriced_default": {"input": price, "output": price}}),
+        budget=BudgetController(budget_path, database), ledger=ledger)
+    return service, ledger
 
 
 def test_finalization_runs_after_retry_and_failover(tmp_path: Path) -> None:
     failing, working = FakeProvider("failing", fail=True), FakeProvider("working")
-    service, audit = service_for(tmp_path, [failing, working])
+    service, ledger = service_for(tmp_path, [failing, working])
     result = asyncio.run(service.chat(ChatRequest(prompt="hello")))
     assert result["provider"] == "working"
     assert failing.calls == 2
-    assert len(audit.events) == 1
-    assert len(audit.events[0]["result"]["attempted"]) == 2
+    rows = ledger.recent()
+    assert len(rows) == 1
+    assert len(rows[0]["attempted"]) == 2
 
 
 def test_atomic_budget_reservations_never_admit_over_ceiling(tmp_path: Path) -> None:
@@ -75,7 +74,7 @@ def test_profile_resolution_is_an_exact_pin() -> None:
 
 def test_repeated_prompts_call_the_provider_each_time(tmp_path: Path) -> None:
     provider = FakeProvider('solo')
-    service, audit = service_for(tmp_path, [provider])
+    service, ledger = service_for(tmp_path, [provider])
 
     async def exercise() -> None:
         for _ in range(2):
@@ -84,7 +83,7 @@ def test_repeated_prompts_call_the_provider_each_time(tmp_path: Path) -> None:
             assert 'cache' not in result
 
     asyncio.run(exercise())
-    assert provider.calls == len(audit.events) == 2
+    assert provider.calls == len(ledger.recent()) == 2
 
 
 def test_runtime_budget_overrides_survive_restart_and_enforce_both_dimensions(tmp_path: Path) -> None:
@@ -116,10 +115,40 @@ def test_old_runtime_budget_dimensions_are_not_loaded(tmp_path: Path) -> None:
     assert [policy.principal for policy in controller.policies()] == ['agent:reader']
 
 
-def test_audit_attribution_uses_agent_and_session(tmp_path: Path) -> None:
-    service, audit = service_for(tmp_path, [FakeProvider('solo')])
-    asyncio.run(service.chat(ChatRequest(prompt='hello', agent='reader', session='run-1')))
-    event = audit.events[0]
-    assert event['channel_user_id'] == 'reader'
-    assert event['session_id'] == 'run-1'
-    assert event['result']['principal'] == {'agent': 'reader', 'session': 'run-1'}
+def test_chat_call_writes_one_complete_ledger_row(tmp_path: Path) -> None:
+    service, ledger = service_for(tmp_path, [FakeProvider('solo')], price=1)
+    asyncio.run(service.chat(ChatRequest(prompt='hello', agent='reader', session='run-1', profile='pin')))
+    [row] = ledger.recent()
+    assert {key: row[key] for key in ('kind', 'provider', 'model', 'input_tokens', 'output_tokens', 'agent', 'session', 'profile', 'status')} == {
+        'kind': 'chat', 'provider': 'solo', 'model': 'solo-model', 'input_tokens': 10, 'output_tokens': 2,
+        'agent': 'reader', 'session': 'run-1', 'profile': 'pin', 'status': 'ok'}
+    assert row['usd'] == pytest.approx(12 / 1_000_000)
+
+
+def embedder(name: str) -> FakeProvider:
+    from dataclasses import replace
+
+    provider = FakeProvider(name)
+    provider.capabilities = replace(provider.capabilities, embeddings=True)
+    return provider
+
+
+def test_embed_call_writes_one_ledger_row(tmp_path: Path) -> None:
+    service, ledger = service_for(tmp_path, [embedder('solo')])
+    asyncio.run(service.embed(EmbedRequest(text='hello world', profile='embed')))
+    [row] = ledger.recent()
+    assert (row['kind'], row['provider'], row['model'], row['profile'], row['status']) == ('embed', 'solo', 'solo-model', 'embed', 'ok')
+
+
+def test_ledger_has_no_update_or_delete(tmp_path: Path) -> None:
+    ledger = CallLedger(tmp_path / 'gateway.sqlite')
+    assert not hasattr(ledger, 'update') and not hasattr(ledger, 'delete')
+
+
+@pytest.mark.parametrize('call', ['chat', 'embed'])
+def test_failed_ledger_write_fails_the_call(tmp_path: Path, call: str) -> None:
+    service, ledger = service_for(tmp_path, [embedder('solo')])
+    ledger.database.path = tmp_path  # a directory cannot be opened as SQLite
+    request = ChatRequest(prompt='hello') if call == 'chat' else EmbedRequest(text='hello', profile='embed')
+    with pytest.raises(sqlite3.OperationalError):
+        asyncio.run(getattr(service, call)(request))

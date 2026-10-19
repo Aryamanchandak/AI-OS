@@ -179,3 +179,37 @@ def test_image_transcription_profile_uses_the_local_model() -> None:
     spec = profiles.resolve('chat', 'image-transcription-v1')
     assert spec['provider'] == 'gemma'
     assert spec['model'] == 'gemma4:12b'
+
+
+def _client_for(service) -> TestClient:
+    app = create_app(token="test-token")
+    app.dependency_overrides[get_llm_service] = lambda: service
+    return TestClient(app, headers={"Authorization": "Bearer test-token"})
+
+
+def test_calls_survive_a_restart(tmp_path: Path) -> None:
+    import asyncio
+    from gateway.llm.models import ChatRequest
+
+    first, _ = service_for(tmp_path, [FakeProvider("solo")])
+    asyncio.run(first.chat(ChatRequest(prompt="hello", agent="reader")))
+    restarted, _ = service_for(tmp_path, [FakeProvider("solo")])
+    calls = _client_for(restarted).get("/api/llm/calls").json()
+    assert [(row["agent"], row["provider"]) for row in calls] == [("reader", "solo")]
+
+
+def test_cost_by_agent_equals_the_sum_of_ledger_rows(tmp_path: Path) -> None:
+    import asyncio
+    from gateway.llm.models import ChatRequest
+
+    service, ledger = service_for(tmp_path, [FakeProvider("solo")], price=1)
+    for agent, session in [("reader", "run-1"), ("reader", "run-2"), ("writer", "run-1")]:
+        asyncio.run(service.chat(ChatRequest(prompt="hello", agent=agent, session=session)))
+    client = _client_for(service)
+    by_agent = {row["value"]: row for row in client.get("/api/llm/cost/by_agent").json()}
+    for agent in ("reader", "writer"):
+        mine = [row for row in ledger.recent() if row["agent"] == agent]
+        assert by_agent[agent]["calls"] == len(mine)
+        assert by_agent[agent]["dollars"] == pytest.approx(sum(row["usd"] for row in mine))
+    one_session = client.get("/api/llm/cost/by_agent", params={"session": "run-1"}).json()
+    assert {row["value"]: row["calls"] for row in one_session} == {"reader": 1, "writer": 1}
