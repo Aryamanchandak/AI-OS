@@ -70,11 +70,11 @@ CREATE INDEX IF NOT EXISTS idx_llm_budget_entries ON llm_budget_entries(dimensio
 
 
 class BudgetController:
-    def __init__(self, path: Path, database_path: Path, *, load_overrides: bool = True) -> None:
-        self.path, self.database_path, self.load_overrides = path, database_path, load_overrides
+    def __init__(self, path: Path, database_path: Path) -> None:
+        self.path, self.database_path = path, database_path
         raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         if raw.get("version") != 1: raise BudgetConfigError(f"{path}: version must be 1")
-        self.defaults = raw.get("defaults") or {}; self.projection = raw.get("projection") or {}; self.alerts = raw.get("alerts") or {}
+        self.defaults = raw.get("defaults") or {}
         entries = raw.get("policies") or []
         if not isinstance(entries, list): raise BudgetConfigError("budgets.yaml: policies must be a list")
         self.file_policies = [self._policy(x, str(path)) for x in entries]
@@ -94,10 +94,9 @@ class BudgetController:
 
     def policies(self) -> list[BudgetPolicy]:
         merged = {x.principal: x for x in self.file_policies}
-        if self.load_overrides:
-            with self._connect() as connection:
-                for row in connection.execute("SELECT * FROM llm_budget_limits"):
-                    merged[row["principal"]] = BudgetPolicy(row["principal"], row["dimension"], row["pattern"], float(row["limit_usd"]), row["period"], bool(row["include_errors"]), "runtime")
+        with self._connect() as connection:
+            for row in connection.execute("SELECT * FROM llm_budget_limits WHERE dimension IN (?, ?)", DIMENSIONS):
+                merged[row["principal"]] = BudgetPolicy(row["principal"], row["dimension"], row["pattern"], float(row["limit_usd"]), row["period"], bool(row["include_errors"]), "runtime")
         return list(merged.values())
 
     def policy_for(self, dimension: str, value: str) -> BudgetPolicy | None:
@@ -149,4 +148,4 @@ class BudgetController:
         with self._connect() as connection: result = connection.execute("DELETE FROM llm_budget_limits WHERE principal=?", (f"{dimension}:{pattern}",))
         return result.rowcount > 0
 
-    def describe(self) -> dict[str, Any]: return {"path": str(self.path), "enabled": self.enabled, "defaults": self.defaults, "projection": self.projection, "alerts": self.alerts, "policies": [x.as_dict() for x in self.policies()]}
+    def describe(self) -> dict[str, Any]: return {"path": str(self.path), "enabled": self.enabled, "defaults": self.defaults, "policies": [x.as_dict() for x in self.policies()]}

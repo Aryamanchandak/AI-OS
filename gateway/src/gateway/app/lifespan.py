@@ -9,7 +9,6 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from gateway.app.dependencies import DependencyContainer
-from gateway.platform.configuration import load_gateway_settings
 from gateway.platform.configuration import GLCPaths
 from gateway.platform.networking import OutboundHTTPClient
 from gateway.platform.service_registry import load_service_registry
@@ -31,13 +30,12 @@ def _construct(dependency: str, factory: Callable[[], T]) -> T:
 
 
 def build_container(
-    *, gateway_config_path: Path, service_registry_path: Path,
+    *, service_registry_path: Path,
     startup_checks: tuple[StartupCheck, ...] = (),
 ) -> DependencyContainer:
     """Construct and validate every long-lived dependency before serving."""
 
     paths = GLCPaths()
-    settings = load_gateway_settings(gateway_config_path)
     services = load_service_registry(service_registry_path)
     audit = _construct("audit database", lambda: AuditStore(paths.audit_db))
     ledger = _construct("call ledger database", lambda: CallLedger(paths.ledger_db))
@@ -53,14 +51,6 @@ def build_container(
             audit=audit,
         ),
     )
-    semantic_cache = _construct(
-        "semantic cache",
-        lambda: llm.build_semantic_cache(
-            config_path=paths.config_dir / "cache.yaml",
-            database_path=paths.cache_db,
-        ),
-    )
-    llm.attach_semantic_cache(semantic_cache)
     llm.attach_tracer(telemetry.tracer)
     try:
         run_startup_checks(
@@ -68,7 +58,6 @@ def build_container(
                 StartupCheck("audit database", audit.healthcheck),
                 StartupCheck("call ledger database", ledger.healthcheck),
                 StartupCheck("telemetry export", telemetry.healthcheck),
-                StartupCheck("semantic cache", semantic_cache.healthcheck),
                 *startup_checks,
             )
         )
@@ -76,7 +65,6 @@ def build_container(
         telemetry.close()
         raise
     return DependencyContainer(
-        settings=settings,
         service_registry=services,
         http=http,
         audit=audit,
@@ -88,7 +76,6 @@ def build_container(
 
 def lifespan_for(
     *,
-    gateway_config_path: Path,
     service_registry_path: Path,
     startup_checks: tuple[StartupCheck, ...] = (),
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
@@ -97,7 +84,6 @@ def lifespan_for(
         container: DependencyContainer | None = None
         try:
             container = build_container(
-                gateway_config_path=gateway_config_path,
                 service_registry_path=service_registry_path,
                 startup_checks=startup_checks,
             )

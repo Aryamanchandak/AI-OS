@@ -30,7 +30,6 @@ from gateway.platform.startup import StartupCheck
 
 GATEWAY_ROOT = AI_OS_ROOT / "gateway"
 SHELL_DIST = AI_OS_ROOT / "shell" / "dist"
-DEFAULT_GATEWAY_CONFIG = GATEWAY_ROOT / "config" / "gateway.yaml"
 DEFAULT_SERVICE_REGISTRY = GATEWAY_ROOT / "config" / "services.yaml"
 
 
@@ -49,7 +48,6 @@ def _diagnostics_registration() -> RouterRegistration:
 def create_app(
     *,
     token: str | None = None,
-    gateway_config_path: Path = DEFAULT_GATEWAY_CONFIG,
     service_registry_path: Path | None = None,
     startup_checks: tuple[StartupCheck, ...] = (),
 ) -> FastAPI:
@@ -61,7 +59,6 @@ def create_app(
         title="AI OS Gateway",
         version=__version__,
         lifespan=lifespan_for(
-            gateway_config_path=gateway_config_path,
             service_registry_path=resolved_registry_path,
             startup_checks=startup_checks,
         ),

@@ -140,84 +140,6 @@
         }
       }
     },
-    "/api/llm/chat/batch": {
-      "post": {
-        "tags": [
-          "llm"
-        ],
-        "summary": "Chat Batch",
-        "operationId": "chat_batch_api_llm_chat_batch_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchChatRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/llm/vision": {
-      "post": {
-        "tags": [
-          "llm"
-        ],
-        "summary": "Vision",
-        "operationId": "vision_api_llm_vision_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VisionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/llm/embed": {
       "post": {
         "tags": [
@@ -361,25 +283,6 @@
         ],
         "summary": "Status",
         "operationId": "status_api_llm_status_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/llm/routers": {
-      "get": {
-        "tags": [
-          "llm"
-        ],
-        "summary": "Routers",
-        "operationId": "routers_api_llm_routers_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -761,66 +664,6 @@
         }
       }
     },
-    "/api/llm/cache/stats": {
-      "get": {
-        "tags": [
-          "llm"
-        ],
-        "summary": "Cache Stats",
-        "operationId": "cache_stats_api_llm_cache_stats_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/llm/cache/purge": {
-      "post": {
-        "tags": [
-          "llm"
-        ],
-        "summary": "Cache Purge",
-        "operationId": "cache_purge_api_llm_cache_purge_post",
-        "parameters": [
-          {
-            "name": "expired_only",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Expired Only"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/llm/pricing": {
       "get": {
         "tags": [
@@ -884,25 +727,6 @@
         }
       }
     },
-    "/api/llm/telemetry": {
-      "get": {
-        "tags": [
-          "llm"
-        ],
-        "summary": "Telemetry",
-        "operationId": "telemetry_api_llm_telemetry_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/preflight": {
       "post": {
         "tags": [
@@ -957,86 +781,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ChatRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
-    "/v1/chat/batch": {
-      "post": {
-        "tags": [
-          "llm-legacy-deprecated"
-        ],
-        "summary": "Chat Batch",
-        "operationId": "chat_batch_v1_chat_batch_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchChatRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
-    "/v1/vision": {
-      "post": {
-        "tags": [
-          "llm-legacy-deprecated"
-        ],
-        "summary": "Vision",
-        "operationId": "vision_v1_vision_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VisionRequest"
               }
             }
           },
@@ -1213,26 +957,6 @@
         ],
         "summary": "Status",
         "operationId": "status_v1_status_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
-    "/v1/routers": {
-      "get": {
-        "tags": [
-          "llm-legacy-deprecated"
-        ],
-        "summary": "Routers",
-        "operationId": "routers_v1_routers_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1622,68 +1346,6 @@
         }
       }
     },
-    "/v1/cache/stats": {
-      "get": {
-        "tags": [
-          "llm-legacy-deprecated"
-        ],
-        "summary": "Cache Stats",
-        "operationId": "cache_stats_v1_cache_stats_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
-    "/v1/cache/purge": {
-      "post": {
-        "tags": [
-          "llm-legacy-deprecated"
-        ],
-        "summary": "Cache Purge",
-        "operationId": "cache_purge_v1_cache_purge_post",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "expired_only",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true,
-              "title": "Expired Only"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/pricing": {
       "get": {
         "tags": [
@@ -1746,26 +1408,6 @@
             }
           }
         }
-      }
-    },
-    "/v1/telemetry": {
-      "get": {
-        "tags": [
-          "llm-legacy-deprecated"
-        ],
-        "summary": "Telemetry",
-        "operationId": "telemetry_v1_telemetry_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        },
-        "deprecated": true
       }
     },
     "/api/observability/traces/recent": {
@@ -2163,34 +1805,12 @@
   },
   "components": {
     "schemas": {
-      "BatchChatRequest": {
-        "properties": {
-          "calls": {
-            "items": {
-              "$ref": "#/components/schemas/ChatRequest"
-            },
-            "type": "array",
-            "title": "Calls"
-          },
-          "max_concurrency": {
-            "type": "integer",
-            "title": "Max Concurrency",
-            "default": 4
-          }
-        },
-        "type": "object",
-        "required": [
-          "calls"
-        ],
-        "title": "BatchChatRequest",
-        "description": "V8 batch endpoint. The gateway dispatches the inner calls with\nbounded parallelism so providers' rate limits are respected centrally."
-      },
       "BudgetSetRequest": {
         "properties": {
           "principal": {
             "type": "string",
             "title": "Principal",
-            "description": "e.g. \"session:run-42\" or \"tenant:*\""
+            "description": "e.g. \"session:run-42\" or \"agent:*\""
           },
           "limit_usd": {
             "type": "number",
@@ -2233,7 +1853,7 @@
           "limit_usd"
         ],
         "title": "BudgetSetRequest",
-        "description": "POST /v1/budget \u2014 arm or move a ceiling at runtime.\n\n`principal` is \"<dimension>:<value-or-glob>\" over the five attribution\ndimensions (tenant, project, user, agent, session). A runtime entry shadows\na same-named entry in budgets.yaml, so an operator can clamp a runaway\nsession without a deploy, and `limit_usd: 0` refuses everything for that\nprincipal immediately."
+        "description": "POST /v1/budget \u2014 arm or move a ceiling at runtime.\n\n`principal` is \"<dimension>:<value-or-glob>\" over the two attribution\ndimensions (agent, session). A runtime entry shadows\na same-named entry in budgets.yaml, so an operator can clamp a runaway\nsession without a deploy, and `limit_usd: 0` refuses everything for that\nprincipal immediately."
       },
       "CacheableSystemBlock": {
         "properties": {
@@ -2343,6 +1963,7 @@
           },
           "stream": {
             "type": "boolean",
+            "const": false,
             "title": "Stream",
             "default": false
           },
@@ -2413,17 +2034,6 @@
               }
             ]
           },
-          "auto_route": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Auto Route"
-          },
           "agent": {
             "anyOf": [
               {
@@ -2445,82 +2055,12 @@
               }
             ],
             "title": "Session"
-          },
-          "tenant": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tenant"
-          },
-          "project": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Project"
-          },
-          "user": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User"
-          },
-          "semantic_cache": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Semantic Cache"
-          },
-          "batch": {
-            "type": "boolean",
-            "title": "Batch",
-            "default": false
-          },
-          "cost_quality_tradeoff": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cost Quality Tradeoff"
-          },
-          "escalate": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Escalate"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "ChatRequest",
-        "description": "Backward-compatible request \u2014 every new field is optional."
+        "description": "Chat input with explicit model/profile selection and agent/session attribution."
       },
       "EmbedRequest": {
         "properties": {
@@ -2840,141 +2380,6 @@
           "type"
         ],
         "title": "ValidationError"
-      },
-      "VisionRequest": {
-        "properties": {
-          "image": {
-            "type": "string",
-            "title": "Image",
-            "description": "data: URL or http(s) URL of the image"
-          },
-          "prompt": {
-            "type": "string",
-            "title": "Prompt"
-          },
-          "system": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "System"
-          },
-          "schema": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Schema"
-          },
-          "schema_name": {
-            "type": "string",
-            "title": "Schema Name",
-            "default": "out"
-          },
-          "model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model"
-          },
-          "provider": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Provider"
-          },
-          "max_tokens": {
-            "type": "integer",
-            "title": "Max Tokens",
-            "default": 1024
-          },
-          "temperature": {
-            "type": "number",
-            "title": "Temperature",
-            "default": 0.0
-          },
-          "agent": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Agent"
-          },
-          "session": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Session"
-          },
-          "tenant": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tenant"
-          },
-          "project": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Project"
-          },
-          "user": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "User"
-          }
-        },
-        "type": "object",
-        "required": [
-          "image",
-          "prompt"
-        ],
-        "title": "VisionRequest",
-        "description": "V9: typed shim for single-image vision calls. Lower-ceremony than\n/v1/chat for the set-of-marks loop \u2014 callers send one image, one prompt,\nand (optionally) a JSON schema for typed output, and the gateway forces\nrouting to a vision-capable provider.\n\nAccepts either a data: URL (base64) or an http(s) URL for `image`.\nThe gateway pre-resolves http URLs the same way /v1/chat does."
       }
     }
   }

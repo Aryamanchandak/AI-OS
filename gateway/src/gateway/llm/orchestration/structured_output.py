@@ -8,7 +8,7 @@ from gateway.llm.orchestration.context import PipelineContext
 
 class StructuredOutputStage:
     async def run(self, context: PipelineContext) -> None:
-        if context.output is not None or context.result is None: return
+        if context.result is None: return
         schema = context.request.response_format.schema_ if context.request.response_format else None
         if not schema or context.result.tool_calls: return
         try:

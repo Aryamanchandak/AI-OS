@@ -10,7 +10,6 @@ four wrong. Ported from `glc_v5/glc/direct_providers.py:106`.
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 import json
 from typing import Any
 import uuid
@@ -18,7 +17,7 @@ import uuid
 import httpx
 
 from gateway.llm.providers.base import (
-    ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage, fallback_stream,
+    ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage,
 )
 from gateway.llm.providers.content import (
     arguments, as_dict, extract_text_blocks, flatten_system, iter_image_blocks, text_of, tool_specs,
@@ -127,11 +126,6 @@ class OpenAIProvider:
                                 cache_read_input_tokens=(usage.get("prompt_tokens_details") or {}).get("cached_tokens", 0) or 0),
             raw=payload, tool_call_dialect="native" if tools else "none", reasoning_applied=reasoning_applied)
 
-    def stream(self, **kwargs: Any) -> AsyncIterator[str]:
-        # The legacy direct adapter inherits `BaseProvider.stream`, i.e. one
-        # buffered frame. Streaming incrementally here would silently change the
-        # wire contract for `openai-*` while claiming to fix streaming.
-        return fallback_stream(self.chat, **kwargs)
 
     async def embed(self, text: str, *, model: str | None = None, task_type: str = "retrieval_document") -> list[float]:
         del task_type

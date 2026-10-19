@@ -8,8 +8,12 @@ embedding:
     description: Stable local retrieval vector space for document chunking.
 
 chat:
+  image-transcription-v1:
+    provider: gemma
+    model: gemma4:12b
+    description: Local image transcription with no hosted fallback.
   knowledge-extraction-v1:
-    provider: anthropic-sonnet
+    provider: anthropic
     model: claude-sonnet-4-6
     description: High-quality structured knowledge extraction.
   document-segmentation-v1:
@@ -17,7 +21,7 @@ chat:
     model: phi4:14b-q4_K_M
     description: Exact local document segmentation model.
   highlight-photo-summary-v1:
-    provider: anthropic-haiku
+    provider: anthropic
     model: claude-haiku-4-5
     description: Fast multimodal highlight-photo summaries.
   cover-classification-v1:

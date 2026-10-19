@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 from typing import Any
 import uuid
 
@@ -10,7 +9,7 @@ import httpx
 
 from gateway.llm.providers.anthropic.schema import clean as clean_schema
 from gateway.llm.providers.base import (
-    ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage, fallback_stream,
+    ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage,
 )
 from gateway.llm.providers.content import (
     as_dict, flatten_system, iter_image_blocks, text_of, tool_specs,
@@ -131,8 +130,6 @@ class AnthropicProvider:
                                 cache_read_input_tokens=usage.get("cache_read_input_tokens", 0) or 0),
             raw=payload, tool_call_dialect="native" if tools else "none", reasoning_applied=thinking)
 
-    def stream(self, **kwargs: Any) -> AsyncIterator[str]:
-        return fallback_stream(self.chat, **kwargs)
 
     async def embed(self, text: str, *, model: str | None = None, task_type: str = "retrieval_document") -> list[float]:
         raise ProviderError("anthropic does not support embeddings", status=400)

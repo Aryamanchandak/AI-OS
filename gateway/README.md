@@ -22,8 +22,7 @@ AI_OS_TOKEN=local-dev-token .venv/bin/python main.py
 Open `http://127.0.0.1:8000/`. The shell asks for the bearer token; the token
 in the example is `local-dev-token`.
 
-Non-secret process defaults live in `config/gateway.yaml`; named service
-addresses live in `config/services.yaml`. A service value can be overridden
+Named service addresses and the Gateway bind address live in `config/services.yaml`. A service value can be overridden
 with `AI_OS_SERVICE_<NAME>_HOST`, `AI_OS_SERVICE_<NAME>_PORT`, or
 `AI_OS_SERVICE_<NAME>_ENABLED`. Overrides receive the same validation as YAML,
 including duplicate enabled-port rejection. Optional workers are not probed at
@@ -84,3 +83,8 @@ sync with `contracts/openapi.json` is the shell's job (`npm run types:generate` 
 Dependency documentation lives in [docs/dependencies.md](docs/dependencies.md).
 Graphiti integration requirements live in
 [docs/integrations/graphiti.md](docs/integrations/graphiti.md).
+
+## Later
+
+Real provider batch processing can return as a separate feature when needed,
+with actual asynchronous submission and billing matched to the provider's batch API.

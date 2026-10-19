@@ -1,6 +1,6 @@
 # Shared SQLite helper
 
-The implementation lives in `__init__.py`. `SQLiteDatabase` centralizes connection setup and cleanup for the [audit store](../../audit/README.md), [call ledger](../../ledger/README.md), and [semantic cache](../../llm/cache/README.md).
+The implementation lives in `__init__.py`. `SQLiteDatabase` centralizes connection setup and cleanup for the [audit store](../../audit/README.md) and [call ledger](../../ledger/README.md).
 
 `connect()` creates the parent directory when necessary, opens a connection with named-row access, and closes it when the context exits. Normal connections commit on success and roll back on exceptions. An explicit `autocommit=True` mode lets callers make each statement durable immediately.
 

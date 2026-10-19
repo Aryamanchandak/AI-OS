@@ -4,19 +4,16 @@
 from __future__ import annotations
 
 import asyncio
-import json
-import time
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 
 from gateway.app.dependencies import get_llm_service
 from gateway.app.router_registry import RouterRegistration
 from gateway.llm import LLMService
 from gateway.llm.economics.budget import BudgetConfigError, _parse_principal, _period_start
 from gateway.llm.economics.meter import DIMENSIONS
-from gateway.llm.models import BatchChatRequest, BudgetSetRequest, ChatRequest, EmbedRequest, ResponseFormat, VisionRequest, PreflightRequest, PreflightResponse
+from gateway.llm.models import BudgetSetRequest, ChatRequest, EmbedRequest, PreflightRequest, PreflightResponse
 from gateway.llm.api.preflight import run_preflight
 from gateway.platform.observability.redaction import safe_error
 
@@ -37,7 +34,7 @@ def _chat_trace(result: dict[str, Any]) -> dict[str, Any]:
         for key, field in (("gen_ai.usage.input_tokens", "input_tokens"), ("gen_ai.usage.output_tokens", "output_tokens")):
             if isinstance(result.get(field), int):
                 span.set_attribute(key, result[field])
-        for key, section, field in (("glc.cost.usd", "cost", "total_usd"), ("glc.cache.hit", "cache", "hit"), ("glc.budget.admitted", "budget", "allowed")):
+        for key, section, field in (("glc.cost.usd", "cost", "total_usd"), ("glc.budget.admitted", "budget", "allowed")):
             value = (result.get(section) or {}).get(field)
             if isinstance(value, (int, float, bool)):
                 span.set_attribute(key, value)
@@ -51,30 +48,7 @@ async def preflight(request: PreflightRequest, service: Annotated[LLMService, De
 
 @router.post("/chat")
 async def chat(request: ChatRequest, service: Annotated[LLMService, Depends(get_llm_service)]):
-    if request.stream:
-        outcome = await service.stream_chat(request)
-        # A semantic-cache hit answers with the stored JSON body even on a
-        # streaming request, which is what the legacy route does.
-        if isinstance(outcome, dict): return _chat_trace(outcome)
-        return StreamingResponse(outcome, media_type="text/event-stream")
     return _chat_trace(await service.chat(request))
-
-
-@router.post("/chat/batch")
-async def chat_batch(request: BatchChatRequest, service: Annotated[LLMService, Depends(get_llm_service)]):
-    semaphore = asyncio.Semaphore(max(1, request.max_concurrency))
-    async def one(call: ChatRequest):
-        async with semaphore:
-            try: return await service.chat(call)
-            except HTTPException as exc: return {"error": str(exc.detail), "status_code": exc.status_code}
-            except Exception as exc: return {"error": str(exc)[:400], "status_code": 500}
-    return {"results": await asyncio.gather(*(one(call) for call in request.calls))}
-
-
-@router.post("/vision")
-async def vision(request: VisionRequest, service: Annotated[LLMService, Depends(get_llm_service)]):
-    inner = ChatRequest(messages=[{"role": "user", "content": [{"type": "text", "text": request.prompt}, {"type": "image_url", "image_url": {"url": request.image}}]}], system=request.system, provider=request.provider, model=request.model, max_tokens=request.max_tokens, temperature=request.temperature, response_format=ResponseFormat(type="json_schema", schema=request.schema_, name=request.schema_name, strict=True) if request.schema_ else None, agent=request.agent, session=request.session, tenant=request.tenant, project=request.project, user=request.user)
-    return await service.chat(inner)
 
 
 @router.post("/embed")
@@ -84,7 +58,7 @@ async def embed(request: EmbedRequest, service: Annotated[LLMService, Depends(ge
 @router.get("/embedders")
 async def embedders(service: Annotated[LLMService, Depends(get_llm_service)]):
     values = {name: provider for name, provider in service.registry.providers.items() if provider.capabilities.embeddings}
-    return {"order": list(values), "models": {name: provider.model for name, provider in values.items()}, "fixed_dim": 768, "max_input_chars": 100000, "backoff_steps_s": [1, 5, 30], "live": {name: {"available": True} for name in values}, "today": service.meter.aggregate(), "profiles": service.profiles.all("embedding")}
+    return {"order": list(values), "models": {name: provider.model for name, provider in values.items()}, "today": service.meter.aggregate(), "profiles": service.profiles.all("embedding")}
 
 
 @router.get("/providers")
@@ -103,10 +77,6 @@ async def capabilities(service: Annotated[LLMService, Depends(get_llm_service)])
 
 @router.get("/status")
 async def status(service: Annotated[LLMService, Depends(get_llm_service)]): return service.status()
-
-
-@router.get("/routers")
-async def routers(service: Annotated[LLMService, Depends(get_llm_service)]): return {"order": [], "providers": [], "models": {}, "live": {}, "today": {}, "limits": {}, "tier_to_order": {}}
 
 
 @router.get("/calls")
@@ -161,30 +131,11 @@ async def cost_by_principal(service: Annotated[LLMService, Depends(get_llm_servi
     return {"period": period, "since": start, "dimensions": list(DIMENSIONS), "by_dimension": values, "totals_usd": {key: round(sum(x["dollars"] for x in rows), 8) for key, rows in values.items()}}
 
 
-@router.get("/cache/stats")
-async def cache_stats(service: Annotated[LLMService, Depends(get_llm_service)]):
-    if service.cache is None:
-        return {"enabled": False, "message": "semantic cache not initialised"}
-    stats = await asyncio.to_thread(service.cache.stats)
-    return {**stats, "enabled": service.cache.enabled}
-
-
-@router.post("/cache/purge")
-async def cache_purge(service: Annotated[LLMService, Depends(get_llm_service)], expired_only: bool = True):
-    if service.cache is None: raise HTTPException(503, "semantic cache not initialised")
-    removed = await asyncio.to_thread(service.cache.purge, expired_only=expired_only)
-    return {"ok": True, "removed": removed}
-
-
 @router.get("/pricing")
 async def pricing(service: Annotated[LLMService, Depends(get_llm_service)], provider: str | None = None, model: str | None = None):
     if provider or model:
-        value = service.pricing.price_for(provider or "", model); return {"provider": provider, "model": model, "input_usd_per_mtok": value.input_usd_per_mtok, "output_usd_per_mtok": value.output_usd_per_mtok, "cache_read_multiplier": value.cache_read_multiplier, "cache_write_multiplier": value.cache_write_multiplier, "batch_multiplier": value.batch_multiplier, "quality": value.quality, "price_source": value.source, "priced": value.priced}
+        value = service.pricing.price_for(provider or "", model); return {"provider": provider, "model": model, "input_usd_per_mtok": value.input_usd_per_mtok, "output_usd_per_mtok": value.output_usd_per_mtok, "cache_read_multiplier": value.cache_read_multiplier, "cache_write_multiplier": value.cache_write_multiplier, "quality": value.quality, "price_source": value.source, "priced": value.priced}
     return service.pricing.describe()
-
-
-@router.get("/telemetry")
-async def telemetry(): return {"capture_content": False, "enabled": True}
 
 
 def registration() -> RouterRegistration: return RouterRegistration(router=router, prefix="/api/llm", tags=("llm",))

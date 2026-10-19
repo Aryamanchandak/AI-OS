@@ -7,12 +7,11 @@ import threading
 import time
 from typing import Any
 
-DIMENSIONS = ("tenant", "project", "user", "agent", "session")
+DIMENSIONS = ("agent", "session")
 
 
 @dataclass(frozen=True, slots=True)
 class Principal:
-    tenant: str | None = None; project: str | None = None; user: str | None = None
     agent: str | None = None; session: str | None = None
 
     @classmethod
@@ -21,12 +20,6 @@ class Principal:
 
     def present(self) -> dict[str, str]:
         return {name: value for name in DIMENSIONS if (value := getattr(self, name)) is not None}
-
-
-@dataclass(slots=True)
-class Usage:
-    input_tokens: int = 0; output_tokens: int = 0
-    cache_creation_input_tokens: int = 0; cache_read_input_tokens: int = 0
 
 
 class Meter:

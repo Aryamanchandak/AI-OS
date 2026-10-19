@@ -6,4 +6,6 @@ Each profile must pin non-empty `provider` and `model` strings. Embedding profil
 
 `resolve(kind, name)` returns a copy of a profile, with a useful list of known names on failure. `all(kind)` returns copies of the section entries for diagnostics.
 
-The [profile resolution stage](../orchestration/README.md) copies chat pins onto the request, and provider execution checks the returned model. Streaming checks the model when the adapter can confirm it; otherwise the terminal frame marks the pin unverified. [LLMService](../README.md) resolves embedding profiles and checks returned vector dimensions. Requests cannot combine a profile with explicit provider/model selection; chat additionally rejects combining a profile with `auto_route`.
+The [profile resolution stage](../orchestration/README.md) copies chat pins onto the request, and provider execution checks the returned model. [LLMService](../README.md) resolves embedding profiles and checks returned vector dimensions. Requests cannot combine a profile with explicit provider/model selection.
+
+`image-transcription-v1` pins local `gemma4:12b` through the `gemma` provider. Send image content to `/api/llm/chat` with this profile; use an `image_url` block containing a base64 `data:` URL. The gateway does not download image links.

@@ -21,7 +21,7 @@ def test_gateway_boots_without_glc_submodules(tmp_path: Path) -> None:
     environment["PYTHONPATH"] = str(snapshot / "src")
     environment["AI_OS_TOKEN"] = "standalone-test-token"
     environment.pop("AI_OS_SERVICE_REGISTRY_PATH", None)
-    for name in ("GLC_GATEWAY_DB", "GLC_AUDIT_DB", "GLC_CACHE_DB"):
+    for name in ("GLC_GATEWAY_DB", "GLC_AUDIT_DB"):
         environment.pop(name, None)
 
     check = """

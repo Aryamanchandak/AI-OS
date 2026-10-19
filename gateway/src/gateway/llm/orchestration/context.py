@@ -25,9 +25,6 @@ class PipelineContext:
     attempts: list[dict[str, Any]] = field(default_factory=list)
     retries: int = 0
     admission: Admission | None = None
-    cache_fields: dict[str, Any] = field(default_factory=dict)
-    cache_embedding: list[float] | None = None
-    cache_hit: bool = False
     cost: dict[str, Any] | None = None
     error: BaseException | None = None
     finalized: bool = False

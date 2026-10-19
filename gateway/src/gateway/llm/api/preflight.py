@@ -26,7 +26,6 @@ async def run_preflight(request: PreflightRequest, service: LLMService) -> Prefl
                         prompt="Reply with OK.", profile=profile,
                         provider=request.chat_provider, model=request.chat_model,
                         max_tokens=8, temperature=0, reasoning="off",
-                        semantic_cache=False, escalate=False,
                     ))
                 else:
                     result = await service.embed(EmbedRequest(text="preflight check", profile=profile))

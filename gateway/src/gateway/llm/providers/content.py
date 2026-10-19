@@ -6,7 +6,7 @@ then dresses in its own dialect. Nothing here knows about a specific vendor —
 the per-vendor translation lives in `providers/<name>/`.
 
 Ported from `glc_v5/glc/providers.py` (`_flatten_system`, `_extract_text_blocks`,
-`_iter_image_blocks`, `_coerce_obj`) and `glc_v5/glc/direct_providers.py`
+`_iter_image_blocks`) and `glc_v5/glc/direct_providers.py`
 (`_as_dict`, `_text`, `_arguments`), which are read-only sources.
 """
 
@@ -51,8 +51,8 @@ def text_of(value: Any) -> str:
 def iter_image_blocks(content: Any) -> Iterator[tuple[str, str]]:
     """Yield (media_type, base64_data) per image block.
 
-    Assumes http(s) URLs were already resolved to `data:` form by the
-    normalization stage, which is where SSRF policy is applied.
+    Accepts embedded `data:` URLs or base64 source blocks. The normalization
+    stage rejects image links before provider execution.
     """
     if not isinstance(content, list):
         return
@@ -105,18 +105,6 @@ def flatten_system(system: Any) -> tuple[str, list[dict[str, Any]], bool]:
         parts.append(value)
         has_cache = has_cache or cache
     return "\n".join(parts), blocks, has_cache
-
-
-def coerce_obj(value: Any) -> Any:
-    """Coerce a tool result into the object shape Gemini's functionResponse wants."""
-    if isinstance(value, (dict, list)):
-        return value
-    if isinstance(value, str):
-        try:
-            return json.loads(value)
-        except json.JSONDecodeError:
-            return {"text": value}
-    return {"value": value}
 
 
 def arguments(value: Any) -> dict[str, Any]:

@@ -7,7 +7,7 @@ This folder turns the gateway's domain services into a running FastAPI applicati
 | File | Responsibility |
 | --- | --- |
 | `main.py` | Defines `create_app()` and the module-level ASGI `app`; registers health checks, service diagnostics, domain routers, API 404 handlers, and optional shell static assets. Redirects `/dashboard` to `/observability`. |
-| `lifespan.py` | Builds settings, the service registry, audit and ledger databases, telemetry, the shared HTTP client, and `LLMService`; creates and attaches the semantic cache; runs startup checks and closes owned resources on shutdown. |
+| `lifespan.py` | Builds the service registry, audit and ledger databases, telemetry, the shared HTTP client, and `LLMService`; runs startup checks and closes owned resources on shutdown. |
 | `dependencies.py` | Defines the typed `DependencyContainer` on `app.state.container` and FastAPI dependencies that expose it, the service registry, or the LLM service to routes. |
 | `middleware.py` | Implements bearer authentication for `/api/` routes, schema/docs paths, and selected legacy observability paths. A missing configured token returns 503; a mismatched header returns 401. |
 | `router_registry.py` | Defines router registrations and installs the LLM and observability routers, including deprecated aliases. |

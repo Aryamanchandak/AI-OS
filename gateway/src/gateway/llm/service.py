@@ -5,20 +5,15 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 import time
-from collections.abc import AsyncIterator
-from typing import Any, Literal
+from typing import Any
 
 from fastapi import HTTPException
 import httpx
-import yaml
 
 from gateway.audit import AuditStore
-from gateway.llm.cache import SemanticCache, SemanticCacheConfig
-from gateway.llm.economics import BudgetController, Meter, Principal, PricingTable
+from gateway.llm.economics import BudgetController, Meter, PricingTable
 from gateway.llm.models import ChatRequest, EmbedRequest
 from gateway.llm.orchestration.budget import BudgetReservationStage
-from gateway.llm.orchestration.cache_lookup import CacheLookupStage
-from gateway.llm.orchestration.cache_store import CacheStoreStage
 from gateway.llm.orchestration.finalization import FinalizationStage
 from gateway.llm.orchestration.normalization import NormalizationStage
 from gateway.llm.orchestration.pipeline import LLMPipeline
@@ -35,14 +30,13 @@ from gateway.llm.providers.registry import ProviderRegistry, build_provider_regi
 class LLMService:
     def __init__(self, *, registry: ProviderRegistry, profiles: ProfileRegistry,
                  pricing: PricingTable, budget: BudgetController, meter: Meter,
-                 audit: AuditStore, cache: SemanticCache | None) -> None:
+                 audit: AuditStore) -> None:
         self.registry, self.profiles, self.pricing = registry, profiles, pricing
-        self.budget, self.meter, self.audit, self.cache = budget, meter, audit, cache
+        self.budget, self.meter, self.audit = budget, meter, audit
         self.pipeline = LLMPipeline(validation=RequestValidationStage(), profiles=ProfileResolutionStage(profiles),
-            normalization=NormalizationStage(), cache_lookup=CacheLookupStage(cache), routing=RoutingStage(registry),
+            normalization=NormalizationStage(), routing=RoutingStage(registry),
             budget=BudgetReservationStage(budget, pricing), provider_call=ProviderCallStage(),
-            structured=StructuredOutputStage(), finalization=FinalizationStage(meter, audit, budget, pricing),
-            cache_store=CacheStoreStage(cache))
+            structured=StructuredOutputStage(), finalization=FinalizationStage(meter, audit, budget, pricing))
 
     @classmethod
     def build(cls, *, client: httpx.AsyncClient, config_dir: Path, database_path: Path, audit: AuditStore) -> "LLMService":
@@ -51,22 +45,7 @@ class LLMService:
         pricing = PricingTable.from_yaml(config_dir / "pricing.yaml")
         budget = BudgetController(config_dir / "budgets.yaml", database_path)
         meter = Meter()
-        return cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, meter=meter, audit=audit, cache=None)
-
-    def build_semantic_cache(self, *, config_path: Path, database_path: Path) -> SemanticCache:
-        raw = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-        if not isinstance(raw, dict):
-            raise ValueError(f"{config_path}: configuration must be a YAML mapping")
-        return SemanticCache(
-            self._cache_embed,
-            database_path,
-            config=SemanticCacheConfig.from_mapping(raw),
-        )
-
-    def attach_semantic_cache(self, cache: SemanticCache) -> None:
-        self.cache = cache
-        self.pipeline.cache_lookup.cache = cache
-        self.pipeline.cache_store.cache = cache
+        return cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, meter=meter, audit=audit)
 
     def attach_tracer(self, tracer: Any) -> None:
         self.pipeline.tracer = tracer
@@ -74,22 +53,7 @@ class LLMService:
     async def chat(self, request: ChatRequest) -> dict[str, Any]:
         return await self.pipeline.run(request)
 
-    async def stream_chat(self, request: ChatRequest) -> dict[str, Any] | AsyncIterator[str]:
-        """Return the SSE frame generator, with stages 1-6 already run.
-
-        Awaiting here means a validation/budget/routing rejection surfaces as an
-        ordinary error response instead of as an error frame inside a 200. A
-        semantic-cache hit comes back as a dict, which the route serves as JSON.
-        """
-        return await self.pipeline.run_stream(request)
-
-    async def _cache_embed(
-        self, text: str, task_type: Literal["retrieval_document", "retrieval_query"]
-    ) -> list[float]:
-        response = await self.embed(EmbedRequest(text=text, task_type=task_type), record=False)
-        return list(response["embedding"])
-
-    async def embed(self, request: EmbedRequest, *, record: bool = True) -> dict[str, Any]:
+    async def embed(self, request: EmbedRequest) -> dict[str, Any]:
         started = time.monotonic(); attempts: list[dict[str, Any]] = []; error: BaseException | None = None; selected = request.provider; model = request.model; expected_dim = None
         if request.profile:
             if request.provider or request.model: raise HTTPException(400, "embedding profile is mutually exclusive with provider/model")
@@ -111,13 +75,13 @@ class LLMService:
                     if selected: break
             raise HTTPException(502 if selected else 503, f"embedding providers unavailable. attempts: {attempts}")
         finally:
-            if record:
-                row: dict[str, Any] = {"provider": result["provider"] if result else selected or "(any)", "model": result["model"] if result else model or "(none)", "principal": {}, "input_tokens": max(1, len(request.text) // 4), "output_tokens": 0, "cost_usd": 0.0, "latency_ms": int((time.monotonic() - started) * 1000), "status": "error" if error else "ok", "error": str(error)[:500] if error else None, "attempted": attempts, "profile": request.profile, "call_role": "embed"}
-                self.meter.record(**row)
-                await asyncio.to_thread(self.audit.append, channel="llm", channel_user_id="anonymous", trust_level="internal", event_type="llm.embed", params={"profile": request.profile}, result=row)
+            row: dict[str, Any] = {"provider": result["provider"] if result else selected or "(any)", "model": result["model"] if result else model or "(none)", "principal": {}, "input_tokens": max(1, len(request.text) // 4), "output_tokens": 0, "cost_usd": 0.0, "latency_ms": int((time.monotonic() - started) * 1000), "status": "error" if error else "ok", "error": str(error)[:500] if error else None, "attempted": attempts, "profile": request.profile, "call_role": "embed"}
+            self.meter.record(**row)
+            await asyncio.to_thread(self.audit.append, channel="llm", channel_user_id="anonymous", trust_level="internal", event_type="llm.embed", params={"profile": request.profile}, result=row)
+
 
     def providers(self) -> dict[str, Any]:
-        return {"order": self.registry.order, "providers": list(self.registry.providers), "shortcuts": {}, "limits": {}, "models": {name: p.model for name, p in self.registry.providers.items()}, "chat_profiles": {name: {**spec, "available": spec["provider"] in self.registry.providers} for name, spec in self.profiles.all("chat").items()}}
+        return {"order": self.registry.order, "providers": list(self.registry.providers), "models": {name: p.model for name, p in self.registry.providers.items()}, "chat_profiles": {name: {**spec, "available": spec["provider"] in self.registry.providers} for name, spec in self.profiles.all("chat").items()}}
 
     def capabilities(self) -> dict[str, Any]: return self.registry.diagnostics()
-    def status(self) -> dict[str, Any]: return {"order": self.registry.order, "live": {name: {"available": True} for name in self.registry.providers}, "today": self.meter.aggregate(), "limits": {}}
+    def status(self) -> dict[str, Any]: return {"order": self.registry.order, "today": self.meter.aggregate()}

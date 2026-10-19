@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 import pytest
 
 from gateway.app.main import create_app
-from gateway.platform.configuration import load_gateway_settings
 from gateway.platform.service_registry import load_service_registry
 
 
@@ -38,16 +37,6 @@ def test_port_overrides_receive_the_same_duplicate_validation(tmp_path: Path) ->
     )
     with pytest.raises(ValueError, match="duplicate enabled service port 8120"):
         load_service_registry(registry, environment={"AI_OS_SERVICE_BETA_PORT": "8120"})
-
-
-def test_missing_and_malformed_configuration_fail_during_construction(tmp_path: Path) -> None:
-    missing = tmp_path / "missing.yaml"
-    with pytest.raises(ValueError, match="does not exist"):
-        load_gateway_settings(missing)
-    malformed = tmp_path / "gateway.yaml"
-    malformed.write_text("host: [broken", encoding="utf-8")
-    with pytest.raises(ValueError, match="malformed"):
-        load_gateway_settings(malformed)
 
 
 def test_missing_registry_prevents_application_startup(tmp_path: Path) -> None:

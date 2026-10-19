@@ -4,7 +4,7 @@
 
 The adapter uses `max_completion_tokens`, native function definitions, parallel tool calls, and an object form for forced tool selection. Reasoning effort is applied only for model names matching its configured family hints. Prompt caching is automatic on this surface, so `cache_system` does not add a vendor dial.
 
-`chat()` returns a normalized `ProviderResult`. `stream()` uses `fallback_stream()`: the request completes first and text is yielded afterward, with the result/model placed in the result sink. This is buffered streaming, rather than incremental token delivery.
+`chat()` returns a completed, normalized `ProviderResult`.
 
 `embed()` implements the OpenAI embeddings request, but this adapter's declared capabilities currently leave `embeddings=False`. The service's normal embedding candidate loop therefore skips these instances.
 

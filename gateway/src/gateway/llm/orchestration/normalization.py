@@ -1,8 +1,7 @@
-import base64
 from typing import Any
 
 from gateway.llm.orchestration.context import PipelineContext
-from gateway.security.ssrf import fetch_bytes
+from fastapi import HTTPException
 
 
 def _text(content: Any) -> str:
@@ -15,22 +14,26 @@ class NormalizationStage:
     async def run(self, context: PipelineContext) -> None:
         request = context.request
         context.messages = list(request.messages or [{"role": "user", "content": request.prompt or ""}])
-        resolved: list[dict[str, Any]] = []
         for message in context.messages:
             content = message.get("content")
             if not isinstance(content, list):
-                resolved.append(message); continue
-            blocks: list[Any] = []
+                continue
             for block in content:
-                image = block.get("image_url") if isinstance(block, dict) and block.get("type") == "image_url" else None
-                url = image.get("url") if isinstance(image, dict) else image
-                if isinstance(url, str) and url.startswith(("http://", "https://")):
-                    payload, media_type = await fetch_bytes(url)
-                    blocks.append({"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{base64.b64encode(payload).decode()}"}})
+                if not isinstance(block, dict):
+                    continue
+                kind = block.get("type")
+                if kind == "image_url":
+                    image = block.get("image_url")
+                    url = image.get("url") if isinstance(image, dict) else image
+                elif kind in {"image", "input_image"}:
+                    source = block.get("source") or {}
+                    if isinstance(source, dict) and source.get("type") == "base64":
+                        continue
+                    url = block.get("url") or (source.get("url") if isinstance(source, dict) else None)
                 else:
-                    blocks.append(block)
-            resolved.append({**message, "content": blocks})
-        context.messages = resolved
+                    continue
+                if not isinstance(url, str) or not url.startswith("data:"):
+                    raise HTTPException(400, "Image links are not supported; send the image as a data: URL")
         context.system = request.system
         context.prompt_text = "".join(_text(x.get("content", "")) for x in context.messages)
         system_chars = len(str(request.system or "")); context.estimated_input_tokens = max(1, (len(context.prompt_text) + system_chars + 3) // 4)

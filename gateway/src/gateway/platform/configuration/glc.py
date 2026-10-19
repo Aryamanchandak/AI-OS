@@ -22,7 +22,6 @@ class GLCPaths:
         self.config_dir = config_dir
         self.ledger_db = Path(env.get("GLC_GATEWAY_DB", str(DATABASE_ROOT / "gateway.sqlite"))).expanduser()
         self.audit_db = Path(env.get("GLC_AUDIT_DB", str(DATABASE_ROOT / "audit.sqlite"))).expanduser()
-        self.cache_db = Path(env.get("GLC_CACHE_DB", str(DATABASE_ROOT / "semantic_cache.sqlite"))).expanduser()
 
     def load_mapping(self, path: Path) -> dict[str, Any]:
         try:

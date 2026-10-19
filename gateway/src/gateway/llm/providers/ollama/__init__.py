@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
 import json
 from typing import Any
 import uuid
@@ -10,7 +9,7 @@ import uuid
 import httpx
 
 from gateway.llm.providers.base import (
-    ProviderCapabilities, ProviderResult, ProviderUsage, fallback_stream,
+    ProviderCapabilities, ProviderResult, ProviderUsage,
 )
 from gateway.llm.providers.content import (
     arguments, as_dict, extract_text_blocks, flatten_system, iter_image_blocks, tool_specs,
@@ -122,8 +121,6 @@ class OllamaProvider:
                                 output_tokens=payload.get("eval_count", 0) or 0),
             raw=payload, tool_call_dialect=dialect)
 
-    def stream(self, **kwargs: Any) -> AsyncIterator[str]:
-        return fallback_stream(self.chat, **kwargs)
 
     async def embed(self, text: str, *, model: str | None = None, task_type: str = "retrieval_document") -> list[float]:
         del task_type

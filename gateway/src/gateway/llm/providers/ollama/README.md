@@ -11,4 +11,4 @@ Configured local models come from `local_models.yaml`; `OLLAMA_URL` controls the
 
 Models with native tool support receive function definitions. Other models receive prompted tool instructions, with tool results translated to user text. The adapter reports the selected tool dialect in its normalized result. It does not execute tools itself.
 
-`chat()` requests `stream: false`; `stream()` yields the completed chat through the buffered fallback. `embed()` reads vectors from Ollama's embedding response. Cross-provider retry and spending policy live in [orchestration](../../orchestration/README.md), rather than in this adapter.
+`chat()` requests a completed JSON response. `embed()` reads vectors from Ollama's embedding response. Cross-provider retry and spending policy live in [orchestration](../../orchestration/README.md), rather than in this adapter.

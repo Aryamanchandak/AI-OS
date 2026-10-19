@@ -30,7 +30,7 @@ class RecentTraceExporter(SpanExporter):
                          if key in {"http.request.method", "http.route", "http.response.status_code",
                                     "gen_ai.provider.name", "gen_ai.response.model",
                                     "gen_ai.usage.input_tokens", "gen_ai.usage.output_tokens",
-                                    "glc.cost.usd", "glc.cache.hit", "glc.budget.admitted"}}
+                                    "glc.cost.usd", "glc.budget.admitted"}}
                 rows.append({
                     "name": span.name, "trace_id": trace_id,
                     "span_id": f"{span.context.span_id:016x}",
@@ -58,7 +58,6 @@ class RecentTraceExporter(SpanExporter):
                     "status": "ERROR" if any(row["status"] == "ERROR" for row in spans) else "OK",
                     **dict.fromkeys(("provider_instance", "role", "tier", "url")),
                     "cost_usd": root["attributes"].get("glc.cost.usd"),
-                    "cache_hit": root["attributes"].get("glc.cache.hit"),
                     "budget_admitted": root["attributes"].get("glc.budget.admitted"),
                     "provider": root["attributes"].get("gen_ai.provider.name"),
                     "model": root["attributes"].get("gen_ai.response.model"),
@@ -110,7 +109,7 @@ class RefusalLog:
 
 
 class DiagnosticCapture:
-    """Observe streaming requests without buffering successful responses."""
+    """Observe requests without buffering successful responses."""
     def __init__(self, app: ASGIApp) -> None:
         self.app = app
 

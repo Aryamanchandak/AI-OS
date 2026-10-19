@@ -13,7 +13,7 @@ This folder captures request/stage timing and selected operational metadata, exp
 
 Application startup initializes telemetry and attaches its tracer to the LLM pipeline. Middleware creates request spans for LLM API traffic; pipeline stages create child spans. The local exporter keeps up to 50 traces and 200 spans per trace by default. Refusal history retains up to 100 HTTP 402 events, with an allow-listed subset of their structured error details. These collections are process-local and disappear on restart.
 
-Successful streaming responses pass through without being buffered. Only 402 response bodies are captured, up to 16 KiB, for refusal processing. Exported local span attributes use an explicit allow-list rather than storing prompt/completion content.
+Successful responses pass through without being buffered. Only 402 response bodies are captured, up to 16 KiB, for refusal processing. Exported local span attributes use an explicit allow-list rather than storing prompt/completion content.
 
 Canonical reads are `/api/observability/traces/recent`, `/traces/{trace_id}`, `/refusals`, and `/agent_trace/{run_id}` under the same prefix. Deprecated aliases exist below `/v1`. Agent traces are fetched only from the registered `agent_runtime` address, with the run identifier encoded and selected content fields removed.
 

@@ -11,7 +11,6 @@ class ProviderCallStage:
         self.max_retries = max_retries; self._semaphore = asyncio.Semaphore(max_concurrency)
 
     async def run(self, context: PipelineContext) -> None:
-        if context.output is not None: return
         last: BaseException | None = None
         for provider in context.candidates:
             context.provider = provider

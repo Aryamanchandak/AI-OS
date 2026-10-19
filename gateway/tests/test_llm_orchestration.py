@@ -1,4 +1,4 @@
-"""Orchestration behaviours that the provider and streaming suites do not cover."""
+"""Orchestration behaviours beyond individual provider adapters."""
 
 from __future__ import annotations
 
@@ -57,3 +57,49 @@ def test_cache_system_defaults_to_off(tmp_path: Path) -> None:
     service, _ = service_for(tmp_path, [provider])
     asyncio.run(service.chat(ChatRequest(prompt="hi")))
     assert provider.kwargs["cache_system"] is False
+
+
+IMAGE_MESSAGES = [{'role': 'user', 'content': [
+    {'type': 'text', 'text': 'Read this image'},
+    {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,AAAA'}},
+]}]
+
+
+@pytest.mark.parametrize('selector', ['provider', 'profile'])
+def test_image_is_rejected_for_a_text_only_selection(tmp_path: Path, selector: str) -> None:
+    provider = SpyProvider('text-only')
+    service, audit = service_for(tmp_path, [provider])
+    request = ChatRequest(messages=IMAGE_MESSAGES, **{selector: 'pin' if selector == 'profile' else provider.name})
+    with pytest.raises(HTTPException) as caught:
+        asyncio.run(service.chat(request))
+    assert caught.value.status_code == 400
+    assert 'vision-capable' in caught.value.detail
+    assert provider.calls == 0
+    assert len(audit.events) == 1
+
+
+def test_unpinned_image_uses_only_vision_capable_candidates(tmp_path: Path) -> None:
+    from dataclasses import replace
+
+    text, vision = SpyProvider('text-only'), SpyProvider('vision')
+    vision.capabilities = replace(vision.capabilities, vision=True)
+    service, _ = service_for(tmp_path, [text, vision])
+    result = asyncio.run(service.chat(ChatRequest(messages=IMAGE_MESSAGES)))
+    assert result['provider'] == 'vision'
+    assert text.calls == 0 and vision.calls == 1
+    assert vision.kwargs['messages'] == IMAGE_MESSAGES
+
+
+def test_local_transcription_profile_dispatches_embedded_image(tmp_path: Path) -> None:
+    from dataclasses import replace
+
+    provider = SpyProvider('gemma', served_model='gemma4:12b')
+    provider.capabilities = replace(provider.capabilities, vision=True)
+    service, _ = service_for(tmp_path, [provider])
+    service.pipeline.profiles.profiles = ProfileRegistry.from_yaml(
+        Path(__file__).resolve().parents[1] / 'config/profiles.yaml')
+    result = asyncio.run(service.chat(ChatRequest(messages=IMAGE_MESSAGES, profile='image-transcription-v1')))
+    assert result['provider'] == 'gemma' and result['model'] == 'gemma4:12b'
+    assert provider.kwargs['messages'] == IMAGE_MESSAGES
+    assert provider.kwargs['model'] == 'gemma4:12b'
+    assert provider.calls == 1

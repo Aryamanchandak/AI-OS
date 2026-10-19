@@ -7,7 +7,6 @@ from typing import Annotated, cast
 
 from fastapi import Depends, Request
 
-from gateway.platform.configuration import GatewaySettings
 from gateway.platform.service_registry import ServiceRegistry
 from gateway.audit import AuditStore
 from gateway.platform.networking import OutboundHTTPClient
@@ -20,7 +19,6 @@ from gateway.llm import LLMService
 class DependencyContainer:
     """The complete set of long-lived services owned by this application."""
 
-    settings: GatewaySettings
     service_registry: ServiceRegistry
     http: OutboundHTTPClient
     audit: AuditStore
@@ -29,12 +27,7 @@ class DependencyContainer:
     llm: LLMService
 
     async def close(self) -> None:
-        """Close container-owned resources in reverse construction order.
-
-        Plan 02 has no non-legacy closeable resource yet. This method makes
-        shutdown ownership explicit before Plans 04–06 add async clients and
-        connection pools.
-        """
+        """Close container-owned resources in reverse construction order."""
         self.telemetry.close()
         await self.http.close()
 

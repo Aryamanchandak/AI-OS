@@ -17,7 +17,7 @@ from gateway.platform.observability.capture import RefusalLog
 def client(tmp_path, monkeypatch):
     for key, filename in {
         "GLC_GATEWAY_DB": "ledger", "GLC_AUDIT_DB": "audit",
-        "GLC_PAIRING_DB": "pairings", "GLC_CACHE_DB": "cache",
+        "GLC_PAIRING_DB": "pairings",
         "GLC_INSTALL_TOKEN_FILE": "install-token",
     }.items():
         monkeypatch.setenv(key, str(tmp_path / filename))
@@ -31,7 +31,7 @@ HEADERS = {"Authorization": "Bearer test-token"}
 def test_preflight_probes_and_redacts_partial_failure(client):
     class LLM:
         async def chat(self, request):
-            assert request.max_tokens == 8 and not request.semantic_cache and not request.escalate
+            assert request.max_tokens == 8
             return {"provider": "test", "model": "chat", "profile": request.profile}
 
         async def embed(self, request):
@@ -146,24 +146,16 @@ def test_preflight_timeout_is_a_bounded_failure(client, monkeypatch):
     assert response["embedding"]["ok"] is True
 
 
-def test_capture_preserves_sse_and_exposes_chat_trace_reference(client):
+def test_capture_exposes_chat_trace_reference_without_content(client):
     class LLM:
         async def chat(self, request):
             return {"provider": "test", "model": "model", "text": "private answer", "input_tokens": 1, "output_tokens": 2}
-        async def stream_chat(self, request):
-            async def frames():
-                yield 'data: {"type":"delta","text":"private answer"}\n\n'
-                yield 'data: {"type":"done"}\n\n'
-            return frames()
     client.app.dependency_overrides[get_llm_service] = lambda: LLM()
     chat = client.post("/api/llm/chat", headers=HEADERS, json={"prompt": "private prompt"}).json()
     detail = client.get(f"/api/observability/traces/{chat['trace']['trace_id']}", headers=HEADERS)
     assert detail.status_code == 200
     assert "private" not in detail.text
     assert detail.json()["spans"][0]["attributes"]["gen_ai.provider.name"] == "test"
-    stream = client.post("/api/llm/chat", headers=HEADERS, json={"prompt": "private prompt", "stream": True})
-    assert stream.headers["content-type"].startswith("text/event-stream")
-    assert stream.text == 'data: {"type":"delta","text":"private answer"}\n\ndata: {"type":"done"}\n\n'
     assert client.get("/api/observability/refusals", headers=HEADERS).json()["total"] == 0
 
 
@@ -173,7 +165,7 @@ def test_dashboard_redirect(client):
 
 
 def test_real_llm_pipeline_stages_are_traced_even_when_provider_is_unconfigured(client):
-    response = client.post("/api/llm/chat", headers=HEADERS, json={"prompt": "probe", "provider": "no-such-provider", "semantic_cache": False})
+    response = client.post("/api/llm/chat", headers=HEADERS, json={"prompt": "probe", "provider": "no-such-provider"})
     assert response.status_code >= 400
     recent = client.get("/api/observability/traces/recent", headers=HEADERS).json()
     detail = client.get(f"/api/observability/traces/{recent['traces'][0]['trace_id']}", headers=HEADERS).json()
