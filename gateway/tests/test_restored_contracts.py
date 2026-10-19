@@ -95,6 +95,21 @@ def test_chat_reply_carries_its_trace_id_and_spans_hold_no_content(client, spans
     assert "private" not in str([dict(span.attributes or {}) for span in spans.get_finished_spans()])
 
 
+def test_request_span_carries_model_tokens_and_cost_under_gen_ai_names(client, spans):
+    # Langfuse reads model, usage and cost from these gen_ai.* attribute names.
+    class LLM:
+        async def chat(self, request):
+            return {"provider": "test", "model": "model", "input_tokens": 1, "output_tokens": 2,
+                    "cost": {"total_usd": 0.0125}}
+    client.app.dependency_overrides[get_llm_service] = lambda: LLM()
+    client.post("/api/llm/chat", headers=HEADERS, json={"prompt": "hi"})
+    [root] = [span for span in spans.get_finished_spans() if span.parent is None]
+    assert root.attributes["gen_ai.response.model"] == "model"
+    assert root.attributes["gen_ai.usage.input_tokens"] == 1
+    assert root.attributes["gen_ai.usage.output_tokens"] == 2
+    assert root.attributes["gen_ai.usage.cost"] == 0.0125
+
+
 def test_real_llm_pipeline_stages_are_traced_even_when_provider_is_unconfigured(client, spans):
     response = client.post("/api/llm/chat", headers=HEADERS, json={"prompt": "probe", "provider": "no-such-provider"})
     assert response.status_code >= 400

@@ -104,7 +104,9 @@ def chat_trace(result: dict[str, Any]) -> dict[str, Any]:
         for key, field in (("gen_ai.usage.input_tokens", "input_tokens"), ("gen_ai.usage.output_tokens", "output_tokens")):
             if isinstance(result.get(field), int):
                 span.set_attribute(key, result[field])
-        for key, section, field in (("glc.cost.usd", "cost", "total_usd"), ("glc.budget.admitted", "budget", "allowed")):
+        # gen_ai.usage.cost is the name Langfuse reads cost from.
+        for key, section, field in (("glc.cost.usd", "cost", "total_usd"), ("gen_ai.usage.cost", "cost", "total_usd"),
+                                    ("glc.budget.admitted", "budget", "allowed")):
             value = (result.get(section) or {}).get(field)
             if isinstance(value, (int, float, bool)):
                 span.set_attribute(key, value)

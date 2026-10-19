@@ -8,3 +8,4 @@
 - 2026-10-19 — Claude `input_tokens` now include cache reads and writes, as OpenAI's do. Why: pricing subtracts cache tokens from input, so the old Claude numbers under-billed cached calls.
 - 2026-10-19 — Kept the prompted tool-calling fallback for local models. Why: phi4 and gemma4 are not on the native-tool list and Ollama was not running to check; any-llm has no fallback.
 - 2026-10-19 — Removed the in-process trace store and `/api/observability/traces/*`, `/refusals`; all OpenTelemetry code is in `gateway/telemetry.py`. Why: it duplicated OpenTelemetry; a real trace viewer comes later, and until then spans go nowhere.
+- 2026-10-19 — Trace viewer is self-hosted Langfuse, reached through the existing OTLP export settings in `.env`; spans also carry `gen_ai.usage.cost`. Why: Langfuse reads cost under that name, and self-hosting keeps traces on this machine.
