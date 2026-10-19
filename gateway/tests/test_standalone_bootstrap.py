@@ -28,7 +28,7 @@ from fastapi.testclient import TestClient
 from main import create_app
 with TestClient(create_app(token='standalone-test-token')) as client:
     assert client.get('/health').json() == {'status': 'ok'}
-    response = client.get('/api/observability/refusals', headers={'Authorization': 'Bearer standalone-test-token'})
+    response = client.get('/api/llm/status', headers={'Authorization': 'Bearer standalone-test-token'})
     assert response.status_code == 200, response.text
 """
     result = subprocess.run(

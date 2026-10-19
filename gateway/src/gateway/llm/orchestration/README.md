@@ -17,4 +17,4 @@ This folder coordinates one chat request from validation to response. `pipeline.
 
 The current provider-call defaults permit one retry and 32 concurrent calls within that stage. Explicit provider/profile selection prevents cross-provider failover. Routing uses registry order; there is no classifier or tier escalation here.
 
-`LLMPipeline._run_stage()` wraps stage execution in OpenTelemetry spans when a tracer is attached. See [service](../README.md), [providers](../providers/README.md), and [economics](../economics/README.md).
+`LLMPipeline._run_stage()` wraps each stage in a span via `gateway/telemetry.py` when a tracer is attached. See [service](../README.md), [providers](../providers/README.md), and [economics](../economics/README.md).

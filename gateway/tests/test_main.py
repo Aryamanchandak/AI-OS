@@ -53,6 +53,7 @@ REMOVED_PATHS = (
     "/", "/dashboard", "/healthz", "/api/diagnostics/services",
     "/v1/providers", "/v1/refusals", "/v1/traces/recent",
     "/v1/observability/agent_trace/x", "/api/observability/agent_trace/x",
+    "/api/observability/traces/recent", "/api/observability/traces/x", "/api/observability/refusals",
 )
 
 

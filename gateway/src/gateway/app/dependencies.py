@@ -8,7 +8,7 @@ from typing import Annotated, cast
 from fastapi import Depends, Request
 
 from gateway.ledger import CallLedger
-from gateway.platform.observability import Telemetry
+from gateway.telemetry import Telemetry
 from gateway.llm import LLMService
 
 

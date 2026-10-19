@@ -11,7 +11,7 @@ from gateway.app.dependencies import DependencyContainer
 from gateway.platform.configuration import GLCPaths
 from gateway.platform.startup import StartupCheck, StartupDependencyError, run_startup_checks
 from gateway.ledger import CallLedger
-from gateway.platform.observability import Telemetry
+from gateway.telemetry import Telemetry
 from gateway.llm import LLMService
 from typing import TypeVar
 

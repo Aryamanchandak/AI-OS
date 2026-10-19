@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from contextlib import nullcontext
 import time
 from typing import Any
 
@@ -17,6 +16,7 @@ from gateway.llm.orchestration.provider_call import ProviderCallStage
 from gateway.llm.orchestration.routing import RoutingStage
 from gateway.llm.orchestration.structured_output import StructuredOutputStage
 from gateway.llm.orchestration.validation import RequestValidationStage
+from gateway.telemetry import stage_span
 
 
 class LLMPipeline:
@@ -32,19 +32,8 @@ class LLMPipeline:
         self.tracer: Any = None
 
     async def _run_stage(self, stage: Any, context: PipelineContext) -> None:
-        boundary = (
-            self.tracer.start_as_current_span(
-                f"llm.{type(stage).__name__}", record_exception=False, set_status_on_exception=False,
-            ) if self.tracer is not None else nullcontext()
-        )
-        with boundary as span:
-            try:
-                await stage.run(context)
-            except BaseException:
-                if span is not None:
-                    from opentelemetry.trace import StatusCode
-                    span.set_status(StatusCode.ERROR)
-                raise
+        with stage_span(self.tracer, f"llm.{type(stage).__name__}"):
+            await stage.run(context)
 
     async def run(self, request: ChatRequest) -> dict[str, Any]:
         context = PipelineContext(request=request, started=time.monotonic(), principal=Principal.from_request(request))

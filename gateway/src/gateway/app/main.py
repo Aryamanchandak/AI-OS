@@ -18,6 +18,7 @@ from gateway.app.router_registry import (
 )
 from gateway.platform.configuration.glc import AI_OS_ROOT as AI_OS_ROOT
 from gateway.platform.startup import StartupCheck
+from gateway.telemetry import RequestSpans
 
 
 def create_app(
@@ -33,8 +34,7 @@ def create_app(
         lifespan=lifespan_for(startup_checks=startup_checks),
     )
     install_bearer_auth(app, expected_token)
-    from gateway.platform.observability.capture import DiagnosticCapture
-    app.add_middleware(DiagnosticCapture)
+    app.add_middleware(RequestSpans)
 
     @app.get("/health", include_in_schema=False)
     def health() -> dict[str, str]:
