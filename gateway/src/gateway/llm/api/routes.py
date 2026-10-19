@@ -99,7 +99,7 @@ async def get_budget(principal: str, service: Annotated[LLMService, Depends(get_
     try: dimension, value = _parse_principal(principal)
     except BudgetConfigError as exc: raise HTTPException(400, str(exc)) from exc
     status = await asyncio.to_thread(service.budget.status_for, dimension, value)
-    if status is None: return {"principal": principal, "dimension": dimension, "value": value, "governed": False, "limit_usd": None, "spent_usd": 0.0, "spent_lifetime_usd": 0.0, "message": "No budget policy matches this principal, so it is unlimited. Add one to budgets.yaml or POST /v1/budget."}
+    if status is None: return {"principal": principal, "dimension": dimension, "value": value, "governed": False, "limit_usd": None, "spent_usd": 0.0, "spent_lifetime_usd": 0.0, "message": "No budget policy matches this principal, so it is unlimited. Add one to budgets.yaml or POST /api/llm/budget."}
     policy = service.budget.policy_for(dimension, value)
     assert policy is not None
     return {**status.as_dict(), "governed": True, "policy": policy.as_dict()}
@@ -139,4 +139,3 @@ async def pricing(service: Annotated[LLMService, Depends(get_llm_service)], prov
 
 
 def registration() -> RouterRegistration: return RouterRegistration(router=router, prefix="/api/llm", tags=("llm",))
-def alias_registration() -> RouterRegistration: return RouterRegistration(router=router, prefix="/v1", tags=("llm-legacy-deprecated",), deprecated=True)

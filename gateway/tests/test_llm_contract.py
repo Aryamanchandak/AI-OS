@@ -1,7 +1,6 @@
 """Route contract for the migrated LLM router.
 
-Checks that every legacy GLC path still answers at its new `/api/llm` path and
-that the `/v1` alias is the same router, not a second implementation.
+Checks that every legacy GLC path still answers at its new `/api/llm` path.
 """
 
 from __future__ import annotations
@@ -47,16 +46,6 @@ def test_every_mapped_route_exists_at_its_new_path() -> None:
     assert missing == [], f"mapped routes absent from the migrated router: {missing}"
 
 
-def test_the_v1_alias_reuses_the_same_router_object() -> None:
-    """Plan 07 deletes the alias; it must not be a second implementation."""
-    from gateway.llm.api.routes import alias_registration
-
-    alias = alias_registration()
-    assert alias.router is registration().router
-    assert alias.prefix == "/v1"
-    assert alias.deprecated is True
-
-
 @pytest.fixture
 def client(tmp_path: Path):
     service, _ = service_for(tmp_path, [FakeProvider("solo")])
@@ -66,13 +55,13 @@ def client(tmp_path: Path):
     return TestClient(app, headers={"Authorization": "Bearer test-token"})
 
 
-@pytest.mark.parametrize("prefix", ["/api/llm", "/v1"])
+@pytest.mark.parametrize("prefix", ["/api/llm"])
 @pytest.mark.parametrize("route", ["routers", "telemetry"])
 def test_placeholder_routes_are_removed(client: TestClient, prefix: str, route: str) -> None:
     assert client.get(f"{prefix}/{route}").status_code == 404
 
 
-@pytest.mark.parametrize("prefix", ["/api/llm", "/v1"])
+@pytest.mark.parametrize("prefix", ["/api/llm"])
 @pytest.mark.parametrize(
     ("route", "removed", "retained"),
     [
@@ -93,14 +82,14 @@ def test_diagnostics_omit_placeholder_fields(
     assert retained <= body.keys()
 
 
-@pytest.mark.parametrize('prefix', ['/api/llm', '/v1'])
+@pytest.mark.parametrize('prefix', ['/api/llm'])
 def test_streaming_is_rejected_with_a_clear_error(client: TestClient, prefix: str) -> None:
     response = client.post(f'{prefix}/chat', json={'prompt': 'hello', 'stream': True})
     assert response.status_code == 422
     assert 'streaming is not supported' in response.text.lower()
 
 
-@pytest.mark.parametrize('prefix', ['/api/llm', '/v1'])
+@pytest.mark.parametrize('prefix', ['/api/llm'])
 @pytest.mark.parametrize(('method', 'route'), [('GET', 'stats'), ('POST', 'purge')])
 def test_response_cache_routes_are_removed(client: TestClient, prefix: str, method: str, route: str) -> None:
     assert client.request(method, f'{prefix}/cache/{route}').status_code == 404
@@ -125,7 +114,7 @@ def test_removed_request_options_are_rejected(client: TestClient, field: str, va
                for error in response.json()['detail'])
 
 
-@pytest.mark.parametrize('prefix', ['/api/llm', '/v1'])
+@pytest.mark.parametrize('prefix', ['/api/llm'])
 @pytest.mark.parametrize(('route', 'body'), [('chat/batch', {'calls': []}), ('vision', {'prompt': 'read', 'image': 'data:image/png;base64,AAAA'})])
 def test_unused_chat_routes_are_removed(client, prefix, route, body) -> None:
     assert client.post(f'{prefix}/{route}', json=body).status_code == 404

@@ -20,7 +20,6 @@ def test_gateway_boots_without_glc_submodules(tmp_path: Path) -> None:
     environment = os.environ.copy()
     environment["PYTHONPATH"] = str(snapshot / "src")
     environment["AI_OS_TOKEN"] = "standalone-test-token"
-    environment.pop("AI_OS_SERVICE_REGISTRY_PATH", None)
     for name in ("GLC_GATEWAY_DB", "GLC_AUDIT_DB"):
         environment.pop(name, None)
 
@@ -29,7 +28,7 @@ from fastapi.testclient import TestClient
 from main import create_app
 with TestClient(create_app(token='standalone-test-token')) as client:
     assert client.get('/health').json() == {'status': 'ok'}
-    response = client.get('/api/diagnostics/services', headers={'Authorization': 'Bearer standalone-test-token'})
+    response = client.get('/api/observability/refusals', headers={'Authorization': 'Bearer standalone-test-token'})
     assert response.status_code == 200, response.text
 """
     result = subprocess.run(

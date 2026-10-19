@@ -13,12 +13,9 @@ SCHEMA_AND_DOCS_PATHS = frozenset({"/openapi.json", "/docs", "/redoc"})
 
 
 def requires_bearer_token(path: str) -> bool:
-    """Protect internal APIs and their schema while leaving the shell open."""
+    """Protect internal APIs and their schema; only /health stays open."""
 
-    return (
-        path.startswith("/api/") or path in SCHEMA_AND_DOCS_PATHS
-        or path == "/v1/refusals" or path.startswith(("/v1/traces/", "/v1/observability/"))
-    )
+    return path.startswith("/api/") or path in SCHEMA_AND_DOCS_PATHS
 
 
 def install_bearer_auth(app: FastAPI, expected_token: str) -> None:

@@ -117,7 +117,7 @@ class DiagnosticCapture:
         application = scope.get("app")
         container = getattr(application.state, "container", None) if application is not None else None
         path = scope.get("path", "")
-        if scope["type"] != "http" or container is None or not path.startswith(("/api/llm/", "/v1/")) or path.startswith(("/v1/traces", "/v1/observability", "/v1/refusals", "/api/observability")):
+        if scope["type"] != "http" or container is None or not path.startswith("/api/llm/"):
             await self.app(scope, receive, send)
             return
         telemetry = container.telemetry

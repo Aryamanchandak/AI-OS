@@ -4,14 +4,12 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from pathlib import Path
 
 from fastapi import FastAPI
 
 from gateway.app.dependencies import DependencyContainer
 from gateway.platform.configuration import GLCPaths
 from gateway.platform.networking import OutboundHTTPClient
-from gateway.platform.service_registry import load_service_registry
 from gateway.platform.startup import StartupCheck, StartupDependencyError, run_startup_checks
 from gateway.audit import AuditStore
 from gateway.ledger import CallLedger
@@ -30,13 +28,11 @@ def _construct(dependency: str, factory: Callable[[], T]) -> T:
 
 
 def build_container(
-    *, service_registry_path: Path,
-    startup_checks: tuple[StartupCheck, ...] = (),
+    *, startup_checks: tuple[StartupCheck, ...] = (),
 ) -> DependencyContainer:
     """Construct and validate every long-lived dependency before serving."""
 
     paths = GLCPaths()
-    services = load_service_registry(service_registry_path)
     audit = _construct("audit database", lambda: AuditStore(paths.audit_db))
     ledger = _construct("call ledger database", lambda: CallLedger(paths.ledger_db))
     telemetry = Telemetry()
@@ -65,7 +61,6 @@ def build_container(
         telemetry.close()
         raise
     return DependencyContainer(
-        service_registry=services,
         http=http,
         audit=audit,
         ledger=ledger,
@@ -76,17 +71,13 @@ def build_container(
 
 def lifespan_for(
     *,
-    service_registry_path: Path,
     startup_checks: tuple[StartupCheck, ...] = (),
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         container: DependencyContainer | None = None
         try:
-            container = build_container(
-                service_registry_path=service_registry_path,
-                startup_checks=startup_checks,
-            )
+            container = build_container(startup_checks=startup_checks)
             app.state.container = container
             yield
         finally:

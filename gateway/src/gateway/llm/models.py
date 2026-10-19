@@ -73,7 +73,7 @@ class ChatRequest(BaseModel):
 
 
 class EmbedRequest(BaseModel):
-    """Request for POST /v1/embed. The model is fixed per deployment (see
+    """Request for POST /api/llm/embed. The model is fixed per deployment (see
     README); only the text, task type, and an optional explicit provider
     are caller-controlled."""
 
@@ -148,7 +148,7 @@ class PreflightResponse(BaseModel):
 
 
 class BudgetSetRequest(BaseModel):
-    """POST /v1/budget — arm or move a ceiling at runtime.
+    """POST /api/llm/budget — arm or move a ceiling at runtime.
 
     `principal` is "<dimension>:<value-or-glob>" over the two attribution
     dimensions (agent, session). A runtime entry shadows

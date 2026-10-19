@@ -1,6 +1,6 @@
 # Gateway source guide
 
-This package runs the AI OS Gateway: a FastAPI application that exposes a common HTTP interface for LLM chat, embeddings, provider diagnostics, budgets, and observability. It also serves the separately built shell frontend when its distribution folder exists.
+This package runs the AI OS Gateway: a FastAPI application that exposes a common HTTP interface for LLM chat, embeddings, provider diagnostics, budgets, and observability.
 
 `__init__.py` defines the package version. The ASGI entry point is `gateway.app.main:app`; `create_app()` constructs an application with configurable startup paths.
 

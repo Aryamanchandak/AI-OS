@@ -1,8 +1,8 @@
 # LLM HTTP endpoints
 
-This folder translates HTTP requests into `LLMService` calls. `routes.py` defines the router; `preflight.py` implements bounded probes; `__init__.py` exports canonical and alias registrations.
+This folder translates HTTP requests into `LLMService` calls. `routes.py` defines the router; `preflight.py` implements bounded probes; `__init__.py` exports the registration.
 
-The same router is mounted at `/api/llm` and, as a deprecated compatibility alias, `/v1`.
+The router is mounted at `/api/llm`.
 
 | Relative endpoint | What it does |
 | --- | --- |
