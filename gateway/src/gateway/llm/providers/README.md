@@ -1,6 +1,6 @@
 # Provider adapters
 
-This folder defines the common provider contract, builds configured instances, and translates gateway requests/results into vendor APIs. Adapters share the application's HTTP client; orchestration owns request-wide policy.
+This folder defines the common provider contract and builds configured instances. Talking to vendors is any-llm's job: `llm.py` is the only file that imports it. Orchestration owns request-wide policy, including retries.
 
 ## Configuration
 
@@ -18,24 +18,10 @@ For example:
 
 Configured membership does not establish live availability. Candidate selection follows registry order unless a provider is explicitly pinned.
 
-## Shared files
+#### Files
 
-| File | Responsibility |
-| --- | --- |
-| `base.py` | Provider protocol, capabilities, normalized results/usage/errors. |
-| `registry.py` | Constructs credential-enabled hosted providers and YAML-configured local models, applies capability overrides, and exposes explicit/ordered candidate lookup. |
-| `capabilities.py` | Resolves model-dependent feature flags using name hints and adapter defaults for diagnostics. |
-| `content.py` | Normalizes text/system/image blocks, tools, arguments, and tool-result objects. |
-| `http.py` | Posts JSON with common timeout, HTTP error, retryability, and response-object checks. |
-| `__init__.py` | Re-exports the provider protocol and common value objects. |
+`base.py` holds the provider protocol and the normalized result, usage and error types. `registry.py` builds the hosted providers that have keys and the local models from `local_models.yaml`, and picks candidates. `llm.py` is the any-llm adapter: it turns a neutral request into any-llm's call and the reply back into a `ProviderResult`. `content.py` normalizes text, system, image and tool blocks. `prompted_tools.py` is the tool-calling fallback for local models with no native tool API.
 
-## Adapters
-
-- [openai](openai/README.md): native OpenAI request dialect, structured output, tools, reasoning, and usage.
-- [anthropic](anthropic/README.md): Messages API, schema adaptation, tools, thinking, and prompt caching.
-- [ollama](ollama/README.md): local models, images, native/prompted tools, and embeddings.
-- [openai_compatible](openai_compatible/README.md): retained support for custom compatible endpoints; not registered by default.
-
-Embedding selection follows declared capabilities. Native OpenAI and compatible adapters have embedding methods but do not currently advertise that capability.
+Timeouts, retries and the concurrency cap are set in `config/providers.yaml`.
 
 See [orchestration](../orchestration/README.md) for retries, profile verification, budgets, and finalization. Live calls are excluded from the offline test suite; use `POST /api/llm/chat` with an explicit provider/model to probe a configured service, and `POST /api/llm/embed` for embeddings.

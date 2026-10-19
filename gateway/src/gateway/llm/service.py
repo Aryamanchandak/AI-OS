@@ -8,8 +8,7 @@ import time
 from typing import Any
 
 from fastapi import HTTPException
-import httpx
-
+from gateway.config import load_mapping
 from gateway.ledger import CallLedger
 from gateway.llm.economics import BudgetController, PricingTable
 from gateway.llm.economics.budget import _period_start
@@ -30,21 +29,24 @@ from gateway.llm.providers.registry import ProviderRegistry, build_provider_regi
 
 class LLMService:
     def __init__(self, *, registry: ProviderRegistry, profiles: ProfileRegistry,
-                 pricing: PricingTable, budget: BudgetController, ledger: CallLedger) -> None:
+                 pricing: PricingTable, budget: BudgetController, ledger: CallLedger,
+                 max_retries: int = 1, max_concurrency: int = 32) -> None:
         self.registry, self.profiles, self.pricing = registry, profiles, pricing
         self.budget, self.ledger = budget, ledger
         self.pipeline = LLMPipeline(validation=RequestValidationStage(), profiles=ProfileResolutionStage(profiles),
             normalization=NormalizationStage(), routing=RoutingStage(registry),
-            budget=BudgetReservationStage(budget, pricing), provider_call=ProviderCallStage(),
+            budget=BudgetReservationStage(budget, pricing), provider_call=ProviderCallStage(max_retries=max_retries, max_concurrency=max_concurrency),
             structured=StructuredOutputStage(), finalization=FinalizationStage(ledger, budget, pricing))
 
     @classmethod
-    def build(cls, *, client: httpx.AsyncClient, config_dir: Path, ledger: CallLedger) -> "LLMService":
-        registry = build_provider_registry(client, config_dir=config_dir)
+    def build(cls, *, config_dir: Path, ledger: CallLedger) -> "LLMService":
+        registry = build_provider_registry(config_dir=config_dir)
+        calls = load_mapping(config_dir / "providers.yaml")
         profiles = ProfileRegistry.from_yaml(config_dir / "profiles.yaml")
         pricing = PricingTable.from_yaml(config_dir / "pricing.yaml")
         budget = BudgetController(config_dir / "budgets.yaml", ledger.database.path)
-        return cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, ledger=ledger)
+        return cls(registry=registry, profiles=profiles, pricing=pricing, budget=budget, ledger=ledger,
+                   max_retries=int(calls["max_retries"]), max_concurrency=int(calls["max_concurrency"]))
 
     def attach_tracer(self, tracer: Any) -> None:
         self.pipeline.tracer = tracer

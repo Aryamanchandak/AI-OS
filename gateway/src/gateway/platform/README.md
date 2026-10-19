@@ -7,7 +7,6 @@ This folder contains infrastructure shared by gateway domains. It supplies the m
 | `startup.py` | Runs named `StartupCheck` callbacks and converts failures to `StartupDependencyError`, which includes a machine-readable event describing the failed dependency and cause. |
 | [configuration](configuration/README.md) | Loads process settings and resolves configuration/database paths. |
 | [database](database/README.md) | Provides SQLite connection, transaction, and migration helpers. |
-| [networking](networking/README.md) | Owns the reusable outbound HTTP client. |
 | [observability](observability/README.md) | Owns tracing, bounded diagnostic storage, redaction, and diagnostic routes. |
 | `__init__.py` | Declares the package. |
 

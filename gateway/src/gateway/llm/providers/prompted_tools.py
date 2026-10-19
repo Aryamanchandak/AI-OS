@@ -1,4 +1,4 @@
-"""Prompted tool-calling fallback for Ollama models with no native tool API.
+"""Prompted tool-calling fallback for local models with no native tool API.
 
 Most local models cannot be handed an OpenAI-style `tools` array. Rather than
 losing tool calling entirely on those models, the tool catalogue is described in

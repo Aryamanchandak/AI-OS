@@ -9,7 +9,6 @@ from fastapi import FastAPI
 
 from gateway.app.dependencies import DependencyContainer
 from gateway.platform.configuration import GLCPaths
-from gateway.platform.networking import OutboundHTTPClient
 from gateway.platform.startup import StartupCheck, StartupDependencyError, run_startup_checks
 from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
@@ -35,11 +34,9 @@ def build_container(
     ledger = _construct("call ledger database", lambda: CallLedger(paths.ledger_db))
     telemetry = Telemetry()
     _construct("telemetry export", telemetry.initialize)
-    http = OutboundHTTPClient()
     llm = _construct(
         "LLM service",
         lambda: LLMService.build(
-            client=http.client,
             config_dir=paths.config_dir,
             ledger=ledger,
         ),
@@ -57,7 +54,6 @@ def build_container(
         telemetry.close()
         raise
     return DependencyContainer(
-        http=http,
         ledger=ledger,
         telemetry=telemetry,
         llm=llm,

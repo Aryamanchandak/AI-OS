@@ -7,7 +7,6 @@ from typing import Annotated, cast
 
 from fastapi import Depends, Request
 
-from gateway.platform.networking import OutboundHTTPClient
 from gateway.ledger import CallLedger
 from gateway.platform.observability import Telemetry
 from gateway.llm import LLMService
@@ -17,7 +16,6 @@ from gateway.llm import LLMService
 class DependencyContainer:
     """The complete set of long-lived services owned by this application."""
 
-    http: OutboundHTTPClient
     ledger: CallLedger
     telemetry: Telemetry
     llm: LLMService
@@ -25,7 +23,6 @@ class DependencyContainer:
     async def close(self) -> None:
         """Close container-owned resources in reverse construction order."""
         self.telemetry.close()
-        await self.http.close()
 
 
 def get_container(request: Request) -> DependencyContainer:
