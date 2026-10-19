@@ -10,7 +10,7 @@ import pytest
 
 from gateway.ledger import CallLedger
 from gateway.llm.economics import BudgetController, Principal, PricingTable
-from gateway.llm.models import ChatRequest, EmbedRequest
+from gateway.llm.models import ChatRequest, ChatResponse, EmbedRequest, EmbedResponse, ToolCall
 from gateway.llm.profiles import ProfileRegistry
 from gateway.llm.providers.base import ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage
 from gateway.llm.providers.registry import ProviderRegistry
@@ -152,3 +152,22 @@ def test_failed_ledger_write_fails_the_call(tmp_path: Path, call: str) -> None:
     request = ChatRequest(prompt='hello') if call == 'chat' else EmbedRequest(text='hello', profile='embed')
     with pytest.raises(sqlite3.OperationalError):
         asyncio.run(getattr(service, call)(request))
+
+
+class ToolCallingProvider(FakeProvider):
+    async def chat(self, **kwargs: Any) -> ProviderResult:
+        return ProviderResult(provider=self.name, model=self.model, stop_reason='tool_use', usage=ProviderUsage(10, 2),
+                              tool_calls=[{'id': 'call-1', 'name': 'lookup', 'arguments': {'q': 'x'}}])
+
+
+@pytest.mark.parametrize('provider', [FakeProvider('solo'), ToolCallingProvider('solo')])
+def test_chat_reply_matches_the_response_model(tmp_path: Path, provider: FakeProvider) -> None:
+    service, _ = service_for(tmp_path, [provider])
+    reply = ChatResponse.model_validate(asyncio.run(service.chat(ChatRequest(prompt='hello'))))
+    assert all(isinstance(call, ToolCall) for call in reply.tool_calls)
+
+
+def test_embed_reply_matches_the_response_model(tmp_path: Path) -> None:
+    service, _ = service_for(tmp_path, [embedder('solo')])
+    reply = EmbedResponse.model_validate(asyncio.run(service.embed(EmbedRequest(text='hello', profile='embed'))))
+    assert reply.dim == len(reply.embedding) == 2

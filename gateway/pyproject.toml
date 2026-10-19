@@ -30,6 +30,8 @@ where = ["src"]
 testpaths = ["."]
 pythonpath = ["src", "."]
 norecursedirs = [".venv", "build"]
+addopts = "-m 'not golden'"
+markers = ["golden: real paid requests using keys from .env; run with -m golden"]
 
 [tool.mypy]
 python_version = "3.12"

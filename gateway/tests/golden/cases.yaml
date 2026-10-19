@@ -1,0 +1,67 @@
+# Real requests with known good outcomes. Run with: .venv/bin/pytest -m golden -v
+# Each run spends a few cents on Anthropic. Embedding runs on local Ollama.
+
+- name: reply-exactly-ok
+  call: chat
+  request:
+    provider: anthropic
+    prompt: Reply with exactly OK
+    max_tokens: 10
+    temperature: 0
+    session: golden-reply-ok
+  expect:
+    text: OK
+    ledger_rows: 1
+    cost_above_zero: true
+
+- name: knowledge-extraction-returns-json
+  call: chat
+  request:
+    profile: knowledge-extraction-v1
+    max_tokens: 500
+    temperature: 0
+    session: golden-extraction
+    prompt: >-
+      List the companies, people and places in this paragraph.
+      Reliance Industries, chaired by Mukesh Ambani, is headquartered in Mumbai.
+      In 2020 it sold stakes in Jio Platforms to Meta and Google.
+    response_format:
+      type: json_schema
+      schema:
+        type: object
+        properties:
+          entities:
+            type: array
+            items:
+              type: object
+              properties:
+                name: {type: string}
+                kind: {type: string, enum: [company, person, place]}
+              required: [name, kind]
+        required: [entities]
+  expect:
+    parsed_names_include: [Reliance Industries, Mukesh Ambani, Mumbai]
+    ledger_rows: 1
+
+- name: chunker-embedding-is-768-numbers
+  call: embed
+  request:
+    profile: chunker-v1
+    text: Reliance Industries is headquartered in Mumbai.
+  expect:
+    dim: 768
+    ledger_rows: 1
+
+- name: zero-session-budget-refuses-before-calling
+  call: chat
+  budget:
+    principal: session:golden-refused
+    limit_usd: 0
+  request:
+    provider: anthropic
+    prompt: Reply with exactly OK
+    max_tokens: 10
+    session: golden-refused
+  expect:
+    status: 402
+    ledger_rows: 0

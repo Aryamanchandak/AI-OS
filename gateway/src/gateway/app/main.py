@@ -6,7 +6,7 @@ import os
 
 from fastapi import FastAPI, HTTPException
 
-from gateway import __version__
+from gateway import __version__, env
 from gateway.app.lifespan import lifespan_for
 from gateway.app.middleware import (
     SCHEMA_AND_DOCS_PATHS as SCHEMA_AND_DOCS_PATHS,
@@ -25,6 +25,7 @@ def create_app(
     token: str | None = None,
     startup_checks: tuple[StartupCheck, ...] = (),
 ) -> FastAPI:
+    env.load_env()
     expected_token = token if token is not None else os.environ.get("AI_OS_TOKEN", "").strip()
     app = FastAPI(
         title="AI OS Gateway",

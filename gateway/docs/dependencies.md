@@ -4,7 +4,7 @@ Every library the gateway installs. Versions are the exact pins in `uv.lock`;
 `pyproject.toml` holds the allowed ranges. Update this file in the same commit
 as any dependency change.
 
-Last checked: 2026-10-17.
+Last checked: 2026-10-19.
 
 ## Runtime
 
@@ -19,7 +19,7 @@ Last checked: 2026-10-17.
 | opentelemetry-api | 1.44.0 | Tracing calls inside the code (spans) | Vendor-neutral tracing standard | Remove tracing; touches 4 files |
 | opentelemetry-sdk | 1.44.0 | Collects and processes the spans | Pairs with the API above | Same as above |
 | opentelemetry-exporter-otlp-proto-http | 1.44.0 | Sends spans to an external tracing backend over HTTP | Works with any OTLP backend (Jaeger, Honeycomb, etc.) | Drop it if traces are never exported off-machine |
-| python-dotenv | 1.2.3 | Meant to load `.env` files | — | **Unused: nothing imports it.** API keys currently come only from the process environment. Either remove it, or add a thin loader so keys come from `.env` as CLAUDE.md requires. |
+| python-dotenv | 1.2.3 | Loads API keys and `AI_OS_TOKEN` from `gateway/.env` at app creation | Standard `.env` reader; shell variables still win | Only `src/gateway/env.py` imports it; replace with a 10-line parser or plain shell exports |
 
 ## Development only (`uv sync --extra dev`)
 
