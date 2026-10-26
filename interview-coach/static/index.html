@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rehearsal — one-way interview practice</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #E9ECF0;
+  --panel: #FFFFFF;
+  --ink: #17202B;
+  --muted: #5B6675;
+  --line: #CDD3DB;
+  --action: #1F5F8B;
+  --action-ink: #FFFFFF;
+  --prep: #B87A0C;
+  --live: #C8252F;
+  --good: #2E7D5B;
+  --soft: #F3F5F8;
+  --font: "Avenir Next", "Segoe UI Variable Text", "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+  --num: "Avenir Next Condensed", "Bahnschrift", "DIN Alternate", "Arial Narrow", var(--font);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #14181E;
+    --panel: #1D232B;
+    --ink: #E6EAF0;
+    --muted: #9AA5B4;
+    --line: #333C47;
+    --action: #5FA3D3;
+    --action-ink: #0E1A24;
+    --prep: #E2A53A;
+    --live: #F0525C;
+    --good: #5DBB8E;
+    --soft: #252C35;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; }
+body { padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0); }
+main { max-width: 820px; margin: 0 auto; padding: 20px 16px 64px; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.01em; }
+h1 small { font-weight: 400; color: var(--muted); font-size: 0.95rem; margin-left: 6px; }
+h2 { font-size: 1.15rem; margin: 0 0 10px; }
+h3 { font-size: 1rem; margin: 20px 0 8px; }
+p { margin: 0 0 10px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+label { display: block; font-weight: 600; font-size: 0.92rem; margin: 12px 0 4px; }
+.hint { color: var(--muted); font-size: 0.88rem; }
+textarea, select, input[type=number] {
+  width: 100%; font: inherit; color: var(--ink); background: var(--soft);
+  border: 1px solid var(--line); border-radius: 6px; padding: 9px 10px;
+}
+textarea { min-height: 110px; resize: vertical; }
+.row { display: grid; grid-template-columns: 1fr; gap: 0 14px; }
+@media (min-width: 620px) { .row { grid-template-columns: 2fr 1fr 1fr; } }
+button {
+  font: inherit; font-weight: 600; border-radius: 6px; padding: 10px 16px; cursor: pointer;
+  border: 1px solid var(--action); background: var(--action); color: var(--action-ink);
+}
+button.ghost { background: transparent; color: var(--action); }
+button.danger { background: var(--live); border-color: var(--live); color: #fff; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:focus-visible, textarea:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible {
+  outline: 3px solid var(--action); outline-offset: 2px;
+}
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
+.hidden { display: none !important; }
+
+/* Stage */
+.qtype { color: var(--muted); font-size: 0.88rem; margin-bottom: 4px; }
+.qtext { font-size: 1.3rem; line-height: 1.35; font-weight: 600; margin-bottom: 8px; }
+.qnote { background: var(--soft); border-left: 3px solid var(--action); padding: 10px 12px; border-radius: 4px; margin: 10px 0; white-space: pre-wrap; }
+.chart { width: 100%; border-radius: 6px; border: 1px solid var(--line); background: #fff; margin-top: 8px; }
+
+.booth { position: relative; margin-top: 14px; border-radius: 10px; overflow: hidden; background: #000; aspect-ratio: 16 / 9; }
+.booth video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.booth video.mirror { transform: scaleX(-1); }
+.light {
+  position: absolute; top: 12px; left: 12px; display: flex; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 10px; border-radius: 999px; background: rgba(0,0,0,0.6); color: #fff; font-weight: 600; font-size: 0.9rem;
+}
+.light .dot { width: 11px; height: 11px; border-radius: 50%; background: #888; }
+.booth[data-state=prep] .light .dot { background: var(--prep); }
+.booth[data-state=live] .light .dot { background: var(--live); animation: pulse 1.2s infinite; }
+.booth[data-state=live] { box-shadow: inset 0 0 0 4px var(--live); }
+.booth[data-state=prep] { box-shadow: inset 0 0 0 4px var(--prep); }
+@keyframes pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .booth[data-state=live] .light .dot { animation: none; } }
+.clock {
+  position: absolute; right: 14px; bottom: 6px; font-family: var(--num); font-weight: 700;
+  font-size: clamp(3rem, 12vw, 5.5rem); color: #fff; line-height: 1; text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  font-variant-numeric: tabular-nums;
+}
+.lens-cue {
+  position: absolute; top: 8px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 0.82rem;
+  background: rgba(0,0,0,0.55); padding: 3px 10px; border-radius: 999px;
+}
+.status { margin-top: 12px; font-weight: 600; }
+
+/* Feedback */
+.scoreline { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.score { font-family: var(--num); font-weight: 700; font-size: 4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.score span { font-size: 1.4rem; color: var(--muted); }
+.verdict { font-size: 1.1rem; font-weight: 600; flex: 1; min-width: 220px; }
+.focus { background: var(--soft); border-radius: 6px; padding: 12px 14px; margin-top: 14px; border-left: 4px solid var(--prep); }
+.focus b { display: block; font-size: 0.88rem; color: var(--muted); margin-bottom: 2px; }
+.fix { border-top: 1px solid var(--line); padding: 10px 0; }
+.fix:first-of-type { border-top: 0; }
+.fix .issue { font-weight: 600; }
+.fix .ev { color: var(--muted); font-size: 0.92rem; font-style: italic; margin: 2px 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { background: var(--soft); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 0.9rem; }
+.chip b { font-variant-numeric: tabular-nums; }
+.chip.warn { border-color: var(--prep); }
+.dims { display: grid; gap: 8px; }
+.dim { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
+.dim .bar { grid-column: 1 / -1; height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.dim .bar i { display: block; height: 100%; background: var(--action); }
+.dim .c { grid-column: 1 / -1; color: var(--muted); font-size: 0.9rem; }
+ul { margin: 0; padding-left: 20px; }
+li { margin-bottom: 4px; }
+.model { white-space: pre-wrap; background: var(--soft); padding: 12px 14px; border-radius: 6px; }
+.transcript { white-space: pre-wrap; font-size: 0.95rem; }
+.transcript .tag { color: var(--prep); font-weight: 600; }
+.transcript .tagp { color: var(--muted); }
+.seek { background: none; border: 0; padding: 0; color: var(--action); text-decoration: underline; font-weight: 600; cursor: pointer; font: inherit; }
+details summary { cursor: pointer; font-weight: 600; margin: 14px 0 6px; }
+.replay { width: 100%; border-radius: 8px; background: #000; margin-top: 8px; }
+
+.hist-item { display: grid; grid-template-columns: 3rem 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; background: none; border-left: 0; border-right: 0; border-bottom: 0; text-align: left; color: var(--ink); width: 100%; font-weight: 400; border-radius: 0; }
+.hist-item .s { font-family: var(--num); font-weight: 700; font-size: 1.6rem; line-height: 1.1; }
+.hist-item .m { color: var(--muted); font-size: 0.85rem; }
+.err { color: var(--live); font-weight: 600; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Rehearsal <small>one-way interview practice</small></h1>
+    <button class="ghost" id="histBtn" type="button">Past attempts</button>
+  </header>
+
+  <!-- History -->
+  <section class="panel hidden" id="historyPanel" aria-label="Past attempts">
+    <h2>Past attempts</h2>
+    <div id="historyList"><p class="hint">No attempts yet.</p></div>
+  </section>
+
+  <!-- Setup -->
+  <section class="panel" id="setup">
+    <h2>What you're preparing for</h2>
+    <p class="hint">Firm, role, programme, the format you've been told to expect, your background. Questions and feedback are tailored to this.</p>
+    <textarea id="ctx" placeholder="e.g. HireVue for [firm] graduate analyst programme, London. 30s prep, up to 2 min per answer, 5 questions: motivation, competencies, one data question. My background: analytics & AI at an asset manager, built agentic tools…"></textarea>
+    <div class="actions"><button class="ghost" id="saveCtx" type="button">Save context</button><span class="hint" id="ctxStatus"></span></div>
+
+    <details id="promptEditor">
+      <summary>AI prompts — view and edit</summary>
+      <p class="hint">Tailor the questions and evaluation to your interview. Your context, question type and timers are added automatically. Keep the response-format instructions so results display correctly.</p>
+      <label for="questionPrompt">Question-generation prompt</label>
+      <textarea id="questionPrompt" rows="14" disabled></textarea>
+      <label for="evaluationPrompt">Answer-evaluation prompt</label>
+      <textarea id="evaluationPrompt" rows="14" disabled></textarea>
+      <p class="hint">Save before getting a question or starting an answer. Changes apply to future requests; retrying a failed assessment keeps its original evaluation prompt.</p>
+      <div class="actions">
+        <button id="savePrompts" type="button" disabled>Save prompts</button>
+        <button id="resetPrompts" class="ghost" type="button" disabled>Reset both to defaults</button>
+        <button id="reloadPrompts" class="ghost hidden" type="button">Reload saved prompts</button>
+        <span id="promptStatus" class="hint" role="status" aria-live="polite">Loading prompts…</span>
+      </div>
+    </details>
+
+    <div class="row">
+      <div>
+        <label for="qtype">Question type</label>
+        <select id="qtype">
+          <option value="mix">Mix (random)</option>
+          <option value="competency">Competency (STAR)</option>
+          <option value="motivational">Why this firm / role</option>
+          <option value="mba_essay">MBA video essay</option>
+          <option value="chart">Chart interpretation</option>
+          <option value="case">Mini case</option>
+          <option value="commercial_awareness">Commercial awareness</option>
+        </select>
+      </div>
+      <div><label for="prep">Prep (s)</label><input type="number" id="prep" min="0" max="300" value="30"></div>
+      <div><label for="ans">Answer (s)</label><input type="number" id="ans" min="15" max="600" value="90"></div>
+    </div>
+
+    <div class="actions">
+      <button id="newQ" type="button">Get a question</button>
+      <button class="ghost" id="calibBtn" type="button">Calibrate eye contact</button>
+      <span class="hint" id="calibStatus"></span>
+    </div>
+    <p class="err" id="setupErr"></p>
+  </section>
+
+  <!-- Stage -->
+  <section class="panel hidden" id="stage">
+    <div class="qtype" id="qtypeLabel"></div>
+    <div class="qtext" id="qtext"></div>
+    <div class="qnote hidden" id="qnote"></div>
+    <img class="chart hidden" id="qchart" alt="Chart for this question">
+
+    <div class="booth" id="booth" data-state="idle">
+      <video id="preview" class="mirror" autoplay muted playsinline></video>
+      <div class="light"><span class="dot"></span><span id="lightText">Camera ready</span></div>
+      <div class="lens-cue hidden" id="lensCue">Look at the lens</div>
+      <div class="clock" id="clock"></div>
+    </div>
+
+    <div class="actions">
+      <button id="startBtn" type="button">Start (prep timer)</button>
+      <button class="ghost hidden" id="skipPrep" type="button">Start answering now</button>
+      <button class="danger hidden" id="stopBtn" type="button">Finish answer</button>
+      <button class="ghost" id="backBtn" type="button">Different question</button>
+    </div>
+    <p class="status" id="stageStatus"></p>
+    <p class="err" id="stageErr"></p>
+  </section>
+
+  <!-- Feedback -->
+  <section class="panel hidden" id="feedback"></section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const TYPE_NAMES = { competency: "Competency", motivational: "Why this firm / role", mba_essay: "MBA video essay", chart: "Chart interpretation", case: "Mini case", commercial_awareness: "Commercial awareness" };
+
+let stream = null, recorder = null, chunks = [], timer = null, currentQ = null, phase = "idle";
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, opts);
+  let data; try { data = await r.json(); } catch { data = {}; }
+  if (!r.ok) throw new Error(data.error || `Request failed (${r.status})`);
+  return data;
+}
+
+function pickMime() {
+  const opts = ["video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
+  return opts.find((m) => window.MediaRecorder && MediaRecorder.isTypeSupported(m)) || "";
+}
+
+async function ensureCamera() {
+  if (stream) return stream;
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+  });
+  $("preview").srcObject = stream;
+  return stream;
+}
+
+function fmt(s) { s = Math.max(0, Math.ceil(s)); return s >= 60 ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}` : String(s); }
+
+function countdown(seconds, onTick, onDone) {
+  clearInterval(timer);
+  const end = performance.now() + seconds * 1000;
+  onTick(seconds);
+  timer = setInterval(() => {
+    const left = (end - performance.now()) / 1000;
+    if (left <= 0) { clearInterval(timer); onTick(0); onDone(); } else onTick(left);
+  }, 100);
+}
+
+function setBooth(state, text) { $("booth").dataset.state = state; $("lightText").textContent = text; }
+
+function startRecording(seconds, onStop) {
+  chunks = [];
+  const mime = pickMime();
+  recorder = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 2_500_000 } : undefined);
+  recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  recorder.onstop = () => onStop(new Blob(chunks, { type: recorder.mimeType || "video/webm" }));
+  recorder.start(1000);
+  countdown(seconds, (l) => ($("clock").textContent = fmt(l)), () => recorder.state === "recording" && recorder.stop());
+}
+
+/* ---------- context & setup ---------- */
+// Whole seconds only; keep the ranges in step with PREP_RANGE / ANSWER_RANGE in app.py.
+const TIMERS = { prep: ["Prep", 0, 300], ans: ["Answer", 15, 600] };
+const TIMER_KEY = "rehearsal.timers";
+let timers = { prep: 30, answer: 90 };
+
+function parseTimer(id, raw) {
+  const [label, lo, hi] = TIMERS[id];
+  const text = String(raw ?? "").trim();
+  if (!/^[0-9]+$/.test(text) || +text < lo || +text > hi) throw new Error(`${label} time must be a whole number of seconds from ${lo} to ${hi}.`);
+  return +text;
+}
+function readTimers() { return { prep: parseTimer("prep", $("prep").value), answer: parseTimer("ans", $("ans").value) }; }
+function storedTimers() { try { return JSON.parse(localStorage.getItem(TIMER_KEY)) || {}; } catch { return {}; } }
+function saveTimers() {
+  const t = storedTimers();
+  for (const id of Object.keys(TIMERS)) { try { t[id] = parseTimer(id, $(id).value); } catch { /* keep the last good value */ } }
+  try { localStorage.setItem(TIMER_KEY, JSON.stringify(t)); } catch { /* storage unavailable: defaults apply next time */ }
+}
+function restoreTimers() {
+  const t = storedTimers();
+  for (const id of Object.keys(TIMERS)) { try { $(id).value = parseTimer(id, t[id]); } catch { /* keep the default */ } }
+}
+restoreTimers();
+$("prep").oninput = saveTimers;
+$("ans").oninput = saveTimers;
+
+function setPromptBusy(busy) {
+  ["questionPrompt", "evaluationPrompt", "savePrompts", "resetPrompts", "reloadPrompts"].forEach((id) => $(id).disabled = busy);
+}
+
+async function updatePrompts(action = "load") {
+  setPromptBusy(true);
+  $("promptStatus").textContent = action === "load" ? "Loading prompts…" : "Saving prompts…";
+  try {
+    const opts = action === "load" ? {} : {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(action === "reset" ? { reset: true } : {
+        question: $("questionPrompt").value, evaluation: $("evaluationPrompt").value,
+      }),
+    };
+    const d = await api("/api/prompts", opts);
+    $("questionPrompt").value = d.question;
+    $("evaluationPrompt").value = d.evaluation;
+    $("reloadPrompts").classList.add("hidden");
+    setPromptBusy(false);
+    $("promptStatus").textContent = action === "load" ? "Saved prompts loaded." : action === "reset" ? "Default prompts restored and saved." : "Prompts saved.";
+  } catch (e) {
+    setPromptBusy(action === "load");
+    $("reloadPrompts").disabled = false;
+    $("reloadPrompts").classList.remove("hidden");
+    $("promptStatus").textContent = "Could not " + (action === "load" ? "load" : "save") + " prompts: " + e.message;
+  }
+}
+$("savePrompts").onclick = () => updatePrompts("save");
+$("resetPrompts").onclick = () => updatePrompts("reset");
+$("reloadPrompts").onclick = () => updatePrompts();
+["questionPrompt", "evaluationPrompt"].forEach((id) => $(id).oninput = () => {
+  $("promptStatus").textContent = "Unsaved changes — click Save prompts to use them.";
+});
+
+async function loadContext() {
+  try {
+    const d = await api("/api/context");
+    $("ctx").value = d.context || "";
+    $("calibStatus").textContent = d.calibrated ? "Eye contact calibrated." : "Not calibrated yet — do this once for better gaze feedback.";
+  } catch (e) { $("setupErr").textContent = e.message; }
+}
+$("saveCtx").onclick = async () => {
+  await api("/api/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ context: $("ctx").value }) });
+  $("ctxStatus").textContent = "Saved.";
+  setTimeout(() => ($("ctxStatus").textContent = ""), 2000);
+};
+
+$("calibBtn").onclick = async () => {
+  $("setupErr").textContent = "";
+  try {
+    showStage(null);
+    await ensureCamera();
+    $("qtypeLabel").textContent = "Calibration";
+    $("qtext").textContent = "Look straight into the camera lens and hold still until the timer ends.";
+    ["startBtn", "skipPrep", "stopBtn", "backBtn"].forEach((b) => $(b).classList.add("hidden"));
+    $("lensCue").classList.remove("hidden");
+    setBooth("prep", "Get ready");
+    countdown(3, (l) => ($("clock").textContent = fmt(l)), () => {
+      setBooth("live", "Calibrating");
+      startRecording(4, async (blob) => {
+        setBooth("idle", "Processing");
+        $("clock").textContent = "";
+        $("lensCue").classList.add("hidden");
+        $("stageStatus").textContent = "Processing calibration…";
+        try {
+          const fd = new FormData(); fd.append("video", blob, "calib");
+          await api("/api/calibrate", { method: "POST", body: fd });
+          $("calibStatus").textContent = "Eye contact calibrated.";
+          $("stageStatus").textContent = "";
+          backToSetup();
+        } catch (e) { $("stageErr").textContent = e.message; $("backBtn").classList.remove("hidden"); }
+      });
+    });
+  } catch (e) { $("setupErr").textContent = "Camera/mic unavailable: " + e.message; backToSetup(); }
+};
+
+$("newQ").onclick = getQuestion;
+async function getQuestion() {
+  $("setupErr").textContent = "";
+  $("newQ").disabled = true; $("newQ").textContent = "Writing a question…";
+  try {
+    timers = readTimers();
+    saveTimers();
+    if ($("ctx").value) await api("/api/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ context: $("ctx").value }) });
+    const q = await api("/api/question", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: $("qtype").value, prep: timers.prep, answer: timers.answer }),
+    });
+    showStage(q);
+    await ensureCamera();
+  } catch (e) { $("setupErr").textContent = e.message; backToSetup(); }
+  finally { $("newQ").disabled = false; $("newQ").textContent = "Get a question"; }
+}
+
+/* ---------- stage ---------- */
+function showStage(q) {
+  currentQ = q;
+  $("setup").classList.add("hidden"); $("feedback").classList.add("hidden"); $("historyPanel").classList.add("hidden");
+  $("stage").classList.remove("hidden");
+  $("stageErr").textContent = ""; $("stageStatus").textContent = ""; $("clock").textContent = "";
+  ["startBtn", "backBtn"].forEach((b) => $(b).classList.remove("hidden"));
+  ["skipPrep", "stopBtn"].forEach((b) => $(b).classList.add("hidden"));
+  setBooth("idle", "Camera ready");
+  if (!q) { $("qnote").classList.add("hidden"); $("qchart").classList.add("hidden"); return; }
+  $("qtypeLabel").textContent = TYPE_NAMES[q.type] || q.type;
+  $("qtext").textContent = q.question;
+  $("qnote").textContent = q.context_note || "";
+  $("qnote").classList.toggle("hidden", !q.context_note);
+  if (q.chart_url) { $("qchart").src = q.chart_url + "?t=" + Date.now(); $("qchart").classList.remove("hidden"); }
+  else $("qchart").classList.add("hidden");
+  window.scrollTo({ top: 0 });
+}
+
+function backToSetup() {
+  clearInterval(timer);
+  if (recorder && recorder.state === "recording") { recorder.onstop = null; recorder.stop(); }
+  phase = "idle";
+  $("stage").classList.add("hidden"); $("feedback").classList.add("hidden");
+  $("setup").classList.remove("hidden"); $("lensCue").classList.add("hidden");
+}
+$("backBtn").onclick = backToSetup;
+
+$("startBtn").onclick = async () => {
+  try { await ensureCamera(); } catch (e) { $("stageErr").textContent = "Camera/mic unavailable: " + e.message; return; }
+  $("startBtn").classList.add("hidden"); $("backBtn").classList.add("hidden"); $("skipPrep").classList.remove("hidden");
+  phase = "prep";
+  setBooth("prep", "Thinking time");
+  countdown(timers.prep, (l) => ($("clock").textContent = fmt(l)), beginAnswer);
+};
+$("skipPrep").onclick = () => { clearInterval(timer); beginAnswer(); };
+
+function beginAnswer() {
+  if (phase !== "prep") return;
+  phase = "live";
+  $("skipPrep").classList.add("hidden"); $("stopBtn").classList.remove("hidden");
+  setBooth("live", "Recording");
+  startRecording(timers.answer, submitAnswer);
+}
+$("stopBtn").onclick = () => { clearInterval(timer); if (recorder && recorder.state === "recording") recorder.stop(); };
+
+async function submitAnswer(blob) {
+  phase = "done";
+  $("stopBtn").classList.add("hidden");
+  setBooth("idle", "Analysing");
+  $("clock").textContent = "";
+  $("stageStatus").textContent = "Transcribing and assessing your answer — usually 30–90 seconds…";
+  try {
+    const fd = new FormData();
+    fd.append("video", blob, "answer");
+    fd.append("qid", currentQ.id);
+    fd.append("prep", timers.prep);
+    fd.append("answer", timers.answer);
+    const r = await api("/api/answer", { method: "POST", body: fd });
+    renderFeedback(r);
+  } catch (e) {
+    $("stageErr").textContent = "Assessment failed: " + e.message;
+    $("stageStatus").textContent = "";
+    $("startBtn").textContent = "Try again"; $("startBtn").classList.remove("hidden"); $("backBtn").classList.remove("hidden");
+  }
+}
+
+/* ---------- feedback ---------- */
+function ts(s) { s = Math.max(0, s); return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`; }
+
+function renderFeedback(r) {
+  const f = r.feedback || {}, m = r.metrics || {}, g = m.gaze || {};
+  const chip = (label, val, warn) => `<span class="chip${warn ? " warn" : ""}">${esc(label)} <b>${esc(val)}</b></span>`;
+  const chips = [];
+  if (m.speech_detected) {
+    chips.push(chip("Pace", `${m.pace_wpm} wpm`, m.pace_wpm < 130 || m.pace_wpm > 170));
+    chips.push(chip("Fillers", `${m.hesitation_fillers} (${m.hesitation_fillers_per_min}/min)`, m.hesitation_fillers_per_min > 3));
+    chips.push(chip("Pauses > 2s", m.pauses_over_2s, m.pauses_over_2s > 2));
+    chips.push(chip("First word at", `${m.time_to_first_word_s}s`, m.time_to_first_word_s > 3));
+    if (m.pitch_variability_semitones != null) chips.push(chip("Pitch variation", `${m.pitch_variability_semitones} st`, m.pitch_variability_semitones < 2));
+    if (m.still_talking_when_time_ran_out) chips.push(chip("Time", "cut off", true));
+    else chips.push(chip("Unused time", `${m.unused_time_s}s`, m.unused_time_s > r.answer_limit * 0.4));
+  }
+  if (g.available) chips.push(chip("Eye contact", `${g.eye_contact_pct}%${g.calibrated ? "" : " (uncalibrated)"}`, g.eye_contact_pct < 80));
+  const tics = Object.entries(m.repeated_verbal_tics || {}).map(([k, v]) => `“${k}” ×${v}`).join(", ");
+
+  const gazeList = (r.gaze_segments || []).map((s) =>
+    `<li><button class="seek" data-t="${s.start}">${ts(s.start)}</button> ${s.direction === "not in frame" ? "out of frame" : "looked " + esc(s.direction)} for ${s.seconds}s</li>`).join("");
+
+  const items = (arr) => (arr || []).map((x) => `<li>${esc(x)}</li>`).join("");
+  const fixes = (arr) => (arr || []).map((x) => `<div class="fix"><div class="issue">${esc(x.issue)}</div>${x.evidence ? `<div class="ev">${esc(x.evidence)}</div>` : ""}<div>${esc(x.fix)}</div></div>`).join("");
+  const dims = (f.content_scores || []).map((d) => `<div class="dim"><b>${esc(d.dimension)}</b><span>${esc(d.score)}/10</span><div class="bar"><i style="width:${(+d.score || 0) * 10}%"></i></div><div class="c">${esc(d.comment)}</div></div>`).join("");
+
+  const annotated = esc(r.annotated_transcript || "")
+    .replace(/\[(looks away: [^\]]+|not in frame [^\]]+)\]/g, '<span class="tag">[$1]</span>')
+    .replace(/\[(pause [^\]]+|\d+:\d\d)\]/g, '<span class="tagp">[$1]</span>');
+
+  $("feedback").innerHTML = `
+    <div class="qtype">${esc(TYPE_NAMES[r.question.type] || r.question.type)}</div>
+    <p><b>${esc(r.question.question)}</b></p>
+    ${r.status && r.status !== "complete" ? `<p class="err" role="status">${esc(r.assessment_error || "Your recording is saved. Assessment has not finished.")}</p>
+      <div class="actions"><button id="retryAssessment" type="button">Retry assessment</button><span id="retryStatus" role="status" class="hint"></span></div>` : ""}
+    <div class="scoreline">
+      <div class="score">${esc(f.overall_score ?? "–")}<span>/10</span></div>
+      <div class="verdict">${esc(f.verdict)}</div>
+    </div>
+    ${f.retry_focus ? `<div class="focus"><b>Next attempt, change this</b>${esc(f.retry_focus)}</div>` : ""}
+    <div class="actions">
+      <button id="redoBtn" type="button">Redo this question</button>
+      <button class="ghost" id="nextBtn" type="button">New question</button>
+    </div>
+
+    ${f.top_fixes?.length ? `<h3>Fix these first</h3>${fixes(f.top_fixes)}` : ""}
+    ${dims ? `<h3>Content</h3><div class="dims">${dims}</div>` : ""}
+    ${f.missed_points?.length ? `<h3>What a strong answer would also have said</h3><ul>${items(f.missed_points)}</ul>` : ""}
+    ${f.what_worked?.length ? `<h3>What worked</h3><ul>${items(f.what_worked)}</ul>` : ""}
+
+    <h3>Delivery</h3>
+    <div class="chips">${chips.join("")}</div>
+    ${tics ? `<p class="hint" style="margin-top:8px">Repeated words: ${esc(tics)}</p>` : ""}
+    ${fixes(f.delivery_feedback)}
+    ${gazeList ? `<details><summary>Where you looked away (${(r.gaze_segments || []).length})</summary><ul>${gazeList}</ul></details>` : ""}
+    ${g.available === false ? `<p class="hint">Eye-contact analysis unavailable: ${esc(g.reason)}</p>` : ""}
+
+    <video class="replay" id="replay" controls playsinline src="${esc(r.video_url)}"></video>
+
+    ${f.model_answer ? `<details open><summary>Model answer</summary><div class="model">${esc(f.model_answer)}</div></details>` : ""}
+    <details><summary>Your transcript, annotated</summary><div class="transcript">${annotated || (m.speech_detected === false ? "(no speech detected)" : "Transcript not available yet.")}</div></details>
+    <details><summary>What the assessor was looking for</summary>
+      <ul>${items(r.assessor_notes?.assessing)}</ul>
+      <h3>Strong answer covers</h3><ul>${items(r.assessor_notes?.strong_answer_covers)}</ul>
+      <h3>Common mistakes</h3><ul>${items(r.assessor_notes?.common_mistakes)}</ul>
+    </details>
+  `;
+  $("stage").classList.add("hidden"); $("setup").classList.add("hidden"); $("historyPanel").classList.add("hidden");
+  $("feedback").classList.remove("hidden");
+  window.scrollTo({ top: 0 });
+
+  $("feedback").querySelectorAll(".seek").forEach((b) => (b.onclick = () => { const v = $("replay"); v.currentTime = +b.dataset.t; v.play(); }));
+  $("redoBtn").onclick = async () => { showStage(r.question); try { await ensureCamera(); } catch (e) { $("stageErr").textContent = e.message; } };
+  $("nextBtn").onclick = () => { $("feedback").classList.add("hidden"); $("setup").classList.remove("hidden"); getQuestion(); };
+  const retry = $("retryAssessment");
+  if (retry) retry.onclick = async () => {
+    retry.disabled = true;
+    retry.textContent = "Assessing saved recording…";
+    $("retryStatus").textContent = "This may take a minute.";
+    try {
+      renderFeedback(await api("/api/attempt/" + encodeURIComponent(r.id) + "/retry", { method: "POST" }));
+    } catch (e) {
+      retry.disabled = false;
+      retry.textContent = "Retry assessment";
+      $("retryStatus").textContent = "Retry failed: " + e.message + ". Your recording is still saved.";
+    }
+  };
+  loadHistory();
+}
+
+/* ---------- history ---------- */
+async function loadHistory() {
+  try {
+    const items = await api("/api/history");
+    $("historyList").innerHTML = items.length ? items.map((h) => `
+      <button class="hist-item" type="button" data-id="${esc(h.id)}">
+        <span class="s">${esc(h.score ?? "–")}</span>
+        <span><span>${esc(h.question)}</span><br><span class="m">${esc(TYPE_NAMES[h.type] || h.type)}, ${esc(h.created)}</span></span>
+      </button>`).join("") : '<p class="hint">No attempts yet.</p>';
+    $("historyList").querySelectorAll(".hist-item").forEach((b) => (b.onclick = async () => renderFeedback(await api("/api/attempt/" + b.dataset.id))));
+  } catch { /* ignore */ }
+}
+$("histBtn").onclick = () => { $("historyPanel").classList.toggle("hidden"); loadHistory(); };
+
+updatePrompts();
+loadContext();
+loadHistory();
+</script>
+</body>
+</html>
