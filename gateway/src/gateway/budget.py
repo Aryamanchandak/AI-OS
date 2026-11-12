@@ -12,19 +12,21 @@ import uuid
 from typing import Any
 
 from gateway.config import load_mapping
-from gateway.platform.database import SQLiteDatabase
+from gateway.db import SQLiteDatabase
 
 DIMENSIONS = ("agent", "session")
 VALID_PERIODS = ("minute", "hour", "day", "month", "lifetime")
 BUDGET_EXCEEDED = "budget_exceeded"
 
 
-class BudgetConfigError(ValueError): pass
+class BudgetConfigError(ValueError):
+    pass
 
 
 @dataclass(frozen=True, slots=True)
 class Principal:
-    agent: str | None = None; session: str | None = None
+    agent: str | None = None
+    session: str | None = None
 
     @classmethod
     def from_request(cls, request: Any) -> "Principal":
@@ -34,13 +36,13 @@ class Principal:
         return {name: value for name in DIMENSIONS if (value := getattr(self, name)) is not None}
 
 
-def _period_start(period: str, now: float | None = None) -> float:
+def period_start(period: str, now: float | None = None) -> float:
     value = now or time.time()
     seconds = {"minute": 60, "hour": 3600, "day": 86400, "month": 2_592_000}.get(period)
     return 0.0 if seconds is None else value - value % seconds
 
 
-def _parse_principal(spec: str) -> tuple[str, str]:
+def parse_principal(spec: str) -> tuple[str, str]:
     dimension, sep, pattern = str(spec).partition(":")
     if not sep or dimension not in DIMENSIONS or not pattern.strip():
         raise BudgetConfigError(f"principal {spec!r}: expected <dimension>:<value> with dimension in {list(DIMENSIONS)}")
@@ -49,16 +51,28 @@ def _parse_principal(spec: str) -> tuple[str, str]:
 
 @dataclass(frozen=True, slots=True)
 class BudgetPolicy:
-    principal: str; dimension: str; pattern: str; limit_usd: float
-    period: str = "day"; include_errors: bool = True; source: str = "budgets.yaml"
+    principal: str
+    dimension: str
+    pattern: str
+    limit_usd: float
+    period: str = "day"
+    include_errors: bool = True
+    source: str = "budgets.yaml"
     def matches(self, dimension: str, value: str) -> bool: return dimension == self.dimension and fnmatch.fnmatch(value, self.pattern)
     def as_dict(self) -> dict[str, Any]: return {name: getattr(self, name) for name in ("principal", "dimension", "pattern", "limit_usd", "period", "include_errors", "source")}
 
 
 @dataclass(slots=True)
 class BudgetStatus:
-    principal: str; dimension: str; value: str; limit_usd: float; spent_usd: float
-    period: str; period_start: float; source: str; reserved_usd: float = 0.0
+    principal: str
+    dimension: str
+    value: str
+    limit_usd: float
+    spent_usd: float
+    period: str
+    period_start: float
+    source: str
+    reserved_usd: float = 0.0
     @property
     def remaining_usd(self) -> float: return max(0.0, self.limit_usd - self.spent_usd - self.reserved_usd)
     @property
@@ -68,9 +82,13 @@ class BudgetStatus:
 
 @dataclass(slots=True)
 class Admission:
-    allowed: bool; projected_usd: float; reservation_id: str | None = None
-    checked: list[BudgetStatus] = field(default_factory=list); breached: BudgetStatus | None = None
-    reason: str = ""; enforced: bool = True
+    allowed: bool
+    projected_usd: float
+    reservation_id: str | None = None
+    checked: list[BudgetStatus] = field(default_factory=list)
+    breached: BudgetStatus | None = None
+    reason: str = ""
+    enforced: bool = True
     def envelope(self) -> dict[str, Any]:
         item = self.breached
         return {"error": BUDGET_EXCEEDED, "code": BUDGET_EXCEEDED, "message": self.reason, "principal": item.principal if item else None, "dimension": item.dimension if item else None, "period": item.period if item else None, "period_start": item.period_start if item else None, "limit_usd": round(item.limit_usd, 8) if item else None, "spent_usd": round(item.spent_usd, 8) if item else None, "remaining_usd": round(item.remaining_usd, 8) if item else None, "projected_usd": round(self.projected_usd, 8), "shortfall_usd": round(max(0.0, self.projected_usd - (item.remaining_usd if item else 0)), 8), "checked": [x.as_dict() for x in self.checked], "hint": "The call was refused before any provider was contacted. Lower max_tokens, choose a cheaper model, or raise the ceiling with POST /api/llm/budget."}
@@ -86,10 +104,12 @@ class BudgetController:
     def __init__(self, path: Path, database_path: Path) -> None:
         self.path, self.database = path, SQLiteDatabase(database_path)
         raw = load_mapping(path)
-        if raw.get("version") != 1: raise BudgetConfigError(f"{path}: version must be 1")
+        if raw.get("version") != 1:
+            raise BudgetConfigError(f"{path}: version must be 1")
         self.defaults = raw.get("defaults") or {}
         entries = raw.get("policies") or []
-        if not isinstance(entries, list): raise BudgetConfigError("budgets.yaml: policies must be a list")
+        if not isinstance(entries, list):
+            raise BudgetConfigError("budgets.yaml: policies must be a list")
         self.file_policies = [self._policy(x, str(path)) for x in entries]
         self.database.migrate([_SCHEMA], autocommit=True)
 
@@ -98,8 +118,11 @@ class BudgetController:
         return self.database.connect(autocommit=True)
 
     def _policy(self, entry: dict[str, Any], source: str) -> BudgetPolicy:
-        dimension, pattern = _parse_principal(str(entry.get("principal", ""))); limit = float(entry.get("limit_usd", -1)); period = str(entry.get("period", self.defaults.get("period", "day")))
-        if limit < 0 or period not in VALID_PERIODS: raise BudgetConfigError(f"invalid budget policy {entry!r}")
+        dimension, pattern = parse_principal(str(entry.get("principal", "")))
+        limit = float(entry.get("limit_usd", -1))
+        period = str(entry.get("period", self.defaults.get("period", "day")))
+        if limit < 0 or period not in VALID_PERIODS:
+            raise BudgetConfigError(f"invalid budget policy {entry!r}")
         return BudgetPolicy(f"{dimension}:{pattern}", dimension, pattern, limit, period, bool(entry.get("include_errors", self.defaults.get("include_errors", True))), source)
 
     @property
@@ -117,20 +140,24 @@ class BudgetController:
         return max(matches, key=lambda x: (not any(c in x.pattern for c in "*?["), len(x.pattern))) if matches else None
 
     def _status_in(self, connection: sqlite3.Connection, policy: BudgetPolicy, value: str) -> BudgetStatus:
-        start = _period_start(policy.period)
+        start = period_start(policy.period)
         rows = connection.execute("SELECT state, COALESCE(SUM(amount_usd),0) amount FROM llm_budget_entries WHERE dimension=? AND value=? AND period_start>=? GROUP BY state", (policy.dimension, value, start)).fetchall()
         amounts = {row["state"]: float(row["amount"]) for row in rows}
         return BudgetStatus(f"{policy.dimension}:{value}", policy.dimension, value, policy.limit_usd, amounts.get("actual", 0.0), policy.period, start, policy.source, amounts.get("reserved", 0.0))
 
     def status_for(self, dimension: str, value: str) -> BudgetStatus | None:
         policy = self.policy_for(dimension, value)
-        if policy is None: return None
-        with self._connect() as connection: return self._status_in(connection, policy, value)
+        if policy is None:
+            return None
+        with self._connect() as connection:
+            return self._status_in(connection, policy, value)
 
     def admit(self, principal: Principal, projected_usd: float) -> Admission:
-        if not self.enabled: return Admission(True, projected_usd, enforced=False, reason="budget enforcement disabled")
+        if not self.enabled:
+            return Admission(True, projected_usd, enforced=False, reason="budget enforcement disabled")
         matches = [(policy, value) for dimension, value in principal.present().items() if (policy := self.policy_for(dimension, value)) is not None]
-        if not matches: return Admission(True, projected_usd, reason="no budget policy matches this principal")
+        if not matches:
+            return Admission(True, projected_usd, reason="no budget policy matches this principal")
         reservation_id = uuid.uuid4().hex
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
@@ -138,27 +165,35 @@ class BudgetController:
                 statuses = [self._status_in(connection, policy, value) for policy, value in matches]
                 breached = min((x for x in statuses if x.spent_usd + x.reserved_usd + projected_usd > x.limit_usd), key=lambda x: x.remaining_usd, default=None)
                 if breached:
-                    connection.rollback(); return Admission(False, projected_usd, checked=statuses, breached=breached, reason=f"{breached.principal} would exceed its {breached.period} budget")
+                    connection.rollback()
+                    return Admission(False, projected_usd, checked=statuses, breached=breached, reason=f"{breached.principal} would exceed its {breached.period} budget")
                 now = time.time()
-                connection.executemany("INSERT INTO llm_budget_entries(reservation_id,dimension,value,period_start,amount_usd,state,created_at) VALUES(?,?,?,?,?,'reserved',?)", [(reservation_id, policy.dimension, value, _period_start(policy.period, now), projected_usd, now) for policy, value in matches])
-                connection.commit(); return Admission(True, projected_usd, reservation_id=reservation_id, checked=statuses, reason="within budget")
-            except BaseException: connection.rollback(); raise
+                connection.executemany("INSERT INTO llm_budget_entries(reservation_id,dimension,value,period_start,amount_usd,state,created_at) VALUES(?,?,?,?,?,'reserved',?)", [(reservation_id, policy.dimension, value, period_start(policy.period, now), projected_usd, now) for policy, value in matches])
+                connection.commit()
+                return Admission(True, projected_usd, reservation_id=reservation_id, checked=statuses, reason="within budget")
+            except BaseException:
+                connection.rollback()
+                raise
 
     def reconcile(self, reservation_id: str | None, actual_usd: float, *, count: bool = True) -> None:
-        if not reservation_id: return
+        if not reservation_id:
+            return
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             state, amount = ("actual", max(0.0, actual_usd)) if count else ("released", 0.0)
-            connection.execute("UPDATE llm_budget_entries SET state=?, amount_usd=? WHERE reservation_id=? AND state='reserved'", (state, amount, reservation_id)); connection.commit()
+            connection.execute("UPDATE llm_budget_entries SET state=?, amount_usd=? WHERE reservation_id=? AND state='reserved'", (state, amount, reservation_id))
+            connection.commit()
 
     def set_limit(self, principal: str, limit_usd: float, period: str | None = None, include_errors: bool | None = None) -> BudgetPolicy:
         policy = self._policy({"principal": principal, "limit_usd": limit_usd, "period": period or self.defaults.get("period", "day"), "include_errors": self.defaults.get("include_errors", True) if include_errors is None else include_errors}, "runtime")
-        with self._connect() as connection: connection.execute("INSERT INTO llm_budget_limits VALUES(?,?,?,?,?,?,?) ON CONFLICT(principal) DO UPDATE SET limit_usd=excluded.limit_usd,period=excluded.period,include_errors=excluded.include_errors,updated_at=excluded.updated_at", (policy.principal, policy.dimension, policy.pattern, policy.limit_usd, policy.period, int(policy.include_errors), time.time()))
+        with self._connect() as connection:
+            connection.execute("INSERT INTO llm_budget_limits VALUES(?,?,?,?,?,?,?) ON CONFLICT(principal) DO UPDATE SET limit_usd=excluded.limit_usd,period=excluded.period,include_errors=excluded.include_errors,updated_at=excluded.updated_at", (policy.principal, policy.dimension, policy.pattern, policy.limit_usd, policy.period, int(policy.include_errors), time.time()))
         return policy
 
     def clear_limit(self, principal: str) -> bool:
-        dimension, pattern = _parse_principal(principal)
-        with self._connect() as connection: result = connection.execute("DELETE FROM llm_budget_limits WHERE principal=?", (f"{dimension}:{pattern}",))
+        dimension, pattern = parse_principal(principal)
+        with self._connect() as connection:
+            result = connection.execute("DELETE FROM llm_budget_limits WHERE principal=?", (f"{dimension}:{pattern}",))
         return result.rowcount > 0
 
     def describe(self) -> dict[str, Any]: return {"path": str(self.path), "enabled": self.enabled, "defaults": self.defaults, "policies": [x.as_dict() for x in self.policies()]}

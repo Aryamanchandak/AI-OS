@@ -9,9 +9,9 @@ from typing import Any
 from fastapi import HTTPException
 import pytest
 
-from gateway.llm.models import ChatRequest
-from gateway.llm.profiles import ProfileRegistry
-from gateway.llm.providers.base import ProviderResult, ProviderUsage
+from gateway.models import ChatRequest
+from gateway.profiles import ProfileRegistry
+from gateway.providers import ProviderResult, ProviderUsage
 
 from test_llm import FakeProvider, service_for
 
@@ -32,7 +32,7 @@ class SpyProvider(FakeProvider):
 def test_pin_mismatch_surfaces_its_own_message_not_a_generic_503(tmp_path: Path) -> None:
     provider = SpyProvider("pinned", served_model="actually-served")
     service, _ = service_for(tmp_path, [provider])
-    service.pipeline.profiles.profiles = ProfileRegistry(
+    service.profiles = ProfileRegistry(
         {"chat": {"pin": {"provider": "pinned", "model": "promised-model"}}, "embedding": {}})
 
     with pytest.raises(HTTPException) as caught:
@@ -96,7 +96,7 @@ def test_local_transcription_profile_dispatches_embedded_image(tmp_path: Path) -
     provider = SpyProvider('gemma', served_model='gemma4:12b')
     provider.capabilities = replace(provider.capabilities, vision=True)
     service, _ = service_for(tmp_path, [provider])
-    service.pipeline.profiles.profiles = ProfileRegistry.from_yaml(
+    service.profiles = ProfileRegistry.from_yaml(
         Path(__file__).resolve().parents[1] / 'config/profiles.yaml')
     result = asyncio.run(service.chat(ChatRequest(messages=IMAGE_MESSAGES, profile='image-transcription-v1')))
     assert result['provider'] == 'gemma' and result['model'] == 'gemma4:12b'

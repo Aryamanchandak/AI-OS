@@ -12,8 +12,8 @@ import pytest
 import yaml
 
 from conftest import REAL_ENV_FILE
-import gateway.env
-from gateway.llm.models import ChatResponse, EmbedResponse
+import gateway.config
+from gateway.models import ChatResponse, EmbedResponse
 from main import create_app
 
 
@@ -26,7 +26,7 @@ AUTH = {"Authorization": "Bearer golden-token"}
 def test_golden_case(case, tmp_path, monkeypatch) -> None:
     # A private ledger, so row counts are exact and the $0 budget never reaches the real database.
     monkeypatch.setenv("GLC_GATEWAY_DB", str(tmp_path / "gateway.sqlite"))
-    monkeypatch.setattr(gateway.env, "ENV_FILE", REAL_ENV_FILE)
+    monkeypatch.setattr(gateway.config, "ENV_FILE", REAL_ENV_FILE)
     expect = case["expect"]
     with TestClient(create_app(token="golden-token")) as client:
         if budget := case.get("budget"):

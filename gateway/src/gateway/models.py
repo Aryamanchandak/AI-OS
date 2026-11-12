@@ -1,4 +1,4 @@
-"""Pydantic v2 request/response models for llm_gatewayV9."""
+"""Request and response shapes for the gateway API."""
 
 from typing import Any, Literal
 

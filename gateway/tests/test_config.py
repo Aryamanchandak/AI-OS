@@ -37,4 +37,4 @@ def test_only_config_imports_yaml() -> None:
 
 def test_only_the_database_helper_opens_sqlite() -> None:
     openers = sorted(p.relative_to(SOURCE).as_posix() for p in SOURCE.rglob("*.py") if "sqlite3.connect" in p.read_text(encoding="utf-8"))
-    assert openers == ["platform/database/__init__.py"]
+    assert openers == ["db.py"]

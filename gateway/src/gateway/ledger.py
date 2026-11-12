@@ -5,7 +5,7 @@ from pathlib import Path
 import time
 from typing import Any
 
-from gateway.platform.database import SQLiteDatabase
+from gateway.db import SQLiteDatabase
 
 # The one column list: the table, migrations and inserts are all built from it.
 COLUMNS = {

@@ -31,7 +31,8 @@ class PricingTable:
     @classmethod
     def from_yaml(cls, path: Path) -> "PricingTable":
         raw = load_mapping(path)
-        if raw.get("version") != 1: raise ValueError(f"{path}: version must be 1")
+        if raw.get("version") != 1:
+            raise ValueError(f"{path}: version must be 1")
         return cls(raw)
 
     def price_for(self, provider: str, model: str | None) -> ModelPrice:
@@ -40,15 +41,20 @@ class PricingTable:
         spec = (self.raw.get("models") or {}).get(name)
         source = f"models.{name}"
         if spec is None and "/" in name:
-            spec = (self.raw.get("models") or {}).get(name.split("/", 1)[1]); source = f"models.{name.split('/', 1)[1]}"
+            spec = (self.raw.get("models") or {}).get(name.split("/", 1)[1])
+            source = f"models.{name.split('/', 1)[1]}"
         if spec is None:
             for row in self.raw.get("patterns") or []:
-                if fnmatch.fnmatch(name, row.get("match", "")): spec, source = row, f"patterns.{row.get('match')}"; break
+                if fnmatch.fnmatch(name, row.get("match", "")):
+                    spec, source = row, f"patterns.{row.get('match')}"
+                    break
         if spec is None:
             base = provider.split("_", 1)[0].split("-", 1)[0]
-            spec = (self.raw.get("providers") or {}).get(base); source = f"providers.{base}"
+            spec = (self.raw.get("providers") or {}).get(base)
+            source = f"providers.{base}"
         if spec is None:
-            spec = self.raw.get("unpriced_default") or {}; source = "unpriced_default"
+            spec = self.raw.get("unpriced_default") or {}
+            source = "unpriced_default"
         return ModelPrice(float(spec.get("input", 0)), float(spec.get("output", 0)),
             float(spec.get("cache_read_multiplier", defaults.get("cache_read_multiplier", 1))),
             float(spec.get("cache_write_multiplier", defaults.get("cache_write_multiplier", 1))),

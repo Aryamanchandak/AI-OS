@@ -1,7 +1,6 @@
-"""Shared SQLite connection and migration primitives.
+"""The only file that opens SQLite: connection setup and transactions.
 
-Schemas remain owned by their domains; this module only centralizes safe
-connection setup and transaction boundaries.
+The ledger and the budget tables each own their schema; they share this helper.
 """
 
 from __future__ import annotations

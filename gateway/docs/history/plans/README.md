@@ -8,7 +8,7 @@ Ollama is unreachable. Live proof remains outstanding.
 The direct-client/deferred-deployment direction below describes the prior status;
 it does not establish Graphiti readiness through this gateway.
 
-Immediate path: use the independent [simple_llm client](../../simple_llm/README.md)
+Immediate path: use the independent [simple_llm client](../../../simple_llm/README.md)
 for direct provider calls. Gateway deployment and further work are deferred.
 
 Gateway scope: give ingestion one working API for hosted LLM calls and local

@@ -9,12 +9,13 @@ from typing import Any
 import pytest
 
 from gateway.ledger import CallLedger
-from gateway.llm.economics import BudgetController, Principal, PricingTable
-from gateway.llm.models import ChatRequest, ChatResponse, EmbedRequest, EmbedResponse, ToolCall
-from gateway.llm.profiles import ProfileRegistry
-from gateway.llm.providers.base import ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage
-from gateway.llm.providers.registry import ProviderRegistry
-from gateway.llm.service import LLMService
+from gateway.budget import BudgetController, Principal
+from gateway.pricing import PricingTable
+from gateway.models import ChatRequest, ChatResponse, EmbedRequest, EmbedResponse, ToolCall
+from gateway.profiles import ProfileRegistry
+from gateway.providers import ProviderCapabilities, ProviderError, ProviderResult, ProviderUsage
+from gateway.providers import ProviderRegistry
+from gateway.service import LLMService
 
 
 class FakeProvider:
@@ -47,7 +48,7 @@ def service_for(tmp_path: Path, providers: list[FakeProvider], *, price: float =
 def test_finalization_runs_after_retry_and_failover(tmp_path: Path) -> None:
     failing, working = FakeProvider("failing", fail=True), FakeProvider("working")
     service, ledger = service_for(tmp_path, [failing, working])
-    service.pipeline.provider_call.max_retries = 1  # explicitly exercise optional retries
+    service.max_retries = 1  # explicitly exercise optional retries
     result = asyncio.run(service.chat(ChatRequest(prompt="hello")))
     assert result["provider"] == "working"
     assert failing.calls == 2
