@@ -15,8 +15,7 @@ REQUIRED_MODULES = (
     "ingestion.pipeline",
     "ingestion.extraction.gateway",
     "ingestion.kg.kg_store",
-    "llm_gateway.client",
-    "llm_gateway.providers",
+    "ingestion.gateway_client",
     "chromadb",
     "neo4j",
 )
@@ -48,11 +47,10 @@ def main() -> None:
 
     print(
         "runtime imports: PASS "
-        f"(merged-ingestion={version('merged-ingestion')}, "
-        f"llm-gateway-v7={version('llm-gateway-v7')})"
+        f"(merged-ingestion={version('merged-ingestion')})"
     )
     print(f"ingestion.runner: {loaded_paths['ingestion.runner']}")
-    print(f"llm_gateway.providers: {loaded_paths['llm_gateway.providers']}")
+    print(f"ingestion.gateway_client: {loaded_paths['ingestion.gateway_client']}")
 
 
 if __name__ == "__main__":

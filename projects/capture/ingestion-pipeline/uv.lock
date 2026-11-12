@@ -955,31 +955,6 @@ wheels = [
 ]
 
 [[package]]
-name = "llm-gateway-v7"
-version = "0.3.0"
-source = { directory = "../../llm_gateway" }
-dependencies = [
-    { name = "httpx" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", marker = "extra == 'server'", specifier = ">=0.110" },
-    { name = "httpx", specifier = ">=0.27" },
-    { name = "jsonschema", marker = "extra == 'server'", specifier = ">=4.21" },
-    { name = "pydantic", marker = "extra == 'server'", specifier = ">=2.6" },
-    { name = "python-dotenv", marker = "extra == 'server'", specifier = ">=1.0" },
-    { name = "uvicorn", extras = ["standard"], marker = "extra == 'server'", specifier = ">=0.27" },
-]
-provides-extras = ["server"]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-]
-
-[[package]]
 name = "lxml"
 version = "6.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1109,7 +1084,7 @@ source = { editable = "." }
 dependencies = [
     { name = "chromadb" },
     { name = "fastapi" },
-    { name = "llm-gateway-v7" },
+    { name = "httpx" },
     { name = "neo4j" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
@@ -1126,7 +1101,6 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
-    { name = "httpx" },
     { name = "mypy" },
     { name = "pytest" },
 ]
@@ -1135,8 +1109,7 @@ dev = [
 requires-dist = [
     { name = "chromadb", specifier = ">=0.4.0" },
     { name = "fastapi", specifier = ">=0.110" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27" },
-    { name = "llm-gateway-v7", directory = "../../llm_gateway" },
+    { name = "httpx", specifier = ">=0.27" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8" },
     { name = "neo4j", specifier = ">=5.0" },
     { name = "numpy", specifier = ">=1.26" },
