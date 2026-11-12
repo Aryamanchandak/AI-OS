@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 import pytest
 
-from gateway.app.dependencies import get_llm_service
-from gateway.app.main import create_app
+from gateway.app import get_llm_service
+from gateway.app import create_app
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def test_preflight_both_probes_succeed(client):
 
 
 def test_preflight_timeout_is_a_bounded_failure(client, monkeypatch):
-    from gateway.llm.api import preflight as module
+    import gateway.app as module
     monkeypatch.setattr(module, "PREFLIGHT_TIMEOUT_S", 0.01)
     class LLM:
         async def chat(self, request):
@@ -79,7 +79,7 @@ def spans(client):
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
     exporter = InMemorySpanExporter()
-    client.app.state.container.telemetry.provider.add_span_processor(SimpleSpanProcessor(exporter))
+    client.app.state.telemetry.provider.add_span_processor(SimpleSpanProcessor(exporter))
     return exporter
 
 
@@ -114,5 +114,5 @@ def test_real_llm_pipeline_stages_are_traced_even_when_provider_is_unconfigured(
     response = client.post("/api/llm/chat", headers=HEADERS, json={"prompt": "probe", "provider": "no-such-provider"})
     assert response.status_code >= 400
     names = {span.name for span in spans.get_finished_spans()}
-    assert "llm.RequestValidationStage" in names
-    assert "llm.FinalizationStage" in names
+    assert "llm.validate" in names
+    assert "llm.finalize" in names

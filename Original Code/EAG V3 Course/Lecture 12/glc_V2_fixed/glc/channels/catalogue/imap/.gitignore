@@ -1,9 +1,0 @@
-# Credentials and tokens — never commit these
-.env
-*.token
-token.json
-credentials.json
-
-# Python cache
-__pycache__/
-*.pyc

@@ -2,7 +2,7 @@
 
 ## For you
 
-**What already exists.** There's no shared database yet. `Database/sqlite/` holds five separate SQLite files, each made by a different older system (the gateway's cost ledger, audit, pairings, a cache). The old learning system's `mvp_store.py` (641 lines, in `Original Code/`) has connection settings worth copying. The rest of it is that system's own tables. There's no `core/` folder and no root project setup.
+**What already exists.** There's no shared database yet. `Database/sqlite/` holds five separate SQLite files, each made by a different older system (the gateway's cost ledger, audit, pairings, a cache). The old learning system's `mvp_store.py` (641 lines, in `projects/learning/learning-system/`) has connection settings worth copying. The rest of it is that system's own tables. There's no `core/` folder and no root project setup.
 
 **What's being built.** `core/store.py`, about 80 lines. It opens one shared database file and lets each component add its own tables in numbered steps, each applied exactly once. That way, ten agents don't end up with ten databases. This bite also adds the root project setup (`pyproject.toml` and a lock file) that bites 3 and 4 need.
 

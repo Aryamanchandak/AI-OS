@@ -10,9 +10,9 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 import pytest
 
-from gateway.app.dependencies import get_llm_service
-from gateway.app.main import create_app
-from gateway.llm.api.routes import registration
+from gateway.app import get_llm_service
+from gateway.app import create_app
+from gateway.app import API_PREFIX, router
 from test_llm import FakeProvider, service_for
 
 #: The old→new mapping from Plan 04a §7. Left side is a legacy GLC path; right
@@ -32,10 +32,9 @@ ROUTE_MAPPING = {
 
 def migrated_paths() -> dict[str, set[str]]:
     """Every path the LLM router registers, with the methods it answers."""
-    reg = registration()
     out: dict[str, set[str]] = {}
-    for route in reg.router.routes:
-        path = f"{reg.prefix}{route.path}"
+    for route in router.routes:
+        path = f"{API_PREFIX}{route.path}"
         out.setdefault(path, set()).update(m for m in route.methods if m not in {"HEAD", "OPTIONS"})
     return out
 
@@ -128,10 +127,10 @@ def test_removed_budget_dimensions_are_rejected(client, dimension) -> None:
 
 @pytest.mark.parametrize('dimension', ['agent', 'session'])
 def test_agent_and_session_runtime_budgets_work(client, dimension) -> None:
-    from gateway.llm.economics import PricingTable
+    from gateway.pricing import PricingTable
 
     service = client.app.dependency_overrides[get_llm_service]()
-    service.pipeline.budget.pricing = PricingTable({'unpriced_default': {'input': 1, 'output': 1}})
+    service.pricing = PricingTable({'unpriced_default': {'input': 1, 'output': 1}})
     response = client.post('/api/llm/budget', json={'principal': f'{dimension}:*', 'limit_usd': 0})
     assert response.status_code == 200
     assert response.json()['policy']['dimension'] == dimension
@@ -173,7 +172,7 @@ def test_image_links_are_rejected_without_network_access(client, monkeypatch, bl
 
 
 def test_image_transcription_profile_uses_the_local_model() -> None:
-    from gateway.llm.profiles import ProfileRegistry
+    from gateway.profiles import ProfileRegistry
 
     profiles = ProfileRegistry.from_yaml(Path(__file__).resolve().parents[1] / 'config/profiles.yaml')
     spec = profiles.resolve('chat', 'image-transcription-v1')
@@ -189,7 +188,7 @@ def _client_for(service) -> TestClient:
 
 def test_calls_survive_a_restart(tmp_path: Path) -> None:
     import asyncio
-    from gateway.llm.models import ChatRequest
+    from gateway.models import ChatRequest
 
     first, _ = service_for(tmp_path, [FakeProvider("solo")])
     asyncio.run(first.chat(ChatRequest(prompt="hello", agent="reader")))
@@ -200,7 +199,7 @@ def test_calls_survive_a_restart(tmp_path: Path) -> None:
 
 def test_cost_by_agent_equals_the_sum_of_ledger_rows(tmp_path: Path) -> None:
     import asyncio
-    from gateway.llm.models import ChatRequest
+    from gateway.models import ChatRequest
 
     service, ledger = service_for(tmp_path, [FakeProvider("solo")], price=1)
     for agent, session in [("reader", "run-1"), ("reader", "run-2"), ("writer", "run-1")]:

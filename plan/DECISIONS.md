@@ -16,4 +16,4 @@
 - 2026-11-03 — Finish the gateway; `core/llm.py` is a thin client over it. Why: keeps the ledger and OpenTelemetry tracing that Stage 5 needs.
 - 2026-11-03 — A bare deploy (`/health` at the public URL, no provider keys on the box) moves into Stage 0. Why: so deploying can't fail in the last week.
 - 2026-11-03 — `plan/` is the only source of truth. The Stage Map and the plan page are views of it, and are updated from it, never the other way. Why: three copies had already drifted apart.
-- 2026-11-03 — The old plan page and the Stage Map are merged into one view, `AI OS plan.html` (https://claude.ai/artifact/Xzz4s8ojdqtBc596iKZjCH); originals in `Old Code/plan-pages-2026-11-03/`. Why: you asked for one document.
+- 2026-11-03 — The old plan page and the Stage Map are merged into one view, `AI OS plan.html` (https://claude.ai/artifact/Xzz4s8ojdqtBc596iKZjCH); originals in `archive/plan-pages-2026-11-03/`. Why: you asked for one document.
