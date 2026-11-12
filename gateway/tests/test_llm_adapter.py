@@ -15,10 +15,10 @@ from typing import Any
 import httpx
 import pytest
 
-from gateway.llm.models import CacheableSystemBlock, ResponseFormat, ToolDef
-from gateway.llm.providers.base import ProviderCapabilities, ProviderError, ProviderUsage
-from gateway.llm.providers.llm import LLMProvider
-from gateway.llm.providers.prompted_tools import parse_prompted_call, supports_native_tools
+from gateway.models import CacheableSystemBlock, ResponseFormat, ToolDef
+from gateway.providers import ProviderCapabilities, ProviderError, ProviderUsage
+from gateway.providers import LLMProvider
+from gateway.providers import parse_prompted_call, supports_native_tools
 
 CONFIG = Path(__file__).resolve().parents[1] / "config"
 TOOL = ToolDef(name="lookup", description="find a thing",
@@ -151,7 +151,7 @@ def test_anthropic_cache_system_flag_marks_every_block() -> None:
 
 
 def test_anthropic_input_tokens_include_cache_so_pricing_bills_each_class_once() -> None:
-    from gateway.llm.economics.pricing import PricingTable
+    from gateway.pricing import PricingTable
 
     recorder = Recorder(claude(input_tokens=5, cache_creation_input_tokens=1000, cache_read_input_tokens=3000))
     result = run(recorder.provider("anthropic", "claude-haiku-4-5").chat(messages=HI))
@@ -246,7 +246,7 @@ def test_openai_reports_cached_tokens_inside_input_tokens() -> None:
 
 @pytest.fixture
 def configured_registry(monkeypatch: pytest.MonkeyPatch):
-    from gateway.llm.providers.registry import build_provider_registry
+    from gateway.providers import build_provider_registry
 
     for name in tuple(os.environ):
         if name.endswith(('_MODEL', '_API_KEY')) or '_API_KEY_' in name:
@@ -268,7 +268,7 @@ def test_registry_contains_only_supported_providers(configured_registry) -> None
 
 
 def test_removed_credentials_do_not_register_providers(monkeypatch, configured_registry) -> None:
-    from gateway.llm.providers.registry import build_provider_registry
+    from gateway.providers import build_provider_registry
 
     for name in ('GEMINI_API_KEY', 'GEMINI_API_KEY_1', 'GROQ_API_KEY', 'CEREBRAS_API_KEY',
                  'NVIDIA_API_KEY', 'OPEN_ROUTER_API_KEY', 'GITHUB_ACCESS_TOKEN'):
@@ -285,7 +285,7 @@ def test_anthropic_request_can_override_the_default_model() -> None:
 
 def test_profiles_and_default_models_have_exact_prices(configured_registry) -> None:
     import yaml
-    from gateway.llm.economics.pricing import PricingTable
+    from gateway.pricing import PricingTable
 
     pricing = PricingTable.from_yaml(CONFIG / 'pricing.yaml')
     profiles = yaml.safe_load((CONFIG / 'profiles.yaml').read_text())
@@ -305,7 +305,7 @@ def test_profiles_and_default_models_have_exact_prices(configured_registry) -> N
     ('openai', 'gpt-5.5', 5, 30),
 ])
 def test_hosted_models_have_verified_prices(provider, model, input_rate, output_rate) -> None:
-    from gateway.llm.economics.pricing import PricingTable
+    from gateway.pricing import PricingTable
 
     pricing = PricingTable.from_yaml(CONFIG / 'pricing.yaml')
     price = pricing.price_for(provider, model)

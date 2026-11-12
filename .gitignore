@@ -1,23 +1,7 @@
-# Excluded for now — not ready to push
+# Local-only folders that live next to the repo checkout and are never pushed
 /Persistent Memory Chats Storage/
-
-# workshop/Original Code: code only — no documents, archives or secrets
-/workshop/Original Code/**/*.md
-/workshop/Original Code/**/*.pdf
-/workshop/Original Code/**/*.doc
-/workshop/Original Code/**/*.docx
-/workshop/Original Code/**/*.xls
-/workshop/Original Code/**/*.xlsx
-/workshop/Original Code/**/*.ppt
-/workshop/Original Code/**/*.pptx
-/workshop/Original Code/**/*.zip
-/workshop/Original Code/**/.uv-cache/
-/workshop/Original Code/**/*.mp3
-/workshop/Original Code/**/*.m4a
-/workshop/Original Code/**/*.wav
-/workshop/Original Code/**/*.db
-/workshop/Original Code/**/*.bin
-/workshop/Original Code/**/*.task
+/Database/
+/AI Agent/
 
 # Secrets (keep .env.example so variable names stay documented)
 .env
@@ -32,12 +16,11 @@ venv/
 # Accidental macOS duplicates like "file 2.yaml"
 * 2.*
 
-# Own git repos / large data / out of scope for this migration — see migration/baseline/
-/Database/
-/AI Agent/
-
-# OS
+# OS / editor
 .DS_Store
+.idea/
+*~
+~$*
 
 # Python
 __pycache__/
@@ -48,8 +31,8 @@ __pycache__/
 # Node
 node_modules/
 dist/
+.next/
+*.tsbuildinfo
 
-# Build output and IDE settings
+# Build output
 gateway/build/
-ingestion/build/
-.idea/

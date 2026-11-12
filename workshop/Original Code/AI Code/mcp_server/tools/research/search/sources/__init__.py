@@ -1,2 +1,0 @@
-"""Research source compatibility clients."""
-

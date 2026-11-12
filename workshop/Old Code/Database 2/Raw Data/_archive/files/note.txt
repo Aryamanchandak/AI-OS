@@ -1,3 +1,0 @@
-Plain text file.
-Line two.
-Saved by file_create.

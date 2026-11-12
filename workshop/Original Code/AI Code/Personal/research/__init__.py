@@ -1,1 +1,0 @@
-"""Separated research boundary."""

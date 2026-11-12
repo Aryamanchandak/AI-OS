@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 import os
+import re
 import socket
 from typing import Any
 from urllib.parse import urlparse
@@ -19,7 +20,21 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.trace import StatusCode
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from gateway.platform.observability.redaction import safe_error
+
+
+def safe_error(value: object) -> str:
+    """Flatten an error to one line with keys and tokens removed."""
+    text = str(value).replace("\r", " ").replace("\n", " ")
+    for key, secret in os.environ.items():
+        if len(secret) >= 8 and any(word in key.upper() for word in ("TOKEN", "SECRET", "PASSWORD", "API_KEY")):
+            text = text.replace(secret, "[redacted]")
+    for pattern in (
+        r"(?i)bearer\s+[^\s,;]+",
+        r"(?i)(authorization|x-api-key|api[_ -]?key)\s*[:=]\s*(?:[A-Za-z]+\s+)?[^\s,;]+",
+        r"\bsk-[A-Za-z0-9_-]{8,}\b",
+    ):
+        text = re.sub(pattern, "[redacted]", text)
+    return text[:300]
 
 
 class Telemetry:
@@ -79,7 +94,7 @@ class Telemetry:
 
 @contextmanager
 def stage_span(tracer: Any, name: str) -> Iterator[None]:
-    """One child span per pipeline stage, marked as an error if the stage raises."""
+    """One child span per chat step, marked as an error if the step raises."""
     if tracer is None:
         yield
         return
@@ -121,12 +136,12 @@ class RequestSpans:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         application = scope.get("app")
-        container = getattr(application.state, "container", None) if application is not None else None
-        if scope["type"] != "http" or container is None or not scope.get("path", "").startswith("/api/llm/"):
+        telemetry = getattr(application.state, "telemetry", None) if application is not None else None
+        if scope["type"] != "http" or telemetry is None or not scope.get("path", "").startswith("/api/llm/"):
             await self.app(scope, receive, send)
             return
         status = 500
-        with container.telemetry.tracer.start_as_current_span("http.request", record_exception=False, set_status_on_exception=False) as span:
+        with telemetry.tracer.start_as_current_span("http.request", record_exception=False, set_status_on_exception=False) as span:
             async def observed(message: Message) -> None:
                 nonlocal status
                 if message["type"] == "http.response.start":

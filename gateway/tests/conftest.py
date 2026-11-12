@@ -5,13 +5,13 @@ from pathlib import Path
 
 import pytest
 
-import gateway.env
+import gateway.config
 
 
 os.environ.setdefault("AI_OS_TOKEN", "gateway-test-token")
 # The normal suite never reads gateway/.env; only golden tests point back at it.
-REAL_ENV_FILE = gateway.env.ENV_FILE
-gateway.env.ENV_FILE = Path(__file__).parent / "absent.env"
+REAL_ENV_FILE = gateway.config.ENV_FILE
+gateway.config.ENV_FILE = Path(__file__).parent / "absent.env"
 
 
 @pytest.fixture

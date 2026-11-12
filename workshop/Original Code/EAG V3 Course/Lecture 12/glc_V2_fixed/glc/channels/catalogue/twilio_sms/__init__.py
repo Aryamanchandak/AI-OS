@@ -1,1 +1,0 @@
-"""Twilio SMS adapter (stub)."""

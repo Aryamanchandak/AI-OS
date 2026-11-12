@@ -7,7 +7,7 @@ uses: [I1, I2, I3]
 builder: claude
 reviewer: codex
 line_budget: 400
-existing: pull pieces (workshop/Original Code/AI Code/Learning System; workshop/interview-coach/prompts/evaluation.md)
+existing: pull pieces (projects/learning/learning-system; projects/life/interview-coach/prompts/evaluation.md)
 status: detailed
 ---
 

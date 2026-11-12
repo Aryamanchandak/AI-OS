@@ -5,9 +5,9 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 import pytest
 
-from gateway.app.main import create_app
-from gateway.platform.configuration import GLCPaths
-from gateway.platform.startup import StartupCheck, StartupDependencyError
+from gateway.app import create_app
+from gateway.config import Paths
+from gateway.app import StartupCheck, StartupDependencyError
 from gateway.ledger import CallLedger
 
 
@@ -21,7 +21,7 @@ def glc_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str
 
 
 def test_database_defaults_are_centralized_under_database_sqlite() -> None:
-    paths = GLCPaths(environment={})
+    paths = Paths(environment={})
     path = paths.ledger_db
     assert path.parent.name == "sqlite"
     assert path.parent.parent.name == "Database"

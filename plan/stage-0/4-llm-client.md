@@ -2,7 +2,7 @@
 
 ## For you
 
-**What already exists.** The gateway accepts model requests at `/api/llm/chat` with a token, but nothing in AI OS calls it yet. `workshop/interview-coach/llm.py` calls Anthropic directly, which skips the gateway and its cost log.
+**What already exists.** The gateway accepts model requests at `/api/llm/chat` with a token, but nothing in AI OS calls it yet. `projects/life/interview-coach/llm.py` calls Anthropic directly, which skips the gateway and its cost log.
 
 **What's being built.** `core/llm.py`, about 60 lines: one `chat()` function that the rest of AI OS uses to reach any model, always through the gateway. It's tested first against a fake gateway, then live with the grading case from bite 1.
 

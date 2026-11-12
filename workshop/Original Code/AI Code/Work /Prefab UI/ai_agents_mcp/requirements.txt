@@ -1,4 +1,0 @@
-fastmcp[apps]
-prefab-ui>=0.15.0
-google-genai
-python-dotenv

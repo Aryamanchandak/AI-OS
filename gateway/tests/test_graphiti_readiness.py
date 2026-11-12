@@ -6,9 +6,8 @@ from pathlib import Path
 from fastapi import HTTPException
 import pytest
 
-from gateway.llm.models import ChatRequest, EmbedRequest, ResponseFormat
-from gateway.llm.providers.base import ProviderError, ProviderResult, ProviderUsage
-from gateway.llm.orchestration.provider_call import ProviderCallStage
+from gateway.models import ChatRequest, EmbedRequest, ResponseFormat
+from gateway.providers import ProviderError, ProviderResult, ProviderUsage
 from gateway.config import load_mapping
 
 from test_llm import embedder, service_for
@@ -57,7 +56,7 @@ def test_provider_error_status_and_attempt_count(
 ) -> None:
     provider = embedder("solo")
     service, ledger = service_for(tmp_path, [provider])
-    assert service.pipeline.provider_call.max_retries == 0
+    assert service.max_retries == 0
     calls = 0
 
     async def fail(*args, **kwargs):
@@ -126,7 +125,7 @@ def test_valid_json_is_parsed_without_changing_generation_parameters(tmp_path: P
 def test_chat_and_embed_share_one_concurrency_cap(tmp_path: Path, cap: int) -> None:
     provider = embedder("solo")
     service, ledger = service_for(tmp_path, [provider])
-    service.pipeline.provider_call = ProviderCallStage(max_concurrency=cap)
+    service.set_max_concurrency(cap)
 
     async def exercise():
         active = peak = entered = 0
@@ -176,7 +175,7 @@ def test_chat_and_embed_share_one_concurrency_cap(tmp_path: Path, cap: int) -> N
 def test_explicit_retry_setting_only_retries_transient_errors(tmp_path: Path, kind, status, expected_calls) -> None:
     provider = embedder("solo")
     service, _ = service_for(tmp_path, [provider])
-    service.pipeline.provider_call.max_retries = 1
+    service.max_retries = 1
     calls = 0
 
     async def fail(*args, **kwargs):
@@ -219,7 +218,7 @@ def test_permanent_errors_do_not_fall_through_to_another_provider(tmp_path: Path
 def test_cancellation_releases_shared_capacity_and_records_error(tmp_path: Path, kind) -> None:
     provider = embedder("solo")
     service, ledger = service_for(tmp_path, [provider])
-    service.pipeline.provider_call = ProviderCallStage(max_concurrency=1)
+    service.set_max_concurrency(1)
 
     async def exercise():
         entered = asyncio.Event()

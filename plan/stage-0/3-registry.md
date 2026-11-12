@@ -2,7 +2,7 @@
 
 ## For you
 
-**What already exists.** Nothing for AI OS. `gateway/src/gateway/llm/providers/registry.py` is a different thing: the gateway's internal list of model providers. The registries in `Old Code/` and `Original Code/` come from the EAG course apps and aren't being reused.
+**What already exists.** Nothing for AI OS. `gateway/src/gateway/providers.py` has a `ProviderRegistry`, which is a different thing: the gateway's internal list of model providers. The registries in `archive/` and `coursework/` come from the EAG course apps and aren't being reused.
 
 **What's being built.** `core/registry.py`, about 100 lines. You mark a function as a "tool" with a name, and the system can then list every tool and call one by name. Bad input gets refused before the function runs. Later, the orchestrator picks from this list to answer your questions. In this bite it's tested with a fake `echo` tool only, so no real tools yet.
 

@@ -77,14 +77,14 @@ AUTH = {"Authorization": "Bearer test-token"}
 @pytest.fixture
 def isolated_env(tmp_path, monkeypatch):
     """No provider keys in the process, a private ledger, and a temporary `.env` path."""
-    import gateway.env
+    import gateway.config
 
     for name in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
         monkeypatch.setenv(name, "")  # recorded, so the teardown removes whatever .env loads
         monkeypatch.delenv(name)
     monkeypatch.setenv("GLC_GATEWAY_DB", str(tmp_path / "gateway.sqlite"))
     env_file = tmp_path / ".env"
-    monkeypatch.setattr(gateway.env, "ENV_FILE", env_file)
+    monkeypatch.setattr(gateway.config, "ENV_FILE", env_file)
     return env_file
 
 
@@ -111,7 +111,7 @@ def test_the_key_value_never_appears_in_responses_or_logs(isolated_env, caplog) 
 
 
 def test_the_key_value_never_appears_in_startup_errors(isolated_env, caplog) -> None:
-    from gateway.platform.startup import StartupCheck
+    from gateway.app import StartupCheck
 
     def broken() -> None:
         raise RuntimeError("dependency down")
