@@ -1,0 +1,66 @@
+{
+  "capture": [],
+  "capture_counts": {
+    "duplicate": 0,
+    "new": 0,
+    "total": 0
+  },
+  "discrepancies": [],
+  "dispatch_counts": {},
+  "failed_from": "preflight",
+  "intake": {
+    "discarded": 0,
+    "discovered": 0,
+    "duplicate": 0,
+    "failed": 0,
+    "gates": [],
+    "items": [],
+    "published": 0,
+    "retake": 0
+  },
+  "last_error": {
+    "message": "cleanup_model: HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8107/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400; spelling_review_model: HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8107/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+    "retryable": true,
+    "stage": "preflight"
+  },
+  "processing": [],
+  "processing_counts": {},
+  "progress": {
+    "envelopes_flagged": 0,
+    "envelopes_resolved": 0,
+    "intake_resolved": 0,
+    "intake_total": 0
+  },
+  "retryable_failures": [],
+  "review": {
+    "approve": 0,
+    "edit": 0,
+    "reject": 0,
+    "still_blocked": 0
+  },
+  "run_id": "3908c4e1-3554-4176-9cd0-8ffb4cb9361b",
+  "stages": [
+    {
+      "detail": {},
+      "stage": "created",
+      "status": "done"
+    },
+    {
+      "detail": {
+        "error": "cleanup_model: HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8107/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400; spelling_review_model: HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8107/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400"
+      },
+      "stage": "preflight",
+      "status": "failed"
+    },
+    {
+      "detail": {
+        "error": "cleanup_model: HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8107/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400; spelling_review_model: HTTPStatusError: Client error '400 Bad Request' for url 'http://localhost:8107/v1/chat'\nFor more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400",
+        "failed_from": "preflight"
+      },
+      "stage": "failed",
+      "status": "failed"
+    }
+  ],
+  "terminal_result": "failed",
+  "vault_notes_written": []
+}

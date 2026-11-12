@@ -1,62 +1,51 @@
 # AI OS Gateway
 
-The single entry point for all LLM calls. One FastAPI process that owns the
-LLM and ledger domains, mounts their routers, and has no UI.
+For direct calls without running the gateway, use [simple_llm](simple_llm/README.md).
+Put keys in that folder’s `.env` and import `LLM`; it has no gateway dependencies.
 
-Gateway owns its Python environment. Set it up once with:
+One local API for ingestion to use OpenAI, Anthropic and local Ollama models.
+Provider keys stay in the gateway; callers use `AI_OS_TOKEN`.
+
+## Run
 
 ```bash
-cd "/Users/aryamanchandak/Documents/AI OS/gateway"
 uv sync --no-editable --extra dev
+cp .env.example .env
 ```
 
+Fill in `.env`: set `AI_OS_TOKEN` and the provider keys you use.
+For local models, start Ollama with the models in `config/local_models.yaml`.
+Then run:
+
 ```bash
-cd "/Users/aryamanchandak/Documents/AI OS/gateway"
-AI_OS_TOKEN=local-dev-token .venv/bin/python main.py
+.venv/bin/python main.py
 ```
 
-The Gateway listens on `127.0.0.1:8000`. `/health` needs no token; every
-`/api/...` route requires `Authorization: Bearer $AI_OS_TOKEN`.
+Address: `http://127.0.0.1:8000`. Call `/health` to check the server.
+API calls require `Authorization: Bearer <AI_OS_TOKEN>`.
 
-## Restored operational contracts
+## Use from ingestion
 
-- `POST /api/llm/preflight` probes chat and
-  embeddings concurrently through the LLM service. Each probe has a 30-second
-  deadline. The response reports each probe's result with redacted errors;
-  model probes still use the normal budget and ledger path.
-- `/api/observability/traces/recent`, `/traces/{trace_id}` and `/refusals`
-  restore the observability reads. All of them require `AI_OS_TOKEN`.
+- `POST /api/llm/chat`: send `prompt` or `messages`, and a `provider`/`model`
+  or a named `profile`. Use `response_format` for structured JSON output.
+- `POST /api/llm/embed`: send `text` and `profile: chunker-v1` for the pinned
+  local 768-dimensional embedding model.
+- `POST /api/llm/preflight`: checks chat and embeddings with real model calls.
+- `GET /api/llm/providers`: shows configured providers and chat profiles.
 
-The trace store retains at most 50 traces with 200 spans each. Refusal storage
-retains the last 100 HTTP 402 events and a total count. Both reset on restart.
-Request and LLM-stage traces exclude prompts, completions, request headers,
-queries, and exception bodies. Successful chat responses include their trace
-and span IDs. Refusal details retain only redacted budget fields.
+Profiles live in `config/profiles.yaml`. Authenticated `/docs` describes request
+fields. These are the gateway's own endpoints; an OpenAI SDK needs an adapter
+rather than just changing its base URL.
 
-Every LLM call is written to the call ledger in `../Database/sqlite/gateway.sqlite`
-(override with `GLC_GATEWAY_DB`). Ledger writes are fail-closed: if the row cannot be
-written, the call fails.
+Calls are recorded in `../Database/sqlite/gateway.sqlite`
+(override with `GLC_GATEWAY_DB`). A failed ledger write fails the request.
 
-## Regression commands
-
-Run these commands without any preconfigured environment variables:
+## Checks
 
 ```bash
-cd "/Users/aryamanchandak/Documents/AI OS/gateway"
 .venv/bin/python -m pytest
-.venv/bin/python scripts/export_openapi.py
 .venv/bin/python -m mypy main.py src/gateway
 ```
 
-`pytest` checks that the committed `contracts/openapi.json` is current. Tests never read
-files outside `gateway/`; keeping the shell's generated TypeScript types in
-sync with `contracts/openapi.json` is the shell's job (`npm run types:generate` there).
-
-Dependency documentation lives in [docs/dependencies.md](docs/dependencies.md).
-Graphiti integration requirements live in
-[docs/integrations/graphiti.md](docs/integrations/graphiti.md).
-
-## Later
-
-Real provider batch processing can return as a separate feature when needed,
-with actual asynchronous submission and billing matched to the provider's batch API.
+Normal tests use fake providers. `pytest -m golden` makes real provider calls;
+see [validation status](docs/plans/README.md).

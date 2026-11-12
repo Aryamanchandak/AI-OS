@@ -1,5 +1,8 @@
 # Gateway YAGNI Review
 
+> Historical review from before the shrink. For current scope and status, see
+> [Gateway status](plans/README.md).
+
 As of 2026-10-18 · Reviewer: Claude · Scope: every `.py` file in `gateway/src/gateway`
 
 About 1,500–2,000 of the gateway's ~4,000 lines of Python can go. Most of it is features built before one request has worked end to end, plus code that redoes what a library already does. Nothing has been changed yet. This is a list for you to approve, tier by tier.

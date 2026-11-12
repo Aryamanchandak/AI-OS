@@ -1,0 +1,5 @@
+AI[[:space:]]Code/ingestion-pipeline[[:space:]]copy.zip filter=lfs diff=lfs merge=lfs -text
+AI[[:space:]]Code/ingestion-pipeline.zip filter=lfs diff=lfs merge=lfs -text
+AI[[:space:]]Code/Work[[:space:]]/Podcast-Agent/tmp/audio/660bcd0d1214e6c6_lex_ai_ffmpeg.mp3 filter=lfs diff=lfs merge=lfs -text
+AI[[:space:]]Code/Work[[:space:]]/Podcast_Agent_Ver_1[[:space:]]finished/tmp/audio/660bcd0d1214e6c6_lex_ai_ffmpeg.mp3 filter=lfs diff=lfs merge=lfs -text
+AI[[:space:]]Code/Work[[:space:]]/Podcast_Agent_Ver_1/tmp/audio/660bcd0d1214e6c6_lex_ai_ffmpeg.mp3 filter=lfs diff=lfs merge=lfs -text

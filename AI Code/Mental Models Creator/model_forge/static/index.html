@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Forge source material into causal models that make falsifiable predictions.">
+  <title>Model Forge — Causal belief workshop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,500;9..144,650&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <a class="wordmark" href="#top" aria-label="Model Forge home"><span>MF</span> Model Forge</a>
+    <p class="status"><i aria-hidden="true"></i> Local belief workshop</p>
+  </header>
+
+  <main id="top">
+    <section class="hero animate-in">
+      <div>
+        <p class="eyebrow">Causal structure, under pressure</p>
+        <h1>Turn source material<br>into a model that<br><em>risks being wrong.</em></h1>
+      </div>
+      <div class="hero-aside">
+        <p>Not a summary. A typed, traceable structure that survives compression, emits dated predictions, and collides with what you already believe.</p>
+        <a href="#workbench" class="text-link">Open the workbench <span>↘</span></a>
+      </div>
+    </section>
+
+    <section id="workbench" class="workbench animate-in">
+      <div class="section-heading">
+        <p class="eyebrow">01 / Construct</p>
+        <h2>Feed the forge</h2>
+      </div>
+      <form id="forge-form" novalidate>
+        <div class="source-tabs" role="radiogroup" aria-label="Source type">
+          <label><input type="radio" name="kind" value="text" checked><span>Paste text</span></label>
+          <label><input type="radio" name="kind" value="file"><span>Upload file</span></label>
+          <label><input type="radio" name="kind" value="url"><span>Fetch URL</span></label>
+          <label><input type="radio" name="kind" value="news"><span>Live news</span></label>
+        </div>
+        <div class="field source-field">
+          <label id="source-label" for="source-content">Source material</label>
+          <textarea id="source-content" rows="9" placeholder="Paste a paper excerpt, conversation, thesis, or causal argument…" required></textarea>
+          <input id="source-file" type="file" accept=".txt,.md,.markdown,.pdf,.mp3,.wav,.m4a,.webm" hidden>
+          <p id="source-help">State causal relationships plainly for the strongest offline extraction.</p>
+        </div>
+        <div class="controls-grid">
+          <div class="field"><label for="model-name">Model name <small>optional</small></label><input id="model-name" placeholder="e.g. Coordination debt"></div>
+          <div class="field"><label for="transfer-domain">Transfer domain <small>optional</small></label><input id="transfer-domain" placeholder="e.g. biological systems"></div>
+          <div class="field compact"><label for="prediction-count">Predictions</label><input id="prediction-count" type="number" min="1" max="20" value="3"></div>
+        </div>
+        <div class="form-footer">
+          <p>Runs compression, prediction extraction, anomaly hunt, transfer test, and collision scan.</p>
+          <button class="primary" type="submit"><span>Forge model</span><b aria-hidden="true">→</b></button>
+        </div>
+        <div id="form-message" class="message" role="status" hidden></div>
+      </form>
+    </section>
+
+    <section class="library-section animate-in">
+      <div class="section-heading library-heading">
+        <div><p class="eyebrow">02 / Library</p><h2>Beliefs on record</h2></div>
+        <button id="refresh" class="quiet" type="button">Refresh</button>
+      </div>
+      <div id="library" class="model-grid" aria-live="polite">
+        <div class="empty-state"><p>Loading the library…</p></div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="model-dialog">
+    <button class="dialog-close" aria-label="Close model detail">×</button>
+    <div id="model-detail"></div>
+  </dialog>
+  <script src="/app.js" defer></script>
+</body>
+</html>

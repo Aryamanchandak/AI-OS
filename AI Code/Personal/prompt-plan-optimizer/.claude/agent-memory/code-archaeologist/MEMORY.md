@@ -1,0 +1,1 @@
+- [Project Architecture](project_architecture.md) — mid-refactor state: optimizer.jsx (prototype) vs lib/ (clean modules, not yet wired), known bugs list

@@ -1,0 +1,35 @@
+[project]
+name = "react-loop"
+version = "0.1.0"
+description = "A hand-built ReAct loop: OpenAI is the reasoning brain (plain text), our code does the tool-calling and iteration against an MCP server."
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.40",
+    "mcp>=1.0",
+    "python-dotenv>=1.0",
+    "ddgs>=9.0",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "feedparser>=6.0",
+    "httpx>=0.27",
+    "youtube-transcript-api>=0.6",
+    "yt-dlp>=2024.8.6",
+    "prefab-ui>=0.20.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["react_loop"]

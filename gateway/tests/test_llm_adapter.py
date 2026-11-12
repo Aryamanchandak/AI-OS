@@ -192,13 +192,14 @@ def test_anthropic_reads_back_tool_calls() -> None:
     assert result.stop_reason == "tool_use" and result.tool_call_dialect == "native"
 
 
-def test_anthropic_retries_once_without_thinking_when_the_model_rejects_it() -> None:
+def test_anthropic_returns_permanent_400_without_retrying_or_changing_settings() -> None:
     recorder = Recorder({"type": "error", "error": {"type": "invalid_request_error", "message": "thinking not supported"}},
                         claude(), status=400)
-    result = run(recorder.provider("anthropic", "claude-haiku-4-5").chat(messages=HI, reasoning="low", max_tokens=2048))
+    with pytest.raises(ProviderError) as caught:
+        run(recorder.provider("anthropic", "claude-haiku-4-5").chat(messages=HI, reasoning="low", max_tokens=2048))
+    assert caught.value.status == 400 and caught.value.retryable is False
+    assert len(recorder.bodies) == 1
     assert recorder.bodies[0]["thinking"] == {"type": "enabled", "budget_tokens": 1024}
-    assert "thinking" not in recorder.bodies[1]
-    assert result.reasoning_applied is False and result.text == "ok"
 
 
 @pytest.mark.parametrize(("status", "retryable"), [(429, True), (529, True), (400, False), (401, False)])

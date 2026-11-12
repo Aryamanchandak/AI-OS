@@ -1,0 +1,328 @@
+{
+  "access_policy": {
+    "allowed_consumers": [
+      "kg",
+      "sqlite",
+      "vector"
+    ],
+    "classification": "private"
+  },
+  "canonical_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+  "captured_at": "2026-08-20T06:46:27.138249Z",
+  "created_at": "2026-08-20T06:48:08.016711Z",
+  "envelope_id": "fe52c726-0331-5445-9033-95969899239c",
+  "extracted_metadata": {},
+  "extraction_version": "semantic_extraction_v1",
+  "highlight_boundary_origin": "user_selection",
+  "highlight_containing_sentence": null,
+  "highlight_context_text": "page_scanner_id: 3 [\u2026]",
+  "highlight_end_char": 625,
+  "highlight_index": 0,
+  "highlight_parent_end_char": 775,
+  "highlight_parent_source_ref": "Page Scanners/streetwise-getting-to-and-through-goldman-sachs/streetwise-getting-to-and-through-goldman-sachs-highlights.md#page-scanner-passage-3",
+  "highlight_parent_start_char": 170,
+  "highlight_start_char": 20,
+  "highlight_text": "Being an outsider helped foster my street smarts, which I would define as the ability to see myself objectively and apply that same perception to others. I developed a knack for sizing up different kinds of people quickly\u2014not always with perfect accuracy, but faster and more accurately than most. If I could read people, I could figure out how to be useful to them and get them to help me. These reflexes would become a great asset for me in the years ahead. Coming from the projects in East New York, I had more to escape, more to prove, and more to gain than a lot of people I subsequently encountered.",
+  "metadata": {
+    "note_title": "streetwise-getting-to-and-through-goldman-sachs-highlights",
+    "origin_kind": "page_scanner",
+    "page_scanner_id": 3,
+    "passage_count": 1,
+    "passage_ids": [
+      3
+    ],
+    "vault_relative_path": "Page Scanners/streetwise-getting-to-and-through-goldman-sachs/streetwise-getting-to-and-through-goldman-sachs-highlights.md"
+  },
+  "model_confidence": 0.88,
+  "normalization_version": "structural_normalization_v1",
+  "normalized_content_hash": "98feed3be1712539d319fe16fc4324d9d1cb9abfc9b0f93824c19603d34cde76",
+  "normalized_origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/Page Scanners/streetwise-getting-to-and-through-goldman-sachs/streetwise-getting-to-and-through-goldman-sachs-highlights.md#page-scanner-3",
+  "observed_at": null,
+  "origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/Page Scanners/streetwise-getting-to-and-through-goldman-sachs/streetwise-getting-to-and-through-goldman-sachs-highlights.md#page-scanner-3",
+  "raw_content_hash": "50355b68bedbed8c652bb9a38b76abcf4f93512023451e5d32514bca180a5be5",
+  "raw_content_ref": "/Users/aryamanchandak/Documents/AI Code/Database/raw/ad7b7648-5b6a-536a-ab64-60aed0034e77.md",
+  "review_policy_version": "deterministic_review_v1",
+  "review_signals": [
+    {
+      "code": "source_is_page_scanner",
+      "detail": "Highlights captured from scanned photos require review",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    }
+  ],
+  "review_status": "pending",
+  "semantic": {
+    "claims": [
+      {
+        "concept_labels": [
+          "Outsider Status",
+          "Street Smarts"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 152,
+            "normalized_char_start": 0,
+            "quote": "Being an outsider helped foster my street smarts, which I would define as the ability to see myself objectively and apply that same perception to others",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "model_confidence": 0.9,
+        "observed_at": null,
+        "proposal_id": "claim-ad7b7648-5b6a-536a-ab64-60aed0034e77-0:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "text": "Being an outsider helped foster street smarts, defined as the ability to see oneself objectively and apply that same perception to others.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Ability to Read People"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 296,
+            "normalized_char_start": 154,
+            "quote": "I developed a knack for sizing up different kinds of people quickly\u2014not always with perfect accuracy, but faster and more accurately than most",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "model_confidence": 0.9,
+        "observed_at": null,
+        "proposal_id": "claim-ad7b7648-5b6a-536a-ab64-60aed0034e77-1:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "text": "The author developed a knack for sizing up different kinds of people quickly\u2014not always with perfect accuracy, but faster and more accurately than most.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Ability to Read People"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 389,
+            "normalized_char_start": 298,
+            "quote": "If I could read people, I could figure out how to be useful to them and get them to help me",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "model_confidence": 0.9,
+        "observed_at": null,
+        "proposal_id": "claim-ad7b7648-5b6a-536a-ab64-60aed0034e77-2:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "text": "Being able to read people allowed the author to figure out how to be useful to them and get them to help.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Street Smarts",
+          "Ability to Read People"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 458,
+            "normalized_char_start": 391,
+            "quote": "These reflexes would become a great asset for me in the years ahead",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "model_confidence": 0.85,
+        "observed_at": null,
+        "proposal_id": "claim-ad7b7648-5b6a-536a-ab64-60aed0034e77-3:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "text": "These reflexes became a great asset in the years ahead.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "East New York Projects"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 604,
+            "normalized_char_start": 460,
+            "quote": "Coming from the projects in East New York, I had more to escape, more to prove, and more to gain than a lot of people I subsequently encountered",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "model_confidence": 0.9,
+        "observed_at": null,
+        "proposal_id": "claim-ad7b7648-5b6a-536a-ab64-60aed0034e77-4:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "text": "Coming from the projects in East New York, the author had more to escape, more to prove, and more to gain than many people subsequently encountered.",
+        "valid_from": null,
+        "valid_to": null
+      }
+    ],
+    "concepts": [
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 152,
+            "normalized_char_start": 35,
+            "quote": "street smarts, which I would define as the ability to see myself objectively and apply that same perception to others",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "label": "Street Smarts",
+        "model_confidence": 0.9,
+        "proposal_id": "concept-ad7b7648-5b6a-536a-ab64-60aed0034e77-0:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 296,
+            "normalized_char_start": 154,
+            "quote": "I developed a knack for sizing up different kinds of people quickly\u2014not always with perfect accuracy, but faster and more accurately than most",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "label": "Ability to Read People",
+        "model_confidence": 0.85,
+        "proposal_id": "concept-ad7b7648-5b6a-536a-ab64-60aed0034e77-1:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 501,
+            "normalized_char_start": 460,
+            "quote": "Coming from the projects in East New York",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "label": "East New York Projects",
+        "model_confidence": 0.9,
+        "proposal_id": "concept-ad7b7648-5b6a-536a-ab64-60aed0034e77-2:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 48,
+            "normalized_char_start": 0,
+            "quote": "Being an outsider helped foster my street smarts",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "label": "Outsider Status",
+        "model_confidence": 0.85,
+        "proposal_id": "concept-ad7b7648-5b6a-536a-ab64-60aed0034e77-3:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed"
+      }
+    ],
+    "field_tags": [
+      "personal development",
+      "self-awareness",
+      "social intelligence",
+      "biography",
+      "resilience"
+    ],
+    "relations": [
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 48,
+            "normalized_char_start": 0,
+            "quote": "Being an outsider helped foster my street smarts",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.9,
+        "object": "Street Smarts",
+        "predicate": "FOSTERS",
+        "proposal_id": "relation-ad7b7648-5b6a-536a-ab64-60aed0034e77-0:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "subject": "Outsider Status"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 152,
+            "normalized_char_start": 35,
+            "quote": "street smarts, which I would define as the ability to see myself objectively and apply that same perception to others",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.9,
+        "object": "Ability to See Oneself Objectively",
+        "predicate": "DEFINED_BY",
+        "proposal_id": "relation-ad7b7648-5b6a-536a-ab64-60aed0034e77-1:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "subject": "Street Smarts"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 389,
+            "normalized_char_start": 298,
+            "quote": "If I could read people, I could figure out how to be useful to them and get them to help me",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.85,
+        "object": "Being Useful to Others",
+        "predicate": "ENABLES",
+        "proposal_id": "relation-ad7b7648-5b6a-536a-ab64-60aed0034e77-2:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "subject": "Ability to Read People"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 604,
+            "normalized_char_start": 460,
+            "quote": "Coming from the projects in East New York, I had more to escape, more to prove, and more to gain than a lot of people I subsequently encountered",
+            "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.85,
+        "object": "Drive to Succeed",
+        "predicate": "MOTIVATES",
+        "proposal_id": "relation-ad7b7648-5b6a-536a-ab64-60aed0034e77-3:h0",
+        "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+        "status": "proposed",
+        "subject": "East New York Projects"
+      }
+    ],
+    "source_quality_signals": []
+  },
+  "source_record_id": "ad7b7648-5b6a-536a-ab64-60aed0034e77",
+  "source_status": "current",
+  "source_type": "obsidian_note",
+  "supersedes_highlight_count": null,
+  "supersedes_record_id": null,
+  "version": 1
+}

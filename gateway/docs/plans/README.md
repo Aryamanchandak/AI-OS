@@ -1,17 +1,30 @@
-# Gateway Shrink Plans
+# Gateway status
 
-As of 2026-10-18 · Sources: `docs/yagni-review.md`, `docs/yagni-review-followup.md`
+Graphiti readiness work is scoped in the [Graphiti readiness plan](graphiti-readiness.md).
+The code fixes are implemented: offline checks report `182 passed, 4 deselected`
+and mypy reports no issues in 47 source files (2026-10-23). The four live golden
+checks fail because `gateway/.env` and the Anthropic key are absent and local
+Ollama is unreachable. Live proof remains outstanding.
+The direct-client/deferred-deployment direction below describes the prior status;
+it does not establish Graphiti readiness through this gateway.
 
-These plans shrink the gateway until you can explain it one module at a time, then get one request working end to end. Start a step only when you say "start step N". Re-check its plan first, because earlier steps change the code. Your OK on a plan covers the test files it lists for deletion; nothing else gets deleted.
+Immediate path: use the independent [simple_llm client](../../simple_llm/README.md)
+for direct provider calls. Gateway deployment and further work are deferred.
 
-**Done.** Step 0 (commit `8f64fbd`). Steps 1–2c (commit `fa30d94`): dead code and fake routes, providers trimmed to Claude/GPT/Ollama with prices fixed, streaming and semantic cache removed, unused request features removed, budgets by agent and session. Step 3 (commit `564e389`): `/v1` addresses, shell hosting, legacy health and dashboard routes, the agent-trace forwarder and the service registry removed ([archived plan](archive/step-3-mechanical-batch.md)). Step 4 (commit `690f87c`). Step 5 code: `.env` loader and golden set; suite passes (133 tests, 2026-10-19). Step 5 is finished only when `pytest -m golden` passes with real keys. Step 6 code (commits `430f00f`, `5941e61`): any-llm behind `llm/providers/llm.py`, OpenTelemetry behind `telemetry.py`, trace store removed; checked against a recorded before/after request snapshot, not yet against the golden set.
+Gateway scope: give ingestion one working API for hosted LLM calls and local
+embeddings. No further restructuring or new features are needed for that scope.
 
-**Step 4 — one call log** ([step-4-one-call-log.md](step-4-one-call-log.md)). The ledger becomes the only call log, one YAML adapter, one SQLite helper. Separate because it changes behaviour (spend survives restarts) and adds a file.
+The main shrink is implemented: legacy routes, streaming, semantic cache,
+duplicate logging and handwritten provider adapters are removed. Existing
+budgets, ledger, profiles, retries and telemetry remain.
 
-**Step 5 — end to end** ([step-5-end-to-end.md](step-5-end-to-end.md)). Load keys from `.env`, one real Claude request, the golden set. First time the gateway works.
+Live provider and ingestion validation has not been established. The golden
+refusal expectation now requires one row with status `refused`.
 
-**Steps 6–7** ([step-6-any-llm.md](step-6-any-llm.md), [step-7-together.md](step-7-together.md)). any-llm and OpenTelemetry behind one adapter each; then Together as config only. Both are checked against the step 5 golden set.
+The ingestion runner in `../Ingestion 2/merged-ingestion` still loads
+`llm_gateway.client.LLM`; its comments describe port 8107. This gateway runs on
+port 8000 with `/api/llm/*` endpoints. Verify the actual client configuration and
+one ingestion request before calling the handoff complete.
 
-## Later: new features, not planned yet
-
-Your CLAUDE.md says to flag new features until one request works end to end. Each gets its own plan after step 5: an OpenAI-format address for Graphiti (chat with structured output plus embeddings, logged and costed; check what its reranker needs); real batching on Anthropic, OpenAI and Together (checking for results needs a scheduling library); a spend dashboard as a leaf reading `/cost`; the image pipeline as an ingestion leaf, once your image-approach chat is settled; and a trace viewer such as Arize Phoenix, the first time you need to debug a trace.
+The step plans and YAGNI reviews are historical context, not an active task list.
+Together, batching, dashboards and further structural cleanup are deferred.

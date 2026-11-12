@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "types:generate": "openapi-typescript ../gateway/openapi.json -o src/api/schema.d.ts",
+    "types:generate": "openapi-typescript ../gateway/contracts/openapi.json -o src/api/schema.d.ts",
     "build": "tsc -b && vite build",
     "test": "vitest run --passWithNoTests=false"
   },

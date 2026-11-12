@@ -15,6 +15,6 @@ This folder exposes one service interface over several LLM vendors and local mod
 
 `LLMService.build()` reads `local_models.yaml`, `profiles.yaml`, `pricing.yaml`, and `budgets.yaml` from the configured directory.
 
-Chat uses the orchestration pipeline. Embeddings instead iterate eligible providers directly, enforcing profile dimensions when specified, then writing one call-ledger row. The current embedding path records zero monetary cost and does not perform chat-style budget admission.
+Chat uses the orchestration pipeline. Embeddings iterate eligible providers through the same concurrency/retry controls, enforce profile dimensions when specified, then write one call-ledger row. The current embedding path records zero monetary cost and does not perform chat-style budget admission.
 
 Chat requests use explicit provider/model selection or exact profiles, with agent and session attribution. Unknown request options are rejected. Capability diagnostics describe configured adapters; they are not live availability probes.

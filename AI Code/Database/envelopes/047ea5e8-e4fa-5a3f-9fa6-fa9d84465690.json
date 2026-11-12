@@ -1,0 +1,355 @@
+{
+  "access_policy": {
+    "allowed_consumers": [
+      "kg",
+      "sqlite",
+      "vector"
+    ],
+    "classification": "private"
+  },
+  "canonical_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+  "captured_at": "2026-08-17T07:01:04.200266Z",
+  "created_at": "2026-08-20T06:47:56.470243Z",
+  "envelope_id": "047ea5e8-e4fa-5a3f-9fa6-fa9d84465690",
+  "extracted_metadata": {},
+  "extraction_version": "semantic_extraction_v1",
+  "highlight_boundary_origin": "document_segment",
+  "highlight_containing_sentence": null,
+  "highlight_context_text": "[\u2026] for fy 27 and for dy 28, what was the eps 3 mn, 6mn, 12mn  back and what it is now\n\nfy27 fy28 eps change over what period ??",
+  "highlight_end_char": 258,
+  "highlight_index": 0,
+  "highlight_parent_end_char": null,
+  "highlight_parent_source_ref": null,
+  "highlight_parent_start_char": null,
+  "highlight_start_char": 0,
+  "highlight_text": "Tim alpha can go live the day after they get business approval.\n\nthey cant get brokers emails on timalpha until they go live\n\nIndex changes, in valuations, the forward eps change, that is not supposed to be like this, mohit hasnt understood what to do there.",
+  "metadata": {
+    "note_title": "Meeting 22April",
+    "origin_kind": "obsidian_note",
+    "vault_relative_path": "ICICI Prudential/Meeting 22April.md"
+  },
+  "model_confidence": 0.7,
+  "normalization_version": "structural_normalization_v1",
+  "normalized_content_hash": "6787d7f3543df731d8ac17fafc03e513e856891355ed4e4f74ffa0f827c8ee01",
+  "normalized_origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Meeting 22April.md",
+  "observed_at": null,
+  "origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Meeting 22April.md",
+  "raw_content_hash": "1cef59d9f785d95bc241256c4081f58f1bc37c2bb4bd3f35e2926f03e11cef7c",
+  "raw_content_ref": "/Users/aryamanchandak/Documents/AI Code/Database/raw/d2cb67ce-17cb-51db-8586-53dcf4a27b2b.md",
+  "review_policy_version": "deterministic_review_v1",
+  "review_signals": [
+    {
+      "code": "overall_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "source_quality_signal",
+      "detail": "Informal note-taking style. The sentence about index changes and forward EPS is ambiguous and lacks full context. 'that is not supposed to be like this' is vague without further context.",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-2:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-3:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-5:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": "relation-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-3:h0",
+      "proposal_type": "relation",
+      "scope": "proposal"
+    }
+  ],
+  "review_status": "pending",
+  "semantic": {
+    "claims": [
+      {
+        "concept_labels": [
+          "Tim Alpha",
+          "Business Approval"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 62,
+            "normalized_char_start": 0,
+            "quote": "Tim alpha can go live the day after they get business approval",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "model_confidence": 0.85,
+        "observed_at": null,
+        "proposal_id": "claim-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-0:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed",
+        "text": "Tim Alpha can go live the day after they get business approval.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Tim Alpha",
+          "Broker Emails"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 124,
+            "normalized_char_start": 65,
+            "quote": "they cant get brokers emails on timalpha until they go live",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "model_confidence": 0.85,
+        "observed_at": null,
+        "proposal_id": "claim-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-1:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed",
+        "text": "They cannot get brokers' emails on Tim Alpha until they go live.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Index Changes",
+          "Forward EPS",
+          "Mohit"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 257,
+            "normalized_char_start": 126,
+            "quote": "Index changes, in valuations, the forward eps change, that is not supposed to be like this, mohit hasnt understood what to do there",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-2:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed",
+        "text": "The forward EPS change in valuations related to index changes is not supposed to be as it currently is, and Mohit has not understood what to do there.",
+        "valid_from": null,
+        "valid_to": null
+      }
+    ],
+    "concepts": [
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 62,
+            "normalized_char_start": 0,
+            "quote": "Tim alpha can go live the day after they get business approval",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "label": "Tim Alpha",
+        "model_confidence": 0.8,
+        "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-0:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 62,
+            "normalized_char_start": 0,
+            "quote": "Tim alpha can go live the day after they get business approval",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "label": "Business Approval",
+        "model_confidence": 0.75,
+        "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-1:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 124,
+            "normalized_char_start": 65,
+            "quote": "they cant get brokers emails on timalpha until they go live",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "label": "Broker Emails",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-2:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 178,
+            "normalized_char_start": 126,
+            "quote": "Index changes, in valuations, the forward eps change",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "label": "Index Changes",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-3:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 216,
+            "normalized_char_start": 156,
+            "quote": "the forward eps change, that is not supposed to be like this",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "label": "Forward EPS",
+        "model_confidence": 0.75,
+        "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-4:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 257,
+            "normalized_char_start": 218,
+            "quote": "mohit hasnt understood what to do there",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "label": "Mohit",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-5:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed"
+      }
+    ],
+    "field_tags": [
+      "investment platform",
+      "operations",
+      "valuation",
+      "EPS",
+      "go-live",
+      "broker"
+    ],
+    "relations": [
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 62,
+            "normalized_char_start": 0,
+            "quote": "Tim alpha can go live the day after they get business approval",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "hierarchical": true,
+        "model_confidence": 0.85,
+        "object": "Business Approval",
+        "predicate": "REQUIRES",
+        "proposal_id": "relation-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-0:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed",
+        "subject": "Tim Alpha"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 124,
+            "normalized_char_start": 65,
+            "quote": "they cant get brokers emails on timalpha until they go live",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "hierarchical": true,
+        "model_confidence": 0.85,
+        "object": "Go Live",
+        "predicate": "REQUIRES",
+        "proposal_id": "relation-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-1:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed",
+        "subject": "Tim Alpha"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 178,
+            "normalized_char_start": 126,
+            "quote": "Index changes, in valuations, the forward eps change",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.75,
+        "object": "Forward EPS",
+        "predicate": "RELATES_TO",
+        "proposal_id": "relation-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-2:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed",
+        "subject": "Index Changes"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 257,
+            "normalized_char_start": 218,
+            "quote": "mohit hasnt understood what to do there",
+            "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.65,
+        "object": "Forward EPS Change",
+        "predicate": "RESPONSIBLE_FOR",
+        "proposal_id": "relation-d2cb67ce-17cb-51db-8586-53dcf4a27b2b-3:h0",
+        "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+        "status": "proposed",
+        "subject": "Mohit"
+      }
+    ],
+    "source_quality_signals": [
+      "Informal note-taking style. The sentence about index changes and forward EPS is ambiguous and lacks full context. 'that is not supposed to be like this' is vague without further context."
+    ]
+  },
+  "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+  "source_status": "current",
+  "source_type": "obsidian_note",
+  "supersedes_highlight_count": null,
+  "supersedes_record_id": null,
+  "version": 1
+}

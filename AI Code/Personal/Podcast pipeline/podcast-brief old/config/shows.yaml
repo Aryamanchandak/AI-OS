@@ -1,0 +1,37 @@
+# Add your podcasts here.
+# profile options: academic | current_events | hybrid
+# sources: provide rss, youtube_channel, or both (rss preferred)
+
+shows:
+  - name: "Lex Fridman Podcast"
+    sources:
+      rss: "https://lexfridman.com/feed/podcast/"
+      youtube_channel: "UCSHZKyawb77ixDdsGog4iWA"
+    profile: academic
+    speakers_hint: "Lex Fridman is the host. The guest changes each episode."
+    active: true
+
+  - name: "Founders"
+    sources:
+      rss: "https://founders.simplecast.com/episodes"
+      youtube_channel: "UCPuDl2UPzDxVjbzqW0NkjCA"
+    profile: hybrid
+    speakers_hint: "David Senra is the sole speaker. He reads from a book and comments."
+    active: true
+
+  - name: "Ezra Klein Show"
+    sources:
+      rss: "https://feeds.simplecast.com/82FI35Px"
+      youtube_channel: "UCoyhhgX9oQHFzxOHkBUMo_w"
+    profile: current_events
+    speakers_hint: "Ezra Klein is the host."
+    active: true
+
+  # Add more shows below:
+  # - name: "Your Show Name"
+  #   sources:
+  #     rss: "https://..."
+  #     youtube_channel: "UC..."   # The UC... part of the YouTube channel URL
+  #   profile: academic            # or current_events or hybrid
+  #   speakers_hint: "..."
+  #   active: true

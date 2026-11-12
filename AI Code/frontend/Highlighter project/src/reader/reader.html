@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!--
+  Marginal — a Readwise-Reader-style highlighting engine.
+  Single file, no build, no dependencies.
+
+  Architecture (the part that matters):
+    - A document is FROZEN at capture time. Its HTML never changes.
+    - Canonical text = concatenation of the DOM's text nodes, one '\n' between blocks.
+      Every offset in the system is against that string. The DOM is derived, never authoritative.
+    - A highlight is a record with FOUR anchors: block+offset, global offsets,
+      exact quote, and prefix/suffix context.
+    - Painting is disposable. Any change = reset blocks from stored HTML, re-index, repaint all.
+    - If reattachment is not confident AND clearly better than the runner-up,
+      the highlight goes to the Notebook as "unplaced" rather than landing on the wrong text.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marginal</title>
+<style>
+  :root{
+    --paper:#F7F6F3;
+    --ink:#16181D;
+    --ink-soft:#5B6068;
+    --ink-faint:#9AA0A8;
+    --rule:#E2E0DA;
+    --panel:#FFFFFF;
+    --mark:#FFD500;
+    --mark-fill:rgba(255,213,0,.22);
+    --mark-edge:#F2C200;
+    --warn:#B4531B;
+    --focus:#2C6E9B;
+    --radius:6px;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .dark{
+    --paper:#14161A;
+    --ink:#E7E5E0;
+    --ink-soft:#9CA3AC;
+    --ink-faint:#6B727B;
+    --rule:#272B31;
+    --panel:#1B1E23;
+    --mark-fill:rgba(255,213,0,.20);
+    --mark-edge:#C9A200;
+    --warn:#E08A4B;
+    --focus:#6FB2DC;
+  }
+
+  *{box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,textarea,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+
+  /* ---------- chrome ---------- */
+  .bar{
+    position:sticky;top:0;z-index:40;
+    display:flex;gap:10px;align-items:center;
+    padding:10px 16px;background:var(--paper);
+    border-bottom:1px solid var(--rule);
+  }
+  .brand{
+    font-family:var(--serif);font-size:19px;letter-spacing:-.01em;
+    padding-right:6px;margin-right:2px;white-space:nowrap;
+  }
+  .brand b{background:linear-gradient(transparent 62%,var(--mark-fill) 62%);box-shadow:inset 0 -2px 0 var(--mark-edge)}
+  .bar select,.bar .btn{
+    background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);
+    padding:6px 10px;font-size:13px;
+  }
+  .bar select{max-width:34vw}
+  .btn:hover{border-color:var(--ink-faint)}
+  .btn.on{background:var(--mark-fill);border-color:var(--mark-edge)}
+  .btn[aria-pressed="true"]{background:var(--mark-fill);border-color:var(--mark-edge)}
+  .spacer{flex:1}
+  .hint{font-size:12px;color:var(--ink-faint);white-space:nowrap}
+  @media(max-width:820px){.hint{display:none}}
+  @media(max-width:620px){
+    .bar{flex-wrap:wrap;padding:8px 10px}
+    .brand{order:0}
+    .bar .spacer{display:none}
+    .bar select{order:1;flex:1;max-width:none;min-width:120px}
+    #btnLibrary,#btnNew{order:2}
+    #btnAuto{order:3;margin-left:auto}
+    #btnTheme,#btnSide{order:3}
+  }
+
+  /* ---------- layout ---------- */
+  .stage{display:grid;grid-template-columns:1fr 340px;min-height:calc(100vh - 49px)}
+  @media(max-width:1000px){.stage{grid-template-columns:1fr}.side{display:none}.side.open{display:block;position:fixed;inset:var(--bar-height,49px) 0 0 auto;width:min(380px,100%);height:calc(100vh - var(--bar-height,49px));z-index:35}}
+
+  .readwrap{padding:44px 24px 45vh;display:flex;justify-content:center}
+  .reader{width:100%;max-width:44rem;position:relative}
+
+  /* ---------- document ---------- */
+  #doc{font-family:var(--serif);font-size:19.5px;line-height:1.62;letter-spacing:.002em}
+  #doc h1{font-size:2em;line-height:1.15;letter-spacing:-.02em;margin:0 0 .1em}
+  #doc h2{font-size:1.32em;line-height:1.25;margin:1.9em 0 .4em}
+  #doc h3{font-size:1.08em;margin:1.5em 0 .3em}
+  #doc p,#doc li,#doc blockquote{margin:0 0 1.05em}
+  #doc ul,#doc ol{margin:0 0 1.05em;padding-left:1.4em}
+  #doc li{margin-bottom:.35em}
+  #doc blockquote{border-left:2px solid var(--mark-edge);padding-left:1em;color:var(--ink-soft);font-style:italic}
+  #doc pre{font-family:var(--mono);font-size:.78em;line-height:1.5;background:var(--panel);border:1px solid var(--rule);
+    border-radius:var(--radius);padding:12px 14px;overflow-x:auto;margin:0 0 1.05em}
+  #doc code{font-family:var(--mono);font-size:.84em}
+  #doc a{color:inherit;text-decoration:underline;text-decoration-color:var(--ink-faint);text-underline-offset:2px}
+  #doc img{max-width:100%;border-radius:var(--radius);display:block}
+  #doc table{width:100%;border-collapse:collapse;font-size:.8em;font-family:var(--sans);margin:0 0 1.2em}
+  #doc th,#doc td{border-bottom:1px solid var(--rule);padding:7px 8px;text-align:left;vertical-align:top}
+  #doc th{color:var(--ink-soft);font-weight:600}
+  .docmeta{font-family:var(--sans);font-size:12.5px;color:var(--ink-faint);margin:6px 0 34px;display:flex;gap:10px;flex-wrap:wrap}
+  .docmeta a{color:inherit}
+
+  [data-block-id]{position:relative}
+  [data-block-id].focused::before{
+    content:"";position:absolute;left:-18px;top:.18em;bottom:.18em;width:2px;background:var(--focus);border-radius:2px;
+  }
+
+  /* ---------- the mark ---------- */
+  rw-highlight{
+    background:var(--mark-fill);
+    box-shadow:inset 0 -2px 0 var(--mark-edge);
+    cursor:pointer;
+    border-radius:1px;
+    transition:background .12s ease;
+  }
+  rw-highlight:hover{background:rgba(255,213,0,.34)}
+  .dark rw-highlight:hover{background:rgba(255,213,0,.30)}
+  rw-highlight.active{background:rgba(255,213,0,.42);box-shadow:inset 0 -2px 0 var(--mark-edge)}
+  rw-highlight:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+  rw-highlight .glyph{
+    font-family:var(--sans);font-size:.6em;vertical-align:.35em;
+    color:var(--ink-soft);margin-left:.25em;letter-spacing:.06em;user-select:none;
+  }
+  rw-highlight .grip{
+    display:none;position:absolute;width:18px;height:1.7em;margin-top:-.2em;
+    padding:0;border:0;background:transparent;color:inherit;
+    appearance:none;-webkit-appearance:none;
+    cursor:col-resize;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;
+  }
+  rw-highlight.active .grip{display:inline-block}
+  rw-highlight .grip::after{content:"";position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--mark-edge);border-radius:2px}
+  rw-highlight .grip.s{margin-left:-9px}
+  rw-highlight .grip.e{margin-left:-9px}
+  rw-highlight .grip:hover::after,
+  rw-highlight .grip:focus-visible::after{width:3px;left:7.5px;box-shadow:0 0 0 3px var(--mark-fill)}
+  body.resizing #doc{cursor:col-resize;user-select:none;-webkit-user-select:none}
+  @media(pointer:coarse){
+    rw-highlight .grip{width:26px;height:2em;margin-top:-.35em}
+    rw-highlight .grip::after{left:12px}
+    rw-highlight .grip.s,rw-highlight .grip.e{margin-left:-13px}
+    rw-highlight .grip:hover::after,
+    rw-highlight .grip:focus-visible::after{left:11.5px}
+  }
+
+  .marginnote{
+    position:absolute;left:calc(100% + 28px);width:210px;
+    font-family:var(--sans);font-size:12.5px;line-height:1.45;color:var(--ink-soft);
+    border-left:2px solid var(--mark-edge);padding-left:10px;
+  }
+  @media(max-width:1360px){.marginnote{display:none}}
+
+  /* ---------- floating toolbar ---------- */
+  .tools{
+    position:absolute;z-index:30;display:none;gap:2px;
+    background:var(--panel);border:1px solid var(--rule);border-radius:8px;
+    padding:4px;box-shadow:0 6px 22px rgba(0,0,0,.13);
+  }
+  .tools.show{display:flex}
+  .tools button{
+    background:none;border:0;border-radius:5px;padding:5px 9px;font-size:12.5px;color:var(--ink-soft);
+  }
+  .tools button:hover{background:var(--mark-fill);color:var(--ink)}
+  .tools button.danger:hover{background:rgba(180,83,27,.14);color:var(--warn)}
+
+  .pop{
+    position:absolute;z-index:31;display:none;width:290px;
+    background:var(--panel);border:1px solid var(--rule);border-radius:8px;
+    padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.16);
+  }
+  .pop.show{display:block}
+  .pop textarea,.pop input{
+    width:100%;background:transparent;border:1px solid var(--rule);border-radius:5px;
+    padding:7px 8px;font-size:13px;font-family:var(--sans);resize:vertical;
+  }
+  .pop textarea{min-height:74px;margin-bottom:7px}
+  .pop .row{display:flex;gap:6px;margin-top:8px;justify-content:flex-end}
+  .pop .row button{background:var(--panel);border:1px solid var(--rule);border-radius:5px;padding:5px 11px;font-size:12.5px}
+  .pop .row button.primary{background:var(--mark);border-color:var(--mark-edge);color:#16181D}
+
+  /* ---------- notebook ---------- */
+  .side{border-left:1px solid var(--rule);background:var(--panel);display:flex;flex-direction:column;height:calc(100vh - 49px);position:sticky;top:49px}
+  .side h2{
+    font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:.13em;
+    color:var(--ink-faint);margin:0;padding:16px 16px 10px;display:flex;align-items:center;gap:8px;
+  }
+  .side h2 .count{font-family:var(--mono);letter-spacing:0;color:var(--ink-soft)}
+  .nb{overflow-y:auto;flex:1;padding:0 12px 20px}
+  .card{
+    display:block;width:100%;text-align:left;background:transparent;color:inherit;font:inherit;
+    border:1px solid var(--rule);border-radius:var(--radius);padding:11px 12px;margin-bottom:8px;cursor:pointer;
+  }
+  .card:hover{border-color:var(--ink-faint)}
+  .card.sel{border-color:var(--mark-edge);background:var(--mark-fill)}
+  .card .q{
+    font-family:var(--serif);font-size:14.5px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .card .n{font-size:12.5px;color:var(--ink-soft);margin-top:7px;border-left:2px solid var(--mark-edge);padding-left:8px;white-space:pre-wrap}
+  .card .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+  .tag{font-size:11px;padding:2px 7px;border:1px solid var(--rule);border-radius:99px;color:var(--ink-soft)}
+  .flag{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid currentColor;border-radius:99px;padding:1px 7px}
+  .strat{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+  .empty{padding:14px 4px;font-size:13px;color:var(--ink-faint);line-height:1.5}
+  .sidefoot{border-top:1px solid var(--rule);padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap}
+  .sidefoot button{background:transparent;border:1px solid var(--rule);border-radius:var(--radius);padding:5px 9px;font-size:12px;color:var(--ink-soft)}
+  .sidefoot button:hover{color:var(--ink);border-color:var(--ink-faint)}
+
+  /* ---------- modal ---------- */
+  .veil{position:fixed;inset:0;background:rgba(10,11,13,.45);display:none;z-index:60;align-items:center;justify-content:center;padding:20px}
+  .veil.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--rule);border-radius:10px;width:min(720px,100%);max-height:86vh;overflow:auto;padding:20px}
+  .modal h3{margin:0 0 4px;font-family:var(--serif);font-size:20px;font-weight:600}
+  .modal p{margin:0 0 14px;font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+  .modal textarea,.modal input{
+    width:100%;background:transparent;border:1px solid var(--rule);border-radius:var(--radius);
+    padding:9px 10px;font-size:13px;font-family:var(--mono);
+  }
+  .modal textarea{min-height:230px;resize:vertical;line-height:1.5}
+  .modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .modal .row button{background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);padding:7px 14px;font-size:13px}
+  .modal .row button.primary{background:var(--mark);border-color:var(--mark-edge);color:#16181D;font-weight:600}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px}
+  .library-head{display:flex;align-items:flex-start;gap:18px;margin-bottom:18px}
+  .library-head .copy{flex:1}
+  .library-head .head-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .library-head button{
+    background:transparent;border:1px solid var(--rule);border-radius:6px;
+    padding:6px 10px;color:var(--ink-soft);font-size:12px;
+  }
+  .library-head button:hover{border-color:var(--ink-faint);color:var(--ink)}
+  .library-search{position:sticky;top:-20px;z-index:2;background:var(--panel);padding:10px 0 12px}
+  .library-search input{font-family:var(--sans);font-size:14px;padding:10px 12px}
+  .library-list{display:grid;gap:9px}
+  .library-item{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;
+    border:1px solid var(--rule);border-radius:8px;padding:13px 14px;
+    transition:border-color .16s ease,background .16s ease,transform .16s ease;
+  }
+  .library-item:hover{border-color:var(--ink-faint);transform:translateY(-1px)}
+  .library-item.current{border-color:var(--mark-edge);background:var(--mark-fill)}
+  .library-title{font-family:var(--serif);font-weight:600;font-size:16px;line-height:1.25;margin-bottom:4px}
+  .library-excerpt{font-size:12.5px;line-height:1.45;color:var(--ink-soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .library-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:7px;color:var(--ink-faint);font-size:11px}
+  .library-meta mark{background:var(--mark-fill);color:inherit;border-radius:2px}
+  .library-actions{display:flex;gap:5px;align-items:center}
+  .library-actions button,.library-actions a{
+    background:transparent;border:1px solid var(--rule);border-radius:6px;padding:6px 9px;
+    color:var(--ink-soft);font-size:12px;text-decoration:none;white-space:nowrap;
+  }
+  .library-actions button:hover,.library-actions a:hover{border-color:var(--ink-faint);color:var(--ink)}
+  .library-actions .delete:hover{border-color:var(--warn);color:var(--warn)}
+  .library-empty{border:1px dashed var(--rule);border-radius:8px;padding:34px;text-align:center;color:var(--ink-faint);font-size:13px}
+  .confirm-box{max-width:480px}
+  .confirm-quote{font-family:var(--serif);font-size:18px;color:var(--ink);margin:18px 0;padding-left:12px;border-left:2px solid var(--mark-edge)}
+  @media(max-width:620px){
+    .library-item{grid-template-columns:1fr}
+    .library-actions{justify-content:flex-start;flex-wrap:wrap}
+  }
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
+    background:var(--ink);color:var(--paper);font-size:13px;padding:9px 15px;border-radius:99px;
+    opacity:0;pointer-events:none;transition:.18s ease;z-index:70;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+  }
+  :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+</style>
+</head>
+
+<body>
+<header class="bar" aria-label="Reader controls">
+  <div class="brand">Marg<b>inal</b></div>
+  <select id="docpick" aria-label="Document"></select>
+  <button class="btn" id="btnLibrary">Library</button>
+  <button class="btn" id="btnNew">Add document</button>
+  <div class="spacer"></div>
+  <span class="hint">Select text to highlight · <b>H</b> paragraph · <b>N</b> note · <b>T</b> tag · <b>Z</b> undo · <b>Alt</b> to select without marking</span>
+  <button class="btn" id="btnAuto" title="Auto-highlight on selection" aria-pressed="true">Auto-mark</button>
+  <button class="btn" id="btnTheme" aria-label="Use dark theme" aria-pressed="false">◐</button>
+  <button class="btn" id="btnSide" aria-label="Toggle notebook" aria-controls="side" aria-expanded="true">☰</button>
+</header>
+
+<main class="stage">
+  <div class="readwrap">
+    <div class="reader">
+      <article id="doc" aria-label="Frozen article"></article>
+      <div class="tools" id="tools" role="toolbar" aria-label="Highlight actions">
+        <button data-act="note">Note</button>
+        <button data-act="tag">Tag</button>
+        <button data-act="copy">Copy</button>
+        <button data-act="delete" class="danger">Remove</button>
+      </div>
+      <div class="pop" id="pop" role="dialog" aria-label="Edit highlight">
+        <label class="sr-only" for="popNote">Note</label>
+        <textarea id="popNote" placeholder="Note"></textarea>
+        <label class="sr-only" for="popTags">Tags, comma separated</label>
+        <input id="popTags" placeholder="Tags, comma separated">
+        <div class="row"><button id="popCancel">Cancel</button><button id="popSave" class="primary">Save</button></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="side" id="side" aria-label="Notebook">
+    <h2>Notebook <span class="count" id="nbCount">0</span></h2>
+    <div class="nb" id="nb"></div>
+    <div class="sidefoot">
+      <button id="btnLibrarySide">Search library</button>
+      <button id="btnMd">Export Markdown</button>
+      <button id="btnJson">Export JSON</button>
+      <button id="btnAudit">Re-anchor from quote</button>
+    </div>
+  </aside>
+</main>
+
+<div class="veil" id="veil" aria-hidden="true">
+  <div class="modal" id="modal" role="dialog" aria-modal="true" tabindex="-1"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+<script src="reader.js"></script>
+</body>
+</html>

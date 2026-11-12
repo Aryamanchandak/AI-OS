@@ -1,0 +1,70 @@
+{
+  "access_policy": {
+    "allowed_consumers": [
+      "kg",
+      "sqlite",
+      "vector"
+    ],
+    "classification": "private"
+  },
+  "canonical_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+  "captured_at": "2026-08-17T07:01:04.200266Z",
+  "created_at": "2026-08-20T06:48:08.013036Z",
+  "envelope_id": "170a42a3-b799-5497-ada8-272a288d2071",
+  "extracted_metadata": {},
+  "extraction_version": "semantic_extraction_v1",
+  "highlight_boundary_origin": "document_segment",
+  "highlight_containing_sentence": null,
+  "highlight_context_text": "Tim alpha can go live the day after they get business approval. they cant get brokers emails on timalpha until they go live\n\nIndex changes, in valuations, the forward eps change, that is not supposed to be like this, mohit hasnt understood what to do there. [\u2026]",
+  "highlight_end_char": 383,
+  "highlight_index": 1,
+  "highlight_parent_end_char": null,
+  "highlight_parent_source_ref": null,
+  "highlight_parent_start_char": null,
+  "highlight_start_char": 259,
+  "highlight_text": "for fy 27 and for dy 28, what was the eps 3 mn, 6mn, 12mn  back and what it is now\n\nfy27 fy28 eps change over what period ??",
+  "metadata": {
+    "note_title": "Meeting 22April",
+    "origin_kind": "obsidian_note",
+    "vault_relative_path": "ICICI Prudential/Meeting 22April.md"
+  },
+  "model_confidence": 0.0,
+  "normalization_version": "structural_normalization_v1",
+  "normalized_content_hash": "6787d7f3543df731d8ac17fafc03e513e856891355ed4e4f74ffa0f827c8ee01",
+  "normalized_origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Meeting 22April.md",
+  "observed_at": null,
+  "origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Meeting 22April.md",
+  "raw_content_hash": "1cef59d9f785d95bc241256c4081f58f1bc37c2bb4bd3f35e2926f03e11cef7c",
+  "raw_content_ref": "/Users/aryamanchandak/Documents/AI Code/Database/raw/d2cb67ce-17cb-51db-8586-53dcf4a27b2b.md",
+  "review_policy_version": "deterministic_review_v1",
+  "review_signals": [
+    {
+      "code": "empty_semantic_extraction",
+      "detail": null,
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "overall_model_confidence_below_threshold",
+      "detail": "0 < 0.75",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    }
+  ],
+  "review_status": "pending",
+  "semantic": {
+    "claims": [],
+    "concepts": [],
+    "field_tags": [],
+    "relations": [],
+    "source_quality_signals": []
+  },
+  "source_record_id": "d2cb67ce-17cb-51db-8586-53dcf4a27b2b",
+  "source_status": "current",
+  "source_type": "obsidian_note",
+  "supersedes_highlight_count": null,
+  "supersedes_record_id": null,
+  "version": 1
+}

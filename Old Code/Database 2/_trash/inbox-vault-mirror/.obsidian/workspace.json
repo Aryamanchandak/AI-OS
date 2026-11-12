@@ -1,0 +1,242 @@
+{
+  "main": {
+    "id": "019fe232a9362e96",
+    "type": "split",
+    "children": [
+      {
+        "id": "1398b71f8d339e58",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2162e27cddf33448",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Readwise/Articles/AI Creates a Fearsome Cold-War-Style Dilemma.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "AI Creates a Fearsome Cold-War-Style Dilemma"
+            }
+          },
+          {
+            "id": "29b498b4260db0f3",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "ICICI Prudential/Equity Meeting with Bernstein.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Equity Meeting with Bernstein"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "37022019bb489ec3",
+    "type": "split",
+    "children": [
+      {
+        "id": "21a8a0979cffee3e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a5d23bba78459106",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "81e599b5b68f014b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "1038c8f39d148ca7",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "287d1cfc44ab5010",
+    "type": "split",
+    "children": [
+      {
+        "id": "5216d398f4bcc9f6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0a19c9be21372286",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "CFA Level 1/CFA 2025 Level I - FI, Derivatives.pdf",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for CFA 2025 Level I - FI, Derivatives"
+            }
+          },
+          {
+            "id": "0b506ab78bd3ee8d",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "CFA Level 1/CFA 2025 Level I - FI, Derivatives.pdf",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from CFA 2025 Level I - FI, Derivatives"
+            }
+          },
+          {
+            "id": "558d7cb3be7507cb",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "b9459f53a087af82",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "CFA Level 1/CFA 2025 Level I - FI, Derivatives.pdf",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of CFA 2025 Level I - FI, Derivatives"
+            }
+          },
+          {
+            "id": "335efe8d6d24690e",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "workspaces:Manage workspace layouts": false,
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "audio-recorder:Start/stop recording": false
+    }
+  },
+  "active": "29b498b4260db0f3",
+  "lastOpenFiles": [
+    "CFA Level 1/CFA 2025 Level I - FI, Derivatives.pdf",
+    "Untitled 1.md",
+    "Readwise/Articles/AI Creates a Fearsome Cold-War-Style Dilemma.md",
+    "Notion/ICICI Prudential AMC/Presentations/7July,26 PPT Krishna Review.md",
+    "Readwise/Articles/The Epstein Tax No Mercy No Malice.md",
+    "Readwise/Full Document Contents/Articles/The Epstein Tax No Mercy No Malice.md",
+    "Readwise/Articles/The Only Screen Your Kid Should Have.md",
+    "Notion/ICICI Prudential AMC/Presentations",
+    "Readwise/Articles/ Amazon everything including Audible.md",
+    "Notion/Readwise/Readwise.md",
+    "Notion/General/General.md",
+    "Notion/ICICI Prudential AMC/Equity/Meeting Notes/AI Agents /ARA with Vineet /ARA with Vineet .md",
+    "Notion/ICICI Prudential AMC/Equity/Meeting Notes/AI Agents /ARA with Vineet ",
+    "Untitled.md",
+    "Notion/ICICI Prudential AMC/Job Role/Projects Listr /Projects Listr .md",
+    "Notion/ICICI Prudential AMC/Job Role/Projects Listr ",
+    "Readwise/Full Document Contents/Articles/Spheres by Default.md",
+    "Readwise/Full Document Contents/Articles/China’s AI Heist.md",
+    "Readwise/Full Document Contents/Articles/Iran and the Forever War Trap.md",
+    "Readwise/Full Document Contents/Articles/The Right Way for Europe to Spend More on Defense.md",
+    "Readwise/Full Document Contents/Articles/Orban’s Fall and Europe’s Rise.md",
+    "Readwise/Full Document Contents/Articles/The War in Ethiopia Isn’t Over.md",
+    "Readwise/Full Document Contents/Articles/The Middle Power Delusion.md",
+    "Readwise/Full Document Contents/Articles/China Is Squandering a Golden Opportunity.md",
+    "Readwise/Full Document Contents/Articles/It’s time to address the looming crisis in entry-level workIt’s time to address the looming crisis in entry-level workIt’s time to address the looming crisis in entry-level work.md",
+    "Readwise/Full Document Contents/Articles/The Crumbling Pillars of Global Peace.md",
+    "Readwise/Full Document Contents/Articles/The Not-So-Quiet American.md",
+    "Readwise/Full Document Contents/Articles/China Was Ready for the Age of Anarchy.md",
+    "Readwise/Full Document Contents/Articles/Why Mexico’s Cartels Are So Hard to Defeat.md",
+    "Untitled.base",
+    "Untitled 2",
+    "Untitled 1",
+    "ICICI Prudential",
+    "Agent MD",
+    "untitled folder",
+    "Untitled.canvas"
+  ]
+}

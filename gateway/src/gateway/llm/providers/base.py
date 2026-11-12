@@ -67,18 +67,3 @@ class Provider(Protocol):
 
     async def embed(self, text: str, *, model: str | None = None,
                     task_type: str = "retrieval_document") -> list[float]: ...
-
-
-def system_text(system: Any) -> str | None:
-    if system is None or isinstance(system, str):
-        return system
-    return "\n".join(str(getattr(block, "text", block.get("text", "") if isinstance(block, dict) else block)) for block in system)
-
-
-def openai_messages(messages: list[dict[str, Any]], system: Any) -> list[dict[str, Any]]:
-    prefix = system_text(system)
-    return ([{"role": "system", "content": prefix}] if prefix else []) + messages
-
-
-def normalize_stop_reason(value: Any) -> str:
-    return {"tool_calls": "tool_use", "tool_use": "tool_use", "length": "max_tokens", "max_tokens": "max_tokens"}.get(str(value), "end_turn")

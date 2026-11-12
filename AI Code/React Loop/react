@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Simplified launcher for the React Loop app.
+# Usage: ./react [--no-browser] [--port N]
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+uv sync
+exec uv run python run.py "$@"

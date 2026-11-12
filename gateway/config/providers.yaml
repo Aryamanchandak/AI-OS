@@ -2,5 +2,5 @@ version: 1
 
 # How the gateway calls providers. Read at startup.
 max_concurrency: 32  # provider calls in flight at once, across all providers
-max_retries: 1       # extra attempts on the same provider after a retryable error (timeout, 429, 5xx)
+max_retries: 0       # callers own transient retries; no automatic gateway retry by default
 timeout_s: 180       # per provider call

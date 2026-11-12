@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>A Durable Test Article</title>
+  </head>
+  <body>
+    <nav>Site navigation should not enter the frozen article.</nav>
+    <article>
+      <h1>A Durable Test Article</h1>
+      <p>Marginal captures the rendered article, sanitizes it, and keeps the result local.</p>
+      {{PASSAGE}}
+      {{AMBIGUOUS_PASSAGE}}
+      <p>Nested <em>emphasis and <a href="/article">linked text</a></em> stay exact across 中文, <span dir="rtl">العربية</span>, and 🙂 emoji.</p>
+      <p>Non-breaking&nbsp;spaces and irregular
+         whitespace remain stable after repainting.</p>
+      <blockquote>Selections close to a screen edge must remain ordinary document text.</blockquote>
+      <ul>
+        <li>Lists can contain <strong>nested emphasis</strong> without changing offsets.</li>
+        <li>Inline <code>code()</code> and punctuation remain selectable.</li>
+      </ul>
+      <pre><code>render(original)
+paint(anchors)
+unpaint()</code></pre>
+      <table>
+        <thead><tr><th>Case</th><th>Expected behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Repeated quote</td><td>Refuse equal candidates</td></tr>
+          <tr><td>Changed context</td><td>Require a clearly better match</td></tr>
+        </tbody>
+      </table>
+      <p>Paragraph 1 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <p>Paragraph 2 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <p>Paragraph 3 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <p>Paragraph 4 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <p>Paragraph 5 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <p>Paragraph 6 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <p>Paragraph 7 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <p>Paragraph 8 explains why frozen documents keep annotations dependable even when a publisher edits navigation, advertising, or surrounding layout after capture.</p>
+      <figure>
+        <a href="/article"><img src="/missing-test-image.png" alt="Linked test illustration"></a>
+        <figcaption>Images wrapped in links must not enter the canonical text unexpectedly.</figcaption>
+      </figure>
+    </article>
+  </body>
+</html>

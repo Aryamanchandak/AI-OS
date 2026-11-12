@@ -1,0 +1,11 @@
+# Website-search allowlist
+#
+# Add one public domain per line, without a scheme, path, port, or wildcard.
+# Subdomains of an allowed domain are accepted automatically.
+#
+# Examples (remove the leading # to enable):
+wikipedia.org
+# github.com
+# docs.python.org
+#
+# The website_search tool fails closed when this file has no active domains.

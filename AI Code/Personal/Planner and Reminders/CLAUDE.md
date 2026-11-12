@@ -1,0 +1,243 @@
+# Planning Assistant — Guiding Principles for Claude Code
+
+**Last updated:** 2026-04-10  
+**Interface:** Streamlit (later: WhatsApp)  
+**Calendar target:** Apple Calendar + Apple Reminders (via AppleScript, local macOS)  
+**LLM Backend:** OpenAI API (GPT-4o)
+
+---
+
+## Core Idea
+
+A chat interface that behaves like a smart collaborator, not a command executor. It listens, probes, builds context — and only moves to action when a real task has crystallised. Between "understanding what you want" and "doing it" is an explicit planning phase that you can see, interrogate, and edit. Nothing touches your calendar without your confirmation.
+
+---
+
+## The Three Modes
+
+## How It Works (Agentic Tool-Calling)
+
+There is no explicit state machine. The model decides what to do by calling tools:
+
+- **Casual chat:** model responds with text, no tools called
+- **Schedule-related queries:** model calls `check_calendar` / `check_reminders`, gets results, responds with informed answer
+- **Creating events/reminders:** model calls `create_event` / `create_reminder` — these are write tools, so the agent loop pauses and shows a confirmation card to the user
+- **Resolving conflicts:** model calls `move_event` / `update_reminder_date` — same confirmation flow
+- **Multi-step flows:** model chains tool calls across loop iterations (e.g., check calendar → find conflict → propose move)
+
+### Key Behavioural Principles
+
+- **Don't hallucinate actions from a casual message.** A "hi" is just a hi — no tools called.
+- **Withhold commitment.** If date/time/context is missing, ask — don't assume.
+- **Nothing is written without confirmation.** Write tools always pause for user approval via the action card.
+- **Ambient awareness.** Today's calendar events are injected into every system prompt so the model always knows the user's schedule.
+
+---
+
+## Structured Plan Schema (legacy)
+
+Previously used for the explicit planning mode. Now the model creates events/reminders directly via tool calls, but this schema is still referenced by `edit_plan()` and `walkthrough()` for backward compatibility.
+
+```json
+{
+  "events": [
+    {
+      "id": "evt_001",
+      "title": "",
+      "date": "YYYY-MM-DD",
+      "time": "HH:MM",
+      "duration_mins": 60,
+      "calendar": "default",
+      "notes": ""
+    }
+  ],
+  "reminders": [
+    {
+      "id": "rem_001",
+      "title": "",
+      "due_date": "YYYY-MM-DD",
+      "due_time": "HH:MM",
+      "priority": "high|medium|low",
+      "list": "Reminders"
+    }
+  ],
+  "follow_ups": [
+    {
+      "id": "fu_001",
+      "person": "",
+      "topic": "",
+      "by_when": "YYYY-MM-DD"
+    }
+  ]
+}
+```
+
+IDs (`evt_001`, `rem_001`) are assigned at plan creation and used for targeted edits — e.g. *"change evt_001 to Thursday"* maps cleanly without ambiguity.
+
+---
+
+## Architecture
+
+```
+Static HTML/JS Frontend (static/index.html)
+    ↓
+FastAPI Backend (app.py, port 8000)
+  - session state: messages, pending_actions, memory_context
+  - ambient calendar injection: today's events in every system prompt
+    ↓
+Agent Loop (planner.py → run_agent_loop)
+  - OpenAI API with function calling (tools, not tag parsing)
+  - 7 tools: check_calendar, check_reminders, create_event,
+    create_reminder, move_event, update_reminder_date, delete_event
+  - Read tools (check_*) → auto-executed, loop continues
+  - Write tools (create_*, move_*, update_*, delete_*) → pause for user confirmation
+  - Loop iterates until model returns text or max_iterations hit
+    ↓
+AppleScript layer (apple_calendar.py, apple_reminders.py)
+  - NSTask-based execution (posix_spawn, no fork)
+  - All functions called by execute_tool() dispatcher
+```
+
+---
+
+## Error Handling
+
+Every failure must be caught and returned as a conversational message — never a silent fail or a raw Python traceback.
+
+| Failure | Handling |
+|---|---|
+| OpenAI timeout / rate limit | Retry once with backoff, then surface: *"Having trouble reaching OpenAI — want to try again?"* |
+| Malformed JSON from model | Re-prompt once with the raw output and instruction to fix format; if still broken, surface: *"I had trouble structuring that plan — can you restate what you'd like?"* |
+| AppleScript write fails | Capture stderr, surface per-item: *"I created the calendar event but couldn't set the Raj reminder — error: [msg]. Want me to try again?"* |
+| AppleScript read returns empty | Surface: *"I couldn't read your calendar — make sure Automation permissions are granted in System Settings."* |
+| Memory file unreadable | Skip that file, log warning, continue — don't crash session startup |
+| Backward mode transition | Preserve `current_plan` in session state, clear the rendered card, return to chat |
+
+---
+
+## Persistent Memory — Markdown Conversation Logs
+
+Every session is saved as a markdown file in `/memory/`. Future sessions load recent logs for continuity — no database needed.
+
+### File naming
+```
+/memory/YYYY-MM-DD_HH-MM_<auto-title>.md
+```
+Auto-title is 3–5 words generated by the model at session end — e.g. `2026-04-10_14-32_investor-deck-prep.md`. Makes the folder browsable by topic, not just date.
+
+### File format
+```markdown
+# Session: 2026-04-10 14:32
+# Title: investor deck prep
+## Modes visited: chat → planning → implemented
+
+### Conversation
+**You:** ...
+**Bot:** ...
+
+### Plan Executed
+[confirmed JSON]
+
+### Carry-Forward Notes
+- Follow-up with Raj scheduled for Thursday — not yet confirmed complete
+- User prefers morning slots for deep work
+- [anything worth remembering next session]
+```
+
+### Memory loading strategy on session start
+Load in this priority order until ~2000 token budget is reached:
+1. **Carry-Forward Notes** from all sessions in the last 7 days (most compact, highest signal)
+2. **Full conversation** from the most recent session only
+3. Nothing older — old files stay on disk but are not loaded unless explicitly requested
+
+Bot opens with a brief acknowledgement of what it remembers — not a wall of text.
+
+### Pruning
+Files are never auto-deleted. The loading strategy naturally ignores old files. User can manually archive if the folder grows large — the app won't break.
+
+---
+
+## Daily Agent Scan
+
+Triggered manually via a **"Run Daily Check"** button in the topbar. No scheduled trigger — press it when you're ready to triage.
+
+### What it scans
+1. **Apple Reminders** — all incomplete todos with due dates
+2. **Apple Calendar** — all events for the next 7 days
+
+### Pre-analysis (Python, before model call)
+Python does the objective arithmetic so the model focuses on reasoning, not date math:
+- Sort events by start time, flag overlapping pairs
+- Flag reminders where `due_date < today` and status is incomplete (missed todos)
+- Flag reminders with no due date sitting for more than 7 days (orphaned todos)
+- Count events per day, flag any day exceeding a threshold (default: 4 events)
+
+Structured pre-analysis is sent to the model alongside the raw dump.
+
+### Three sub-problems — tested and handled independently
+1. **Missed todos** — due date passed, still incomplete → model proposes a new due date
+2. **Calendar conflicts** — overlapping events → model proposes which to move and when, with reasoning
+3. **Overloaded days / orphaned todos** — surfaced for review, no auto-action proposed
+
+### Output
+- Conversational morning briefing appears as the opening chat message
+- Reshuffle proposals use the same tool-calling flow — model calls `move_event`, `update_reminder_date` etc.
+- Write actions pause for user confirmation via the unified action card
+- Nothing is moved or created without user confirmation
+
+---
+
+## UI Layout (FastAPI + Static HTML)
+
+- **Main area:** chat window — continuous conversation
+- **Topbar:** model pill, mode badge, "daily check" button
+- **Action card:** rendered below chat as a unified confirmation card for any pending write actions
+- **Session saves** on server shutdown or "New Session" click (write to `/memory/` then reset state)
+
+---
+
+## Backend & Technical Constraints
+
+### LLM
+- OpenAI API, `gpt-5.4-nano` (configurable in `planner.py`)
+- `openai` Python SDK, `chat.completions.create` with `tools` parameter
+- Full message history sent every call
+- **Function calling** (not tag parsing): model invokes tools like `check_calendar`, `create_event`, etc.
+- **Agent loop** in `planner.py`: iterates LLM calls, auto-executes read tools, pauses on write tools for confirmation
+- Ambient calendar awareness: today's events injected into system prompt on every `/chat` call
+
+### Mac / Python Constraints
+- **No `multiprocessing` with fork().** macOS + Python + OpenAI SDK crashes with the fork() issue. Use `threading` or `asyncio` only. If multiprocessing is ever needed, set `multiprocessing.set_start_method('spawn')` at the very top of the entry point before any imports.
+- **AppleScript via NSTask** (posix_spawn, no fork) — thread-safe. Defined inline as Python strings in `apple_calendar.py` and `apple_reminders.py`.
+- **No launchd / cron / background processes** — all triggers are manual buttons.
+- **Permissions:** first run requires granting Automation permissions to Terminal / Python in System Settings → Privacy & Security → Automation. If AppleScript returns a permissions error, surface it clearly with instructions.
+
+---
+
+## Build Status
+
+Phases 1–8 from the original build breakdown are complete. The system was then refactored from tag-based parsing to an **agentic tool-calling architecture**:
+
+### Completed
+- FastAPI + static HTML frontend (replaced original Streamlit)
+- OpenAI function calling with 7 tools (replaced `<mode:planning>` / `<mode:direct>` tag parsing)
+- Agent loop in `planner.py` — iterates LLM calls, auto-executes reads, pauses writes for confirmation
+- Unified action confirmation card in frontend (replaced separate direct/plan cards)
+- Ambient calendar injection — today's events in every system prompt
+- AppleScript read/write layer via NSTask (apple_calendar.py, apple_reminders.py)
+- Daily scan with pre-analysis (scan.py) — now uses agent loop instead of tag parsing
+- Markdown memory system (memory.py) — session save/load with carry-forward notes
+- Rollback-aware execution for confirmed write actions
+
+---
+
+## Future
+- Replace Streamlit with WhatsApp (same Python backend, swap I/O layer)
+- Add Slack / email for follow-up tracking
+- Session search: query `/memory/` folder by topic keyword
+
+---
+
+## To Complete
+
+*(Nothing outstanding — all originally-listed items are complete.)*

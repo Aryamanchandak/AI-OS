@@ -1,0 +1,51 @@
+{
+  "product": {
+    "name": "PRAXIS",
+    "feeling": "commanding",
+    "purpose": "Turn a real situation into one defensible move, or refuse to manufacture strategy."
+  },
+  "scope": {
+    "included": ["principle cards", "situational cue matching", "LIVE", "STRIP", "REP", "AUDIT", "falsifiable predictions", "output linting", "persistent decision tracker", "outcome resolution", "personal hit-rate weighting", "card and cue graph", "contradiction edges", "passage grounding", "book ingestion", "inference gateway", "local access control"],
+    "deferred": [],
+    "rationale": "The user explicitly requested that the complete closed loop ship in one implementation with no deferred product items."
+  },
+  "corpus": {
+    "card_count": 15,
+    "books": ["Influence — Robert Cialdini", "Thinking in Bets — Annie Duke", "Getting to Yes — Roger Fisher, William Ury, Bruce Patton"],
+    "rationale": "The set spans social influence, decision quality, and principled negotiation without pretending one tradition covers every situation."
+  },
+  "inference": {
+    "provider": "OpenAI",
+    "api": "Responses API",
+    "default_model": "gpt-5.6-terra",
+    "reasoning_effort": "low",
+    "rationale": "Terra balances intelligence and cost; low reasoning effort favors a fast, phone-at-the-desk interaction."
+  },
+  "runtime": {
+    "stack": "React + Vite + TypeScript client, Express + TypeScript server",
+    "target": "local computer and phone on the same trusted network",
+    "persistence": "atomic local JSON state under PRAXIS_DATA_DIR",
+    "credentials": "OPENAI_API_KEY and PRAXIS_ACCESS_TOKEN are read by the server only",
+    "external_adapters": "local graph and passage stores work out of the box; Neo4j and Chroma HTTP adapters activate when their environment variables are configured"
+  },
+  "output_contract": {
+    "live_word_limit": 120,
+    "recommendations": 1,
+    "requires_prediction": true,
+    "requires_forced_discard": true,
+    "allows_null": true,
+    "regeneration_attempts": 1
+  },
+  "evidence_policy": {
+    "replication_states": ["strong", "contested", "dead", "never-tested-outside-lab"],
+    "dead_cards_recommended": false,
+    "source_precision": "chapter or named section for seed cards; ingested passages retain user-supplied source labels; no invented page numbers or quotations"
+  },
+  "closed_loop": {
+    "decision_write": "Every non-question result is recorded locally.",
+    "resolution": "The user marks a prediction hit or miss and can add outcome notes.",
+    "personal_weight": "Bayesian-smoothed hit rate demotes weak cards during ranking without overriding dead-card exclusion.",
+    "audit": "Coverage, unresolved decisions, per-card hit rates, and never-fired cards are calculated on demand.",
+    "rep": "Synthetic practice targets the least-used or weakest-performing eligible card."
+  }
+}

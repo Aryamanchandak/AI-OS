@@ -1,0 +1,9 @@
+[project]
+name = "study-automation"
+version = "0.1.0"
+description = "Headless automation host for Learning System's card generation job (imports study_system as a sibling library; see Learning System/plans/10_AUTOMATION_ADAPTER_RELOCATION_PLAN.md)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

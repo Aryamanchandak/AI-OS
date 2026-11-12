@@ -1,0 +1,1213 @@
+<!--
+  Marginal — a Readwise-Reader-style highlighting engine.
+  Single file, no build, no dependencies.
+
+  Architecture (the part that matters):
+    - A document is FROZEN at capture time. Its HTML never changes.
+    - Canonical text = concatenation of the DOM's text nodes, one '\n' between blocks.
+      Every offset in the system is against that string. The DOM is derived, never authoritative.
+    - A highlight is a record with FOUR anchors: block+offset, global offsets,
+      exact quote, and prefix/suffix context.
+    - Painting is disposable. Any change = reset blocks from stored HTML, re-index, repaint all.
+    - If reattachment is not confident AND clearly better than the runner-up,
+      the highlight goes to the Notebook as "unplaced" rather than landing on the wrong text.
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marginal</title>
+<style>
+  :root{
+    --paper:#F7F6F3;
+    --ink:#16181D;
+    --ink-soft:#5B6068;
+    --ink-faint:#9AA0A8;
+    --rule:#E2E0DA;
+    --panel:#FFFFFF;
+    --mark:#FFD500;
+    --mark-fill:rgba(255,213,0,.22);
+    --mark-edge:#F2C200;
+    --warn:#B4531B;
+    --focus:#2C6E9B;
+    --radius:6px;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .dark{
+    --paper:#14161A;
+    --ink:#E7E5E0;
+    --ink-soft:#9CA3AC;
+    --ink-faint:#6B727B;
+    --rule:#272B31;
+    --panel:#1B1E23;
+    --mark-fill:rgba(255,213,0,.20);
+    --mark-edge:#C9A200;
+    --warn:#E08A4B;
+    --focus:#6FB2DC;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  button,input,textarea,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+
+  /* ---------- chrome ---------- */
+  .bar{
+    position:sticky;top:0;z-index:40;
+    display:flex;gap:10px;align-items:center;
+    padding:10px 16px;background:var(--paper);
+    border-bottom:1px solid var(--rule);
+  }
+  .brand{
+    font-family:var(--serif);font-size:19px;letter-spacing:-.01em;
+    padding-right:6px;margin-right:2px;white-space:nowrap;
+  }
+  .brand b{background:linear-gradient(transparent 62%,var(--mark-fill) 62%);box-shadow:inset 0 -2px 0 var(--mark-edge)}
+  .bar select,.bar .btn{
+    background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);
+    padding:6px 10px;font-size:13px;
+  }
+  .bar select{max-width:34vw}
+  .btn:hover{border-color:var(--ink-faint)}
+  .btn.on{background:var(--mark-fill);border-color:var(--mark-edge)}
+  .spacer{flex:1}
+  .hint{font-size:12px;color:var(--ink-faint);white-space:nowrap}
+  @media(max-width:820px){.hint{display:none}}
+
+  /* ---------- layout ---------- */
+  .stage{display:grid;grid-template-columns:1fr 340px;min-height:calc(100vh - 49px)}
+  @media(max-width:1000px){.stage{grid-template-columns:1fr}.side{display:none}.side.open{display:block;position:fixed;inset:49px 0 0 auto;width:min(380px,100%);z-index:35}}
+
+  .readwrap{padding:44px 24px 45vh;display:flex;justify-content:center}
+  .reader{width:100%;max-width:44rem;position:relative}
+
+  /* ---------- document ---------- */
+  #doc{font-family:var(--serif);font-size:19.5px;line-height:1.62;letter-spacing:.002em}
+  #doc h1{font-size:2em;line-height:1.15;letter-spacing:-.02em;margin:0 0 .1em}
+  #doc h2{font-size:1.32em;line-height:1.25;margin:1.9em 0 .4em}
+  #doc h3{font-size:1.08em;margin:1.5em 0 .3em}
+  #doc p,#doc li,#doc blockquote{margin:0 0 1.05em}
+  #doc ul,#doc ol{margin:0 0 1.05em;padding-left:1.4em}
+  #doc li{margin-bottom:.35em}
+  #doc blockquote{border-left:2px solid var(--mark-edge);padding-left:1em;color:var(--ink-soft);font-style:italic}
+  #doc pre{font-family:var(--mono);font-size:.78em;line-height:1.5;background:var(--panel);border:1px solid var(--rule);
+    border-radius:var(--radius);padding:12px 14px;overflow-x:auto;margin:0 0 1.05em}
+  #doc code{font-family:var(--mono);font-size:.84em}
+  #doc a{color:inherit;text-decoration:underline;text-decoration-color:var(--ink-faint);text-underline-offset:2px}
+  #doc img{max-width:100%;border-radius:var(--radius);display:block}
+  #doc table{width:100%;border-collapse:collapse;font-size:.8em;font-family:var(--sans);margin:0 0 1.2em}
+  #doc th,#doc td{border-bottom:1px solid var(--rule);padding:7px 8px;text-align:left;vertical-align:top}
+  #doc th{color:var(--ink-soft);font-weight:600}
+  .docmeta{font-family:var(--sans);font-size:12.5px;color:var(--ink-faint);margin:6px 0 34px;display:flex;gap:10px;flex-wrap:wrap}
+  .docmeta a{color:inherit}
+
+  [data-block-id]{position:relative}
+  [data-block-id].focused::before{
+    content:"";position:absolute;left:-18px;top:.18em;bottom:.18em;width:2px;background:var(--focus);border-radius:2px;
+  }
+
+  /* ---------- the mark ---------- */
+  rw-highlight{
+    background:var(--mark-fill);
+    box-shadow:inset 0 -2px 0 var(--mark-edge);
+    cursor:pointer;
+    border-radius:1px;
+    transition:background .12s ease;
+  }
+  rw-highlight:hover{background:rgba(255,213,0,.34)}
+  .dark rw-highlight:hover{background:rgba(255,213,0,.30)}
+  rw-highlight.active{background:rgba(255,213,0,.42);box-shadow:inset 0 -2px 0 var(--mark-edge)}
+  rw-highlight .glyph{
+    font-family:var(--sans);font-size:.6em;vertical-align:.35em;
+    color:var(--ink-soft);margin-left:.25em;letter-spacing:.06em;user-select:none;
+  }
+  rw-highlight .grip{
+    display:none;position:absolute;width:18px;height:1.7em;margin-top:-.2em;
+    padding:0;border:0;background:transparent;color:inherit;
+    appearance:none;-webkit-appearance:none;
+    cursor:col-resize;z-index:5;touch-action:none;user-select:none;-webkit-user-select:none;
+  }
+  rw-highlight.active .grip{display:inline-block}
+  rw-highlight .grip::after{content:"";position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--mark-edge);border-radius:2px}
+  rw-highlight .grip.s{margin-left:-9px}
+  rw-highlight .grip.e{margin-left:-9px}
+  rw-highlight .grip:hover::after,
+  rw-highlight .grip:focus-visible::after{width:3px;left:7.5px;box-shadow:0 0 0 3px var(--mark-fill)}
+  body.resizing #doc{cursor:col-resize;user-select:none;-webkit-user-select:none}
+  @media(pointer:coarse){
+    rw-highlight .grip{width:26px;height:2em;margin-top:-.35em}
+    rw-highlight .grip::after{left:12px}
+    rw-highlight .grip.s,rw-highlight .grip.e{margin-left:-13px}
+    rw-highlight .grip:hover::after,
+    rw-highlight .grip:focus-visible::after{left:11.5px}
+  }
+
+  .marginnote{
+    position:absolute;left:calc(100% + 28px);width:210px;
+    font-family:var(--sans);font-size:12.5px;line-height:1.45;color:var(--ink-soft);
+    border-left:2px solid var(--mark-edge);padding-left:10px;
+  }
+  @media(max-width:1360px){.marginnote{display:none}}
+
+  /* ---------- floating toolbar ---------- */
+  .tools{
+    position:absolute;z-index:30;display:none;gap:2px;
+    background:var(--panel);border:1px solid var(--rule);border-radius:8px;
+    padding:4px;box-shadow:0 6px 22px rgba(0,0,0,.13);
+  }
+  .tools.show{display:flex}
+  .tools button{
+    background:none;border:0;border-radius:5px;padding:5px 9px;font-size:12.5px;color:var(--ink-soft);
+  }
+  .tools button:hover{background:var(--mark-fill);color:var(--ink)}
+  .tools button.danger:hover{background:rgba(180,83,27,.14);color:var(--warn)}
+
+  .pop{
+    position:absolute;z-index:31;display:none;width:290px;
+    background:var(--panel);border:1px solid var(--rule);border-radius:8px;
+    padding:10px;box-shadow:0 10px 30px rgba(0,0,0,.16);
+  }
+  .pop.show{display:block}
+  .pop textarea,.pop input{
+    width:100%;background:transparent;border:1px solid var(--rule);border-radius:5px;
+    padding:7px 8px;font-size:13px;font-family:var(--sans);resize:vertical;
+  }
+  .pop textarea{min-height:74px;margin-bottom:7px}
+  .pop .row{display:flex;gap:6px;margin-top:8px;justify-content:flex-end}
+  .pop .row button{background:var(--panel);border:1px solid var(--rule);border-radius:5px;padding:5px 11px;font-size:12.5px}
+  .pop .row button.primary{background:var(--mark);border-color:var(--mark-edge);color:#16181D}
+
+  /* ---------- notebook ---------- */
+  .side{border-left:1px solid var(--rule);background:var(--panel);display:flex;flex-direction:column;height:calc(100vh - 49px);position:sticky;top:49px}
+  .side h2{
+    font-family:var(--sans);font-size:11px;text-transform:uppercase;letter-spacing:.13em;
+    color:var(--ink-faint);margin:0;padding:16px 16px 10px;display:flex;align-items:center;gap:8px;
+  }
+  .side h2 .count{font-family:var(--mono);letter-spacing:0;color:var(--ink-soft)}
+  .nb{overflow-y:auto;flex:1;padding:0 12px 20px}
+  .card{
+    border:1px solid var(--rule);border-radius:var(--radius);padding:11px 12px;margin-bottom:8px;cursor:pointer;
+  }
+  .card:hover{border-color:var(--ink-faint)}
+  .card.sel{border-color:var(--mark-edge);background:var(--mark-fill)}
+  .card .q{
+    font-family:var(--serif);font-size:14.5px;line-height:1.45;
+    display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .card .n{font-size:12.5px;color:var(--ink-soft);margin-top:7px;border-left:2px solid var(--mark-edge);padding-left:8px;white-space:pre-wrap}
+  .card .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+  .tag{font-size:11px;padding:2px 7px;border:1px solid var(--rule);border-radius:99px;color:var(--ink-soft)}
+  .flag{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--warn);border:1px solid currentColor;border-radius:99px;padding:1px 7px}
+  .strat{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint)}
+  .empty{padding:14px 4px;font-size:13px;color:var(--ink-faint);line-height:1.5}
+  .sidefoot{border-top:1px solid var(--rule);padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap}
+  .sidefoot button{background:transparent;border:1px solid var(--rule);border-radius:var(--radius);padding:5px 9px;font-size:12px;color:var(--ink-soft)}
+  .sidefoot button:hover{color:var(--ink);border-color:var(--ink-faint)}
+
+  /* ---------- modal ---------- */
+  .veil{position:fixed;inset:0;background:rgba(10,11,13,.45);display:none;z-index:60;align-items:center;justify-content:center;padding:20px}
+  .veil.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--rule);border-radius:10px;width:min(720px,100%);max-height:86vh;overflow:auto;padding:20px}
+  .modal h3{margin:0 0 4px;font-family:var(--serif);font-size:20px;font-weight:600}
+  .modal p{margin:0 0 14px;font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+  .modal textarea,.modal input{
+    width:100%;background:transparent;border:1px solid var(--rule);border-radius:var(--radius);
+    padding:9px 10px;font-size:13px;font-family:var(--mono);
+  }
+  .modal textarea{min-height:230px;resize:vertical;line-height:1.5}
+  .modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+  .modal .row button{background:var(--panel);border:1px solid var(--rule);border-radius:var(--radius);padding:7px 14px;font-size:13px}
+  .modal .row button.primary{background:var(--mark);border-color:var(--mark-edge);color:#16181D;font-weight:600}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:5px}
+
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);
+    background:var(--ink);color:var(--paper);font-size:13px;padding:9px 15px;border-radius:99px;
+    opacity:0;pointer-events:none;transition:.18s ease;z-index:70;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+</style>
+
+<div class="bar">
+  <div class="brand">Marg<b>inal</b></div>
+  <select id="docpick" aria-label="Document"></select>
+  <button class="btn" id="btnNew">Add document</button>
+  <div class="spacer"></div>
+  <span class="hint">Select text to highlight · <b>H</b> paragraph · <b>N</b> note · <b>T</b> tag · <b>Z</b> undo · <b>Alt</b> to select without marking</span>
+  <button class="btn" id="btnAuto" title="Auto-highlight on selection">Auto-mark</button>
+  <button class="btn" id="btnTheme" aria-label="Toggle theme">◐</button>
+  <button class="btn" id="btnSide" aria-label="Toggle notebook">☰</button>
+</div>
+
+<div class="stage">
+  <div class="readwrap">
+    <div class="reader">
+      <div id="doc"></div>
+      <div class="tools" id="tools">
+        <button data-act="note">Note</button>
+        <button data-act="tag">Tag</button>
+        <button data-act="copy">Copy</button>
+        <button data-act="delete" class="danger">Remove</button>
+      </div>
+      <div class="pop" id="pop">
+        <textarea id="popNote" placeholder="Note"></textarea>
+        <input id="popTags" placeholder="Tags, comma separated">
+        <div class="row"><button id="popCancel">Cancel</button><button id="popSave" class="primary">Save</button></div>
+      </div>
+    </div>
+  </div>
+
+  <aside class="side" id="side">
+    <h2>Notebook <span class="count" id="nbCount">0</span></h2>
+    <div class="nb" id="nb"></div>
+    <div class="sidefoot">
+      <button id="btnMd">Export Markdown</button>
+      <button id="btnJson">Export JSON</button>
+      <button id="btnAudit">Re-anchor from quote</button>
+    </div>
+  </aside>
+</div>
+
+<div class="veil" id="veil">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   0. tiny helpers
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+async function sget(k){ try{ const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; }catch(e){ return null; } }
+async function sset(k,v){ try{ await window.storage.set(k, JSON.stringify(v)); }catch(e){ console.warn('storage', e); } }
+async function sdel(k){ try{ await window.storage.delete(k); }catch(e){} }
+
+/* ============================================================
+   1. sanitizer — allowlist only. Capture is untrusted input.
+   ============================================================ */
+const ALLOW = {
+  p:[],h1:[],h2:[],h3:[],h4:[],ul:[],ol:[],li:[],blockquote:[],pre:[],code:[],
+  em:[],i:[],strong:[],b:[],u:[],s:[],sup:[],sub:[],br:[],hr:[],figure:[],figcaption:[],
+  a:['href'],img:['src','alt'],table:[],thead:[],tbody:[],tr:[],th:[],td:[]
+};
+function sanitize(html){
+  const t = document.createElement('template'); t.innerHTML = html;
+  (function walk(node){
+    for (const child of Array.from(node.childNodes)){
+      if (child.nodeType === 3) continue;
+      if (child.nodeType !== 1){ child.remove(); continue; }
+      const tag = child.tagName.toLowerCase();
+      if (!(tag in ALLOW)){
+        // unwrap unknown containers, drop scripts/styles outright
+        if (['script','style','noscript','iframe','object','svg','canvas'].includes(tag)) child.remove();
+        else { walk(child); child.replaceWith(...child.childNodes); }
+        continue;
+      }
+      for (const a of Array.from(child.attributes)){
+        if (!ALLOW[tag].includes(a.name)) child.removeAttribute(a.name);
+      }
+      const href = child.getAttribute && child.getAttribute('href');
+      if (href && /^\s*(javascript|data):/i.test(href)) child.removeAttribute('href');
+      const src = child.getAttribute && child.getAttribute('src');
+      if (src && /^\s*javascript:/i.test(src)) child.remove();
+      else walk(child);
+    }
+  })(t.content);
+  return t.innerHTML;
+}
+/* Plain text -> blocks, for pasted prose */
+function textToHtml(txt){
+  return txt.split(/\n{2,}/).map(p => {
+    const s = p.trim(); if (!s) return '';
+    if (/^#{1,3}\s/.test(s)) { const n = s.match(/^#+/)[0].length; return `<h${n}>${esc(s.replace(/^#+\s/,''))}</h${n}>`; }
+    if (/^[-*]\s/m.test(s) && s.split('\n').every(l => /^[-*]\s/.test(l.trim())))
+      return '<ul>' + s.split('\n').map(l => `<li>${esc(l.replace(/^\s*[-*]\s/,''))}</li>`).join('') + '</ul>';
+    return `<p>${esc(s).replace(/\n/g,' ')}</p>`;
+  }).join('');
+}
+function hash(str){
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/* ============================================================
+   2. state
+   ============================================================ */
+const BLOCK_TAGS = 'h1,h2,h3,h4,p,li,blockquote,pre,figcaption,tr';
+let S = {
+  docs: [],          // [{id,title,url,capturedAt,revisionHash}]
+  doc: null,         // full doc {..., html}
+  hls: [],           // highlights for current doc
+  canonical: '',     // canonical text of current doc
+  index: [],         // [{node,start,end,blockId,blockOffset}] over the PAINTED dom
+  blocks: [],        // [{id,el,start,end}]
+  focus: -1,
+  active: null,      // active highlight id
+  undo: [],
+  auto: true,
+  dragging: null,     // active resize transaction; the DOM grip itself is disposable
+  suppressSelectionUntil: 0
+};
+
+/* ============================================================
+   3. render + index
+   The DOM is derived from doc.html every single time.
+   Nothing mutates the stored html, ever.
+   ============================================================ */
+function renderDocument(){
+  const d = S.doc, host = $('#doc');
+  host.innerHTML =
+    `<h1 data-block-id="title">${esc(d.title)}</h1>` +
+    `<div class="docmeta">${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">${esc(hostname(d.url))}</a>` : '<span>pasted</span>'}` +
+    `<span>frozen ${new Date(d.capturedAt).toLocaleDateString()}</span><span class="strat">rev ${d.revisionHash}</span></div>` +
+    d.html;
+  normalizeTextNodes(host);
+  indexDocument();
+}
+function hostname(u){ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return u; } }
+
+/* NBSP and composed forms are normalised once, in the DOM itself, so the
+   canonical string and the live text nodes can never drift apart. */
+function normalizeTextNodes(root){
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n, list = [];
+  while ((n = w.nextNode())) list.push(n);
+  for (const t of list){
+    const v = t.nodeValue.replace(/\u00a0/g, ' ').normalize('NFC');
+    if (v !== t.nodeValue) t.nodeValue = v;
+  }
+}
+
+function indexDocument(){
+  S.index = []; S.blocks = [];
+  let text = '', pos = 0;
+
+  // Block ids are assigned by document order over a fixed selector, and the
+  // document is rebuilt from the same frozen html every time — so they are stable.
+  const all = Array.from($('#doc').querySelectorAll(BLOCK_TAGS + ',[data-block-id]'));
+  all.forEach((el, i) => { if (!el.dataset.blockId) el.dataset.blockId = 'b' + i; });
+
+  // only leaf blocks carry text (a blockquote wrapping a p is not itself a block)
+  const ordered = all.filter(el => !el.querySelector(BLOCK_TAGS + ',[data-block-id]'));
+  for (const el of ordered){
+    const bStart = pos;
+    // UI we inject into the document (note glyphs, margin notes) is not content
+    // and must never enter the canonical string, or every later offset shifts.
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode: n => n.parentElement && n.parentElement.closest('.glyph,.marginnote,.grip')
+        ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+    let n, bOff = 0;
+    while ((n = w.nextNode())){
+      const len = n.nodeValue.length;
+      if (len === 0) continue;
+      S.index.push({ node:n, start:pos, end:pos+len, blockId:el.dataset.blockId, blockOffset:bOff });
+      text += n.nodeValue; pos += len; bOff += len;
+    }
+    S.blocks.push({ id: el.dataset.blockId, el, start: bStart, end: pos });
+    text += '\n'; pos += 1;
+  }
+  S.canonical = text;
+}
+
+/* offset <-> DOM */
+function globalOf(node, offset){
+  const e = S.index.find(x => x.node === node);
+  if (e) return e.start + Math.min(offset, e.end - e.start);
+  // Container boundaries are common beside inline elements. Prefer the first
+  // indexed descendant after the caret, then the last one before it.
+  if (node.nodeType === 1){
+    const kids = Array.from(node.childNodes);
+    const entriesIn = child => child ? S.index.filter(x => x.node === child || (child.nodeType === 1 && child.contains(x.node))) : [];
+    const after = entriesIn(kids[offset]);
+    if (after.length) return after[0].start;
+    const before = entriesIn(kids[offset - 1]);
+    if (before.length) return before[before.length - 1].end;
+    const inside = S.index.filter(x => node.contains(x.node));
+    if (inside.length) return offset <= 0 ? inside[0].start : inside[inside.length - 1].end;
+  }
+  return null;
+}
+function partsFor(start, end){
+  return S.index
+    .filter(e => e.end > start && e.start < end)
+    .map(e => ({ node:e.node, s: Math.max(0, start - e.start), e: Math.min(e.end - e.start, end - e.start) }))
+    .filter(p => p.e > p.s);
+}
+function blockAt(off){ return S.blocks.find(b => off >= b.start && off <= b.end) || S.blocks[0]; }
+
+/* ============================================================
+   4. painting — disposable by design
+   ============================================================ */
+function repaint(){
+  const wasActive = S.active;
+  renderDocument();                       // wipes every wrapper, restores original text
+  const placed = S.hls.filter(h => h.status === 'attached').sort((a,b) => a.position.start - b.position.start);
+  // paint in reverse document order so earlier text-node offsets stay valid
+  for (let i = placed.length - 1; i >= 0; i--) paint(placed[i]);
+  indexDocument();
+  S.active = wasActive;
+  if (S.active) markActive(S.active);
+  layoutMarginNotes();
+  renderNotebook();
+}
+function paint(h){
+  const parts = partsFor(h.position.start, h.position.end);
+  for (let i = parts.length - 1; i >= 0; i--){
+    const p = parts[i];
+    const r = document.createRange();
+    try { r.setStart(p.node, p.s); r.setEnd(p.node, p.e); } catch(e){ continue; }
+    const el = document.createElement('rw-highlight');
+    el.dataset.highlightId = h.id;
+    if (h.note) el.classList.add('has-note');
+    try { r.surroundContents(el); } catch(e){ continue; }
+    if (i === 0){
+      const g = makeGrip('start');
+      el.insertBefore(g, el.firstChild);
+    }
+    if (i === parts.length - 1){
+      const g = makeGrip('end');
+      el.appendChild(g);
+      if (h.note || (h.tags && h.tags.length)){
+        const s = document.createElement('span'); s.className = 'glyph';
+        s.textContent = (h.note ? '✎' : '') + (h.tags && h.tags.length ? '#' : '');
+        el.appendChild(s);
+      }
+    }
+  }
+}
+function makeGrip(edge){
+  const g = document.createElement('button');
+  g.type = 'button';
+  g.className = 'grip ' + (edge === 'start' ? 's' : 'e');
+  g.dataset.edge = edge;
+  g.setAttribute('aria-label', `Resize ${edge} boundary`);
+  g.title = `Drag to resize the ${edge} boundary · Arrow keys nudge`;
+  return g;
+}
+function markActive(id){
+  $$('rw-highlight.active').forEach(e => e.classList.remove('active'));
+  $$(`rw-highlight[data-highlight-id="${id}"]`).forEach(e => e.classList.add('active'));
+}
+function layoutMarginNotes(){
+  $$('.marginnote').forEach(e => e.remove());
+  if (window.innerWidth < 1360) return;
+  for (const h of S.hls){
+    if (!h.note || h.status !== 'attached') continue;
+    const el = document.querySelector(`rw-highlight[data-highlight-id="${h.id}"]`);
+    if (!el) continue;
+    const block = el.closest('[data-block-id]'); if (!block) continue;
+    const note = document.createElement('div');
+    note.className = 'marginnote'; note.textContent = h.note;
+    note.style.top = (el.offsetTop - block.offsetTop) + 'px';
+    block.appendChild(note);
+  }
+}
+
+/* ============================================================
+   5. creating highlights
+   ============================================================ */
+const CTX = 40;
+function trimBounds(start, end){
+  while (start < end && /\s/.test(S.canonical[start])) start++;
+  while (end > start && /\s/.test(S.canonical[end - 1])) end--;
+  return { start, end };
+}
+function refreshAnchors(h, start, end, opts = {}){
+  const sb = blockAt(start), eb = blockAt(end);
+  h.position = { start, end };
+  h.quote = {
+    exact: S.canonical.slice(start, end),
+    prefix: S.canonical.slice(Math.max(0, start - CTX), start),
+    suffix: S.canonical.slice(end, end + CTX)
+  };
+  h.range = {
+    startBlockId: sb.id, startOffset: start - sb.start,
+    endBlockId: eb.id, endOffset: end - eb.start
+  };
+  h.revisionHash = S.doc.revisionHash;
+  h.status = 'attached';
+  if (opts.strategy) h.strategy = opts.strategy;
+  if (opts.confidence != null) h.confidence = opts.confidence;
+  if (opts.touchUpdatedAt) h.updatedAt = new Date().toISOString();
+  return h;
+}
+function makeHighlight(start, end){
+  // trim whitespace at the edges — nobody means to highlight a trailing space
+  ({ start, end } = trimBounds(start, end));
+  if (end - start < 1) return null;
+
+  return refreshAnchors({
+    id: uid(),
+    docId: S.doc.id,
+    revisionHash: S.doc.revisionHash,
+    note: '', tags: [],
+    createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+    status: 'attached', strategy: 'created', confidence: 1
+  }, start, end);
+}
+/* merge rule lives at the DATA layer, not the render layer.
+   overlapping or touching (<=1 whitespace apart) highlights become one record. */
+function shouldMerge(a, b){
+  if (a.status !== 'attached' || b.status !== 'attached') return false;
+  const left = a.position.start <= b.position.start ? a : b;
+  const right = left === a ? b : a;
+  if (left.position.end >= right.position.start) return true;
+  const gap = S.canonical.slice(left.position.end, right.position.start);
+  return gap.length === 1 && /\s/.test(gap);
+}
+function mergeRecords(a, b){
+  const aFirst = (a.createdAt || '') <= (b.createdAt || '');
+  const older = aFirst ? a : b;
+  const newer = aFirst ? b : a;
+  const start = Math.min(a.position.start, b.position.start);
+  const end = Math.max(a.position.end, b.position.end);
+  const directStrategy = a.strategy === 'resized' || b.strategy === 'resized' ? 'resized' : (newer.strategy || older.strategy);
+  return refreshAnchors({
+    ...older,
+    note: [older.note, newer.note].filter(Boolean).join('\n'),
+    tags: Array.from(new Set([...(older.tags || []), ...(newer.tags || [])])),
+    updatedAt: new Date().toISOString()
+  }, start, end, { strategy: directStrategy, confidence: 1 });
+}
+function mergeIntoStore(candidate){
+  let merged = candidate;
+  let rest = S.hls.filter(x => x.id !== candidate.id);
+  // The union can grow far enough to reach a record seen earlier, so repeat
+  // until no remaining record violates the store invariant.
+  let changed = true;
+  while (changed){
+    changed = false;
+    const keep = [];
+    for (const x of rest){
+      if (shouldMerge(x, merged)){
+        merged = mergeRecords(x, merged);
+        changed = true;
+      } else keep.push(x);
+    }
+    rest = keep;
+  }
+  S.hls = [...rest, merged];
+  return merged;
+}
+function commit(h, undoSnapshot){
+  if (!h) return null;
+  pushUndo(undoSnapshot);
+  const merged = mergeIntoStore(h);
+  S.active = merged.id;
+  save(); repaint();
+  return merged;
+}
+function pushUndo(snapshot = JSON.stringify(S.hls)){
+  S.undo.push(snapshot);
+  if (S.undo.length > 60) S.undo.shift();
+}
+function undo(){
+  if (!S.undo.length) return toast('Nothing to undo');
+  S.hls = JSON.parse(S.undo.pop());
+  S.active = null; save(); repaint(); toast('Undone');
+}
+
+/* selection -> highlight */
+document.addEventListener('mouseup', e => {
+  if (S.dragging || Date.now() < S.suppressSelectionUntil) return;
+  setTimeout(() => handleSelection(e.altKey), 0);
+});
+document.addEventListener('keyup', e => { if (e.key === 'Shift') handleSelection(false); });
+function handleSelection(bypass){
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !S.auto || bypass) return;
+  const r = sel.getRangeAt(0);
+  if (!$('#doc').contains(r.commonAncestorContainer)) return;
+  const a = globalOf(r.startContainer, r.startOffset);
+  const b = globalOf(r.endContainer, r.endOffset);
+  if (a == null || b == null) return;
+  const h = commit(makeHighlight(Math.min(a,b), Math.max(a,b)));
+  sel.removeAllRanges();
+  if (h) showTools(h.id);
+}
+
+/* click an existing mark */
+$('#doc').addEventListener('click', e => {
+  const el = e.target.closest && e.target.closest('rw-highlight');
+  if (el){ S.active = el.dataset.highlightId; markActive(S.active); showTools(S.active); renderNotebook(); }
+  else if (!e.target.closest('.tools') && !e.target.closest('.pop')) hideTools();
+});
+
+/* ============================================================
+   6. resize grips
+   ============================================================ */
+document.addEventListener('pointerdown', e => {
+  const g = e.target.closest && e.target.closest('.grip');
+  if (!g) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const mark = g.closest('rw-highlight');
+  const h = mark && S.hls.find(x => x.id === mark.dataset.highlightId);
+  if (!h || h.status !== 'attached') return;
+  e.preventDefault();
+  e.stopPropagation();
+  S.dragging = {
+    id: h.id,
+    edge: g.dataset.edge,
+    pointerId: e.pointerId,
+    before: JSON.stringify(S.hls),
+    original: { ...h.position },
+    changed: false
+  };
+  S.suppressSelectionUntil = Date.now() + 500;
+  document.body.classList.add('resizing');
+  try { $('#doc').setPointerCapture(e.pointerId); } catch(err){}
+  hideTools();
+});
+document.addEventListener('pointermove', e => {
+  if (!S.dragging || e.pointerId !== S.dragging.pointerId) return;
+  e.preventDefault();
+  const off = offsetFromPoint(e.clientX, e.clientY);
+  if (off == null) return;
+  previewResize(off);
+});
+document.addEventListener('pointerup', e => {
+  if (!S.dragging || e.pointerId !== S.dragging.pointerId) return;
+  e.preventDefault();
+  finishResize(true);
+});
+document.addEventListener('pointercancel', e => {
+  if (!S.dragging || e.pointerId !== S.dragging.pointerId) return;
+  finishResize(false);
+});
+$('#doc').addEventListener('lostpointercapture', e => {
+  if (S.dragging && e.pointerId === S.dragging.pointerId) finishResize(false);
+});
+function resizeBounds(h, edge, rawOffset){
+  const lastBlock = S.blocks[S.blocks.length - 1];
+  const docEnd = lastBlock ? lastBlock.end : S.canonical.length;
+  const off = Math.max(0, Math.min(docEnd, rawOffset));
+  let { start, end } = h.position;
+  if (edge === 'start') start = Math.min(off, stepCodePoint(end, -1));
+  else end = Math.max(off, stepCodePoint(start, 1));
+  return { start, end };
+}
+function previewResize(off){
+  const tx = S.dragging; if (!tx) return false;
+  const h = S.hls.find(x => x.id === tx.id); if (!h) return false;
+  const { start, end } = resizeBounds(h, tx.edge, off);
+  if (start === h.position.start && end === h.position.end) return false;
+  refreshAnchors(h, start, end, { strategy: 'resized', confidence: 1 });
+  tx.changed = true;
+  repaint(); markActive(h.id);
+  return true;
+}
+function finishResize(shouldCommit, announceCancel = false){
+  const tx = S.dragging; if (!tx) return null;
+  S.dragging = null; // clear first: releasePointerCapture emits lostpointercapture
+  document.body.classList.remove('resizing');
+  try {
+    if ($('#doc').hasPointerCapture(tx.pointerId)) $('#doc').releasePointerCapture(tx.pointerId);
+  } catch(err){}
+
+  const restore = () => {
+    S.hls = JSON.parse(tx.before);
+    S.active = tx.id;
+    repaint();
+    requestAnimationFrame(() => {
+      focusGrip(tx.id, tx.edge);
+      showTools(tx.id);
+    });
+    if (announceCancel) toast('Resize cancelled');
+    return null;
+  };
+  if (!shouldCommit || !tx.changed) return restore();
+
+  const h = S.hls.find(x => x.id === tx.id);
+  if (!h) return restore();
+  const bounds = trimBounds(h.position.start, h.position.end);
+  if (bounds.end <= bounds.start ||
+      (bounds.start === tx.original.start && bounds.end === tx.original.end)) return restore();
+
+  refreshAnchors(h, bounds.start, bounds.end, {
+    strategy: 'resized', confidence: 1, touchUpdatedAt: true
+  });
+  const merged = commit(h, tx.before);
+  requestAnimationFrame(() => {
+    focusGrip(merged.id, tx.edge);
+    showTools(merged.id);
+  });
+  return merged;
+}
+function focusGrip(id, edge){
+  const side = edge === 'start' ? 's' : 'e';
+  document.querySelector(`rw-highlight[data-highlight-id="${id}"] .grip.${side}`)?.focus({ preventScroll:true });
+}
+function offsetFromPoint(x, y){
+  let node, offset;
+  if (document.caretPositionFromPoint){
+    const p = document.caretPositionFromPoint(x, y); if (!p) return null;
+    node = p.offsetNode; offset = p.offset;
+  } else if (document.caretRangeFromPoint){
+    const r = document.caretRangeFromPoint(x, y); if (!r) return null;
+    node = r.startContainer; offset = r.startOffset;
+  } else return null;
+  const grip = node.nodeType === 1 ? node.closest?.('.grip') : node.parentElement?.closest('.grip');
+  if (grip){
+    const mark = grip.closest('rw-highlight');
+    const h = mark && S.hls.find(v => v.id === mark.dataset.highlightId);
+    if (h) return grip.dataset.edge === 'start' ? h.position.start : h.position.end;
+  }
+  if (!$('#doc').contains(node)) return null;
+  return globalOf(node, offset);
+}
+
+/* ============================================================
+   7. keyboard grammar
+   ============================================================ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && S.dragging){
+    e.preventDefault();
+    finishResize(false, true);
+    return;
+  }
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+  if (e.metaKey || e.ctrlKey) return;
+  const grip = e.target.closest && e.target.closest('.grip');
+  if (grip && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')){
+    e.preventDefault();
+    resizeFromKeyboard(grip, e.key, e.shiftKey ? 5 : 1);
+    return;
+  }
+  const k = e.key.toLowerCase();
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    if (!S.blocks.length) return;
+    e.preventDefault();
+    S.focus = Math.max(0, Math.min(S.blocks.length - 1, S.focus + (e.key === 'ArrowDown' ? 1 : -1)));
+    paintFocus();
+  } else if (k === 'h' || k === 'n'){
+    if (S.focus < 0) return;
+    e.preventDefault();
+    const b = S.blocks[S.focus];
+    const h = commit(makeHighlight(b.start, b.end));
+    if (h && k === 'n') openPop(h.id, 'note');
+  } else if (k === 't'){
+    if (!S.active) return;
+    e.preventDefault(); openPop(S.active, 'tag');
+  } else if (k === 'z'){
+    e.preventDefault(); undo();
+  } else if (e.key === 'Escape'){
+    hideTools(); closePop(); S.active = null; markActive(''); renderNotebook();
+  }
+});
+function stepCodePoint(off, direction){
+  if (direction < 0){
+    if (off <= 0) return 0;
+    let next = off - 1;
+    const low = S.canonical.charCodeAt(next);
+    const high = S.canonical.charCodeAt(next - 1);
+    if (low >= 0xDC00 && low <= 0xDFFF && high >= 0xD800 && high <= 0xDBFF) next--;
+    return next;
+  }
+  if (off >= S.canonical.length) return S.canonical.length;
+  let next = off + 1;
+  const high = S.canonical.charCodeAt(off);
+  const low = S.canonical.charCodeAt(off + 1);
+  if (high >= 0xD800 && high <= 0xDBFF && low >= 0xDC00 && low <= 0xDFFF) next++;
+  return next;
+}
+function resizeFromKeyboard(grip, key, amount){
+  const mark = grip.closest('rw-highlight');
+  const h = mark && S.hls.find(x => x.id === mark.dataset.highlightId);
+  if (!h || h.status !== 'attached') return;
+  const edge = grip.dataset.edge;
+  const block = grip.closest('[data-block-id]');
+  const rtl = block && getComputedStyle(block).direction === 'rtl';
+  let direction = key === 'ArrowLeft' ? -1 : 1;
+  if (rtl) direction *= -1;
+  let off = h.position[edge];
+  for (let i = 0; i < amount; i++) off = stepCodePoint(off, direction);
+  let bounds = resizeBounds(h, edge, off);
+  bounds = trimBounds(bounds.start, bounds.end);
+  if (bounds.end <= bounds.start ||
+      (bounds.start === h.position.start && bounds.end === h.position.end)) return;
+  const before = JSON.stringify(S.hls);
+  refreshAnchors(h, bounds.start, bounds.end, {
+    strategy: 'resized', confidence: 1, touchUpdatedAt: true
+  });
+  const merged = commit(h, before);
+  requestAnimationFrame(() => {
+    focusGrip(merged.id, edge);
+    showTools(merged.id);
+  });
+}
+function paintFocus(){
+  $$('[data-block-id].focused').forEach(el => el.classList.remove('focused'));
+  const b = S.blocks[S.focus]; if (!b) return;
+  b.el.classList.add('focused');
+  b.el.scrollIntoView({ block:'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+}
+
+/* ============================================================
+   8. toolbar + note popover
+   ============================================================ */
+function anchorRectOf(id){
+  const els = $$(`rw-highlight[data-highlight-id="${id}"]`);
+  if (!els.length) return null;
+  const last = els[els.length - 1];
+  const wrap = $('.reader').getBoundingClientRect();
+  const r = last.getBoundingClientRect();
+  return { top: r.bottom - wrap.top + 8, left: Math.max(0, r.left - wrap.left) };
+}
+function showTools(id){
+  const pos = anchorRectOf(id); const t = $('#tools');
+  if (!pos) return hideTools();
+  t.style.top = pos.top + 'px'; t.style.left = pos.left + 'px';
+  t.classList.add('show'); t.dataset.id = id;
+}
+function hideTools(){ $('#tools').classList.remove('show'); }
+$('#tools').addEventListener('click', e => {
+  const act = e.target.dataset.act; const id = $('#tools').dataset.id;
+  if (!act || !id) return;
+  const h = S.hls.find(x => x.id === id); if (!h) return;
+  if (act === 'note') openPop(id, 'note');
+  if (act === 'tag') openPop(id, 'tag');
+  if (act === 'copy'){ navigator.clipboard?.writeText(h.quote.exact); toast('Quote copied'); hideTools(); }
+  if (act === 'delete'){ pushUndo(); S.hls = S.hls.filter(x => x.id !== id); S.active = null; save(); repaint(); hideTools(); }
+});
+function openPop(id, focusField){
+  const h = S.hls.find(x => x.id === id); if (!h) return;
+  const pos = anchorRectOf(id) || { top: 40, left: 0 };
+  const p = $('#pop');
+  p.style.top = pos.top + 'px'; p.style.left = pos.left + 'px';
+  p.dataset.id = id; p.classList.add('show'); hideTools();
+  $('#popNote').value = h.note || '';
+  $('#popTags').value = (h.tags || []).join(', ');
+  (focusField === 'tag' ? $('#popTags') : $('#popNote')).focus();
+}
+function closePop(){ $('#pop').classList.remove('show'); }
+$('#popCancel').onclick = closePop;
+$('#popSave').onclick = () => {
+  const h = S.hls.find(x => x.id === $('#pop').dataset.id); if (!h) return;
+  pushUndo();
+  h.note = $('#popNote').value.trim();
+  h.tags = $('#popTags').value.split(',').map(s => s.trim()).filter(Boolean);
+  h.updatedAt = new Date().toISOString();
+  save(); closePop(); repaint();
+};
+$('#pop').addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePop();
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('#popSave').click();
+});
+
+/* ============================================================
+   9. reattachment — the actual hard part
+   Runs when the stored revision no longer matches what we render.
+   Rule: a missing overlay is recoverable, a confidently wrong one is not.
+   ============================================================ */
+function bigrams(s){
+  const m = new Map();
+  for (let i = 0; i < s.length - 1; i++){ const g = s.slice(i, i+2); m.set(g, (m.get(g)||0)+1); }
+  return m;
+}
+function dice(a, b){
+  if (!a.size || !b.size) return 0;
+  let hit = 0, total = 0;
+  for (const [g,c] of a){ total += c; hit += Math.min(c, b.get(g) || 0); }
+  let tb = 0; for (const [,c] of b) tb += c;
+  return (2 * hit) / (total + tb);
+}
+function allIndexOf(hay, needle){
+  const out = []; let i = hay.indexOf(needle);
+  while (i !== -1 && out.length < 200){ out.push(i); i = hay.indexOf(needle, i + 1); }
+  return out;
+}
+function contextScore(start, end, h){
+  const pre = S.canonical.slice(Math.max(0, start - CTX), start);
+  const suf = S.canonical.slice(end, end + CTX);
+  const tail = (a, b) => { let n = 0; while (n < Math.min(a.length, b.length) && a[a.length-1-n] === b[b.length-1-n]) n++; return n; };
+  const head = (a, b) => { let n = 0; while (n < Math.min(a.length, b.length) && a[n] === b[n]) n++; return n; };
+  const p = h.quote.prefix ? tail(pre, h.quote.prefix) / Math.max(1, h.quote.prefix.length) : .5;
+  const s = h.quote.suffix ? head(suf, h.quote.suffix) / Math.max(1, h.quote.suffix.length) : .5;
+  const drift = Math.abs(start - h.position.start) / Math.max(500, S.canonical.length);
+  return .55 + .22 * p + .22 * s - Math.min(.18, drift);
+}
+function resolve(h, opts = {}){
+  const q = h.quote.exact;
+  const ignorePos = !!opts.forceSearch;
+
+  // 1. same revision: stored offsets are gospel
+  if (!ignorePos && h.revisionHash === S.doc.revisionHash && S.canonical.slice(h.position.start, h.position.end) === q)
+    return { start: h.position.start, end: h.position.end, confidence: 1, strategy: 'revision' };
+
+  // 2. block id + local offset
+  if (!ignorePos){
+    const b = S.blocks.find(x => x.id === h.range.startBlockId);
+    if (b){
+      const s = b.start + h.range.startOffset, e = s + q.length;
+      if (S.canonical.slice(s, e) === q) return { start:s, end:e, confidence:.97, strategy:'block' };
+    }
+    // 3. global offsets
+    if (S.canonical.slice(h.position.start, h.position.end) === q)
+      return { start:h.position.start, end:h.position.end, confidence:.95, strategy:'position' };
+  }
+
+  // 4. exact quote search, ranked by surrounding context
+  const hits = allIndexOf(S.canonical, q);
+  if (hits.length){
+    const scored = hits.map(i => ({ start:i, end:i + q.length, confidence: contextScore(i, i + q.length, h), strategy:'quote' }))
+                       .sort((a,b) => b.confidence - a.confidence);
+    const [best, next] = scored;
+    if (hits.length === 1 || best.confidence - (next ? next.confidence : 0) >= .05) return best;
+  }
+
+  // 5. fuzzy window
+  if (q.length >= 12 && S.canonical.length < 400000){
+    const target = bigrams(q), L = q.length, step = Math.max(1, Math.floor(L / 6));
+    let best = null, second = 0;
+    for (let i = 0; i + L <= S.canonical.length; i += step){
+      const sc = dice(bigrams(S.canonical.slice(i, i + L)), target);
+      if (!best || sc > best.confidence){ second = best ? best.confidence : 0; best = { start:i, end:i+L, confidence:sc, strategy:'fuzzy' }; }
+      else if (sc > second) second = sc;
+    }
+    if (best && best.confidence >= .82 && best.confidence - second >= .04) return best;
+  }
+
+  // 6. refuse
+  return null;
+}
+function reanchorAll(opts){
+  let placed = 0, dropped = 0;
+  for (const h of S.hls){
+    const r = resolve(h, opts);
+    if (r){
+      h.position = { start:r.start, end:r.end };
+      const sb = blockAt(r.start), eb = blockAt(r.end);
+      h.range = { startBlockId: sb.id, startOffset: r.start - sb.start, endBlockId: eb.id, endOffset: r.end - eb.start };
+      h.status = 'attached'; h.strategy = r.strategy; h.confidence = Math.round(r.confidence * 100) / 100;
+      h.revisionHash = S.doc.revisionHash;
+      placed++;
+    } else { h.status = 'unplaced'; h.strategy = 'none'; h.confidence = 0; dropped++; }
+  }
+  return { placed, dropped };
+}
+
+/* ============================================================
+   10. notebook
+   ============================================================ */
+function renderNotebook(){
+  const nb = $('#nb');
+  $('#nbCount').textContent = S.hls.length;
+  if (!S.hls.length){
+    nb.innerHTML = `<div class="empty">No highlights yet.<br><br>Drag across any sentence, or press <b>↓</b> then <b>H</b> to mark a whole paragraph.</div>`;
+    return;
+  }
+  const sorted = [...S.hls].sort((a,b) => (a.status === b.status ? a.position.start - b.position.start : a.status === 'attached' ? -1 : 1));
+  nb.innerHTML = sorted.map(h => `
+    <div class="card ${h.id === S.active ? 'sel' : ''}" data-id="${h.id}">
+      <div class="q">${esc(h.quote.exact)}</div>
+      ${h.note ? `<div class="n">${esc(h.note)}</div>` : ''}
+      <div class="meta">
+        ${(h.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join('')}
+        ${h.status === 'unplaced' ? '<span class="flag">unplaced</span>' : ''}
+        <span class="strat">${h.strategy}${h.confidence != null && h.strategy !== 'created' ? ' ' + h.confidence : ''}</span>
+      </div>
+    </div>`).join('');
+}
+$('#nb').addEventListener('click', e => {
+  const card = e.target.closest('.card'); if (!card) return;
+  const h = S.hls.find(x => x.id === card.dataset.id); if (!h) return;
+  S.active = h.id; renderNotebook();
+  if (h.status !== 'attached') return toast('This one has no confident position in the document');
+  markActive(h.id);
+  const el = document.querySelector(`rw-highlight[data-highlight-id="${h.id}"]`);
+  el?.scrollIntoView({ block:'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  setTimeout(() => showTools(h.id), 320);
+});
+
+/* ============================================================
+   11. export
+   ============================================================ */
+function toMarkdown(){
+  const d = S.doc;
+  const body = [...S.hls].sort((a,b) => a.position.start - b.position.start).map(h =>
+    `> ${h.quote.exact.replace(/\n/g,'\n> ')}\n` +
+    (h.note ? `\n${h.note}\n` : '') +
+    ((h.tags||[]).length ? `\n${h.tags.map(t => '#' + t.replace(/\s+/g,'-')).join(' ')}\n` : '') +
+    (h.status !== 'attached' ? `\n*(position not recoverable in the current revision)*\n` : '')
+  ).join('\n---\n\n');
+  return `# ${d.title}\n\n${d.url ? d.url + '\n' : ''}Captured ${new Date(d.capturedAt).toISOString().slice(0,10)} · revision ${d.revisionHash}\n\n${body}\n`;
+}
+function showModal(html){ $('#modal').innerHTML = html; $('#veil').classList.add('show'); }
+function closeModal(){ $('#veil').classList.remove('show'); }
+$('#veil').addEventListener('click', e => { if (e.target === $('#veil')) closeModal(); });
+
+$('#btnMd').onclick = () => showModal(`
+  <h3>Markdown</h3><p>The quote, the note, the tags, the source. Portable by default.</p>
+  <textarea readonly>${esc(toMarkdown())}</textarea>
+  <div class="row"><button onclick="closeModal()">Close</button>
+  <button class="primary" onclick="navigator.clipboard.writeText(this.closest('.modal').querySelector('textarea').value);toast('Copied')">Copy</button></div>`);
+$('#btnJson').onclick = () => showModal(`
+  <h3>JSON</h3><p>Every anchor, exactly as stored. This is the real record — the yellow is just a projection of it.</p>
+  <textarea readonly>${esc(JSON.stringify({ document: { ...S.doc, html: '…' + S.doc.html.length + ' chars…' }, highlights: S.hls }, null, 2))}</textarea>
+  <div class="row"><button onclick="closeModal()">Close</button>
+  <button class="primary" onclick="navigator.clipboard.writeText(this.closest('.modal').querySelector('textarea').value);toast('Copied')">Copy</button></div>`);
+
+/* forces every highlight back through search + fuzzy, ignoring stored offsets.
+   This is how you find out whether your anchors would survive a re-parse. */
+$('#btnAudit').onclick = () => {
+  if (!S.hls.length) return toast('Nothing to re-anchor');
+  const before = JSON.stringify(S.hls.map(h => h.position));
+  const { placed, dropped } = reanchorAll({ forceSearch: true });
+  const same = JSON.stringify(S.hls.map(h => h.position)) === before;
+  save(); repaint();
+  toast(`${placed} re-found from quote alone, ${dropped} refused${same ? ', all landed identically' : ', some moved'}`);
+};
+
+/* ============================================================
+   12. documents
+   ============================================================ */
+async function save(){
+  if (!S.doc) return;
+  await sset('hls:' + S.doc.id, S.hls);
+}
+async function saveDoc(d){
+  await sset('doc:' + d.id, d);
+  S.docs = S.docs.filter(x => x.id !== d.id).concat([{ id:d.id, title:d.title, url:d.url, capturedAt:d.capturedAt, revisionHash:d.revisionHash }]);
+  await sset('docs:index', S.docs);
+}
+async function openDoc(id){
+  const d = await sget('doc:' + id);
+  if (!d) return toast('That document could not be loaded');
+  S.doc = d;
+  S.hls = (await sget('hls:' + id)) || [];
+  S.focus = -1; S.active = null; S.undo = [];
+  renderDocument();
+  const stale = S.hls.some(h => h.revisionHash !== d.revisionHash);
+  const r = reanchorAll();
+  repaint();
+  if (stale && r.dropped) toast(`${r.dropped} highlight${r.dropped > 1 ? 's' : ''} kept in the Notebook — no confident position`);
+  $('#docpick').value = id;
+  window.scrollTo(0,0);
+}
+function renderPicker(){
+  $('#docpick').innerHTML = S.docs.map(d => `<option value="${d.id}">${esc(d.title)}</option>`).join('');
+  if (S.doc) $('#docpick').value = S.doc.id;
+}
+$('#docpick').onchange = e => openDoc(e.target.value);
+
+$('#btnNew').onclick = () => showModal(`
+  <h3>Add a document</h3>
+  <p>Paste an article. Rich text keeps its structure; plain text is split into paragraphs. Whatever lands here is frozen — the copy you highlight never changes underneath you.</p>
+  <div class="field"><label>Title</label><input id="mTitle" placeholder="Untitled"></div>
+  <div class="field"><label>Source URL (optional)</label><input id="mUrl" placeholder="https://"></div>
+  <div class="field"><label>Content</label><textarea id="mBody" placeholder="Paste here…"></textarea></div>
+  <div class="row"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="addDoc()">Freeze it</button></div>`);
+
+window.addDoc = async function(){
+  const title = ($('#mTitle').value.trim() || 'Untitled');
+  const url = $('#mUrl').value.trim();
+  const raw = $('#mBody').value;
+  if (!raw.trim()) return toast('Paste something first');
+  const looksHtml = /<\/?(p|div|h[1-6]|ul|ol|li|article|section|span)\b/i.test(raw);
+  const html = sanitize(looksHtml ? raw : textToHtml(raw));
+  const d = { id: uid(), title, url, capturedAt: new Date().toISOString(), html, revisionHash: hash(html) };
+  await saveDoc(d); renderPicker(); closeModal();
+  await sset('hls:' + d.id, []);
+  openDoc(d.id);
+};
+window.closeModal = closeModal; window.toast = toast;
+
+/* also accept a rich paste straight onto the modal textarea */
+document.addEventListener('paste', e => {
+  const ta = document.getElementById('mBody');
+  if (!ta || document.activeElement !== ta) return;
+  const html = e.clipboardData?.getData('text/html');
+  if (html){ e.preventDefault(); ta.value = html; toast('Pasted with formatting'); }
+});
+
+/* ============================================================
+   13. chrome
+   ============================================================ */
+$('#btnTheme').onclick = async () => {
+  document.body.classList.toggle('dark');
+  await sset('pref:theme', document.body.classList.contains('dark') ? 'dark' : 'light');
+};
+$('#btnAuto').onclick = async () => {
+  S.auto = !S.auto;
+  $('#btnAuto').classList.toggle('on', S.auto);
+  await sset('pref:auto', S.auto);
+  toast(S.auto ? 'Selecting text marks it' : 'Selection no longer marks — use H, or the toolbar');
+};
+$('#btnSide').onclick = () => $('#side').classList.toggle('open');
+window.addEventListener('resize', () => { layoutMarginNotes(); if ($('#tools').dataset.id && $('#tools').classList.contains('show')) showTools($('#tools').dataset.id); });
+
+/* ============================================================
+   14. seed + boot
+   ============================================================ */
+const SEED_HTML = `
+<p>A highlight looks like the simplest feature in a reader. You drag across a sentence, the sentence turns yellow, you move on. The reason it is not simple is that <em>the sentence you dragged across is not a thing the computer has</em>. What the computer has is a tree of nodes, and your gesture lands somewhere inside it.</p>
+<h2>The frozen copy</h2>
+<p>The decision that does most of the work is refusing to re-derive the document. A page you saved on Tuesday is stored exactly as it rendered on Tuesday. If the publisher rewrites the lede on Wednesday, adds a newsletter box, or ships a new CMS, none of it reaches your copy.</p>
+<p>This turns an impossible problem — keep an annotation attached to an arbitrary webpage forever — into a tractable one: keep an annotation attached to a versioned document you control. Everything downstream gets cheaper.</p>
+<blockquote>A missing overlay is recoverable. A confidently wrong overlay is not.</blockquote>
+<h2>Four anchors, not one</h2>
+<p>A robust annotation stores several independent descriptions of the same passage, so that failure of one does not mean loss of the record:</p>
+<ul>
+  <li>a structural position — this block, this offset inside it;</li>
+  <li>a global character range against the canonical text;</li>
+  <li>the exact quote itself;</li>
+  <li>the text immediately before and after it.</li>
+</ul>
+<p>The W3C annotation model calls the last two a <a href="https://www.w3.org/TR/annotation-model/">TextQuoteSelector</a>, and Hypothesis has written at length about resolving them with fuzzy matching when the cheap paths fail. Reader has never published its schema, but its observable behaviour is consistent with roughly this.</p>
+<h2>Where it gets loud</h2>
+<p>Anchoring is the interesting half of the problem; boundaries are the exhausting half. Consider what the following demand of a selection model:</p>
+<table>
+  <thead><tr><th>Case</th><th>What breaks</th></tr></thead>
+  <tbody>
+    <tr><td>Nested emphasis and links</td><td>One logical highlight, several visual fragments</td></tr>
+    <tr><td>Repeated identical sentences</td><td>Quote search finds four candidates, all equally good</td></tr>
+    <tr><td>Non-breaking spaces</td><td>Offsets drift silently by one character per instance</td></tr>
+    <tr><td>Emoji and CJK — 中文的字符 — 🙂</td><td>Length in code units is not length in characters</td></tr>
+  </tbody>
+</table>
+<p>Anchoring is the interesting half of the problem; boundaries are the exhausting half.</p>
+<h2>Rendering is disposable</h2>
+<p>The record is the highlight. The yellow is a projection of the record, rebuilt from scratch whenever anything changes:</p>
+<pre><code>render(doc.html)      // original text, always
+normalise(textNodes)  // NBSP, NFC — once
+index()               // node -> global offsets
+paint(highlights)     // wrap, in reverse order
+index()               // again, over the painted tree</code></pre>
+<p>Rebuilding is not an optimisation problem at this scale, and it buys an invariant worth far more than the milliseconds: removing every wrapper always restores the document to precisely the text that was captured.</p>
+`;
+async function boot(){
+  S.docs = (await sget('docs:index')) || [];
+  const theme = await sget('pref:theme');
+  if (theme === 'dark') document.body.classList.add('dark');
+  const auto = await sget('pref:auto');
+  S.auto = auto === null ? true : auto;
+  $('#btnAuto').classList.toggle('on', S.auto);
+
+  if (!S.docs.length){
+    const html = sanitize(SEED_HTML);
+    const d = { id:'seed', title:'What a highlight actually is', url:'', capturedAt:new Date().toISOString(), html, revisionHash: hash(html) };
+    await saveDoc(d); await sset('hls:seed', []);
+  }
+  renderPicker();
+  await openDoc(S.docs[0].id);
+}
+boot();
+</script>

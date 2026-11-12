@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Weekly story generator. Fires every Sunday at 20:00 local time.
+
+  Install:
+      cp launchd/com.you.upi-agent-story.plist ~/Library/LaunchAgents/
+      # Edit the absolute paths below to match your install
+      launchctl load ~/Library/LaunchAgents/com.you.upi-agent-story.plist
+
+  Companion to com.you.upi-agent.plist (the daily ingest job described in
+  the base README). This one only generates the weekly story; the brain
+  reactor itself runs as part of every ingestion via agent.py's hook.
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+ "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.you.upi-agent-story</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/absolute/path/to/upi-agent/.venv/bin/python3</string>
+    <string>-m</string>
+    <string>core.cli</string>
+    <string>story</string>
+    <string>weekly</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/absolute/path/to/upi-agent</string>
+
+  <!-- Sunday at 20:00. In launchd, Weekday=0 means Sunday. -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key><integer>0</integer>
+    <key>Hour</key><integer>20</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/upi-agent-story.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/upi-agent-story.err</string>
+</dict>
+</plist>

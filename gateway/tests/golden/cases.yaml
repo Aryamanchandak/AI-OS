@@ -64,4 +64,5 @@
     session: golden-refused
   expect:
     status: 402
-    ledger_rows: 0
+    ledger_rows: 1
+    ledger_status: refused

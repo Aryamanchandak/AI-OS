@@ -1,0 +1,20 @@
+{
+  "_comment": "Golden-set answer key for the Phase 2 regression check. Human transcription of the highlighted passages on 4 pages from the Atomic Habits inbox, awaiting user confirmation. Text is the correct READING of each highlighted region (curly quotes / em-dashes kept verbatim; check.py normalizes them). These are clean, unambiguously-highlighted pages chosen as a regression tripwire — IMG_7746 (two-column, patchy highlight) is deliberately excluded; it is the known type-to-fix hard case (Phase 1 findings §3). CORRECTED 2026-07-18: IMG_7749 originally began 'through this plateau—what I call the Plateau of Latent Potential.' and IMG_7748 began 'change.' — visual inspection of both photos shows those leading words are NOT highlighted (the extractor had leaked them via the poke-up bug the attribution rule in process.py now fixes, and the transcription copied the leak). IMG_7749's highlight starts at 'If you find yourself'; IMG_7748's at 'Breakthrough moments'.",
+  "batch": "Atomic Habits",
+  "pages": {
+    "IMG_7748.JPG": [
+      "Breakthrough moments are often the result of many previous actions, which build up the potential required to unleash a major change. This pattern shows up everywhere. Cancer spends 80 percent of its life undetectable, then takes over the body in months. Bamboo can barely be seen for the first five years as it builds extensive root systems underground before exploding ninety feet into the air within six weeks. Similarly, habits often appear to make no difference until you cross a critical threshold and unlock a new level of performance. In the early and middle stages of any quest, there is often a Valley of Disappointment. You expect to make progress in a linear fashion and it's frustrating how ineffective changes can seem during the first days, weeks, and even months. It doesn't feel like you are going anywhere. It's a hallmark of any compounding process: the most powerful outcomes are delayed."
+    ],
+    "IMG_7749.JPG": [
+      "If you find yourself struggling to build a good habit or break a bad one, it is not because you have lost your ability to improve. It is often because you have not yet crossed the Plateau of Latent Potential. Complaining about not achieving success despite working hard is like complaining about an ice cube not melting when you heated it from twenty-five to thirty-one degrees. Your work was not wasted; it is just being stored. All the action happens at thirty-two degrees."
+    ],
+    "IMG_7752.JPG": [
+      "FORGET ABOUT GOALS, FOCUS ON SYSTEMS INSTEAD"
+    ],
+    "IMG_7754.JPG": [
+      "mistakenly assume that ambitious goals led to their success while overlooking all of the people who had the same objective but didn't succeed. Every Olympian wants to win a gold medal. Every candidate wants to get the job. And if successful and unsuccessful people share the same goals, then the goal cannot be what differentiates the winners from the losers. It wasn't the",
+      "Problem #2: Achieving a goal is only a momentary change.",
+      "Achieving a goal only changes your life for the moment. That's the counterintuitive thing about improvement. We think we need to change our results, but the results are not the problem. What we really need to change are the systems that cause those results. When you solve problems at the results level, you only solve them temporarily. In order to improve for good, you need to solve problems at the systems level. Fix the inputs and the outputs will fix themselves."
+    ]
+  }
+}

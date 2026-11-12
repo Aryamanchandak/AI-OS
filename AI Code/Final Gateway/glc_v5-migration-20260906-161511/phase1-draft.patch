@@ -1,0 +1,226 @@
+diff --git a/glc/config.py b/glc/config.py
+index 6be7e82..69b12c2 100644
+--- a/glc/config.py
++++ b/glc/config.py
+@@ -27,6 +27,7 @@ PACKAGED_PRICING = Path(__file__).parent / "economics" / "pricing.yaml"
+ PACKAGED_BUDGETS = Path(__file__).parent / "economics" / "budgets.yaml"
+ PACKAGED_ROUTING = Path(__file__).parent / "routing" / "routing.yaml"
+ PACKAGED_CACHE = Path(__file__).parent / "cache" / "cache.yaml"
++PACKAGED_LOCAL_MODELS = Path(__file__).parent / "local_models.yaml"
+ 
+ 
+ def policy_yaml_path() -> Path:
+@@ -64,6 +65,10 @@ def cache_yaml_path() -> Path:
+     return _resolve("GLC_CACHE_YAML", "cache.yaml", PACKAGED_CACHE)
+ 
+ 
++def local_models_yaml_path() -> Path:
++    return _resolve("GLC_LOCAL_MODELS_YAML", "local_models.yaml", PACKAGED_LOCAL_MODELS)
++
++
+ def load_yaml(path: Path, default: dict | None = None) -> dict:
+     """Read a config file, returning `default` when it is absent or empty.
+ 
+diff --git a/glc/providers.py b/glc/providers.py
+index d52ddfc..a1c46f9 100644
+--- a/glc/providers.py
++++ b/glc/providers.py
+@@ -1038,8 +1038,9 @@ class OllamaProvider(BaseProvider):
+         "vision": False,
+     }
+ 
+-    def __init__(self, model, base_url="http://localhost:11434"):
++    def __init__(self, model, base_url="http://localhost:11434", local_config: dict | None = None):
+         super().__init__("", model, base_url)
++        self.local_config = dict(local_config or {})
+ 
+     def _translate_messages(self, messages, system_text, prompted_fallback=False):
+         out = []
+@@ -1119,6 +1120,8 @@ class OllamaProvider(BaseProvider):
+             "options": {"temperature": temperature, "num_predict": max_tokens},
+             "stream": False,
+         }
++        if self.local_config.get("needs_think_false"):
++            body["think"] = False
+         if native:
+             body["tools"] = [
+                 {
+@@ -1182,7 +1185,13 @@ class OllamaProvider(BaseProvider):
+                 "output_tokens": d.get("eval_count", 0) or 0,
+                 "cache_creation_input_tokens": 0,
+                 "cache_read_input_tokens": 0,
+-                "stop_reason": "tool_use" if tool_calls_out else "end_turn",
++                "stop_reason": (
++                    "tool_use"
++                    if tool_calls_out
++                    else "max_tokens"
++                    if d.get("done_reason") in {"length", "max_tokens"}
++                    else "end_turn"
++                ),
+                 "model": m,
+                 "tool_call_dialect": dialect,
+                 "reasoning_applied": False,
+@@ -1242,6 +1251,32 @@ def model_capabilities(provider_name: str, model: str, default_caps: dict) -> di
+     return caps
+ 
+ 
++def load_local_models() -> dict[str, dict]:
++    """Load and validate the separately addressable Ollama model catalogue."""
++    from glc import config as _config
++
++    path = _config.local_models_yaml_path()
++    raw = _config.load_yaml(path)
++    models = raw.get("models") or {}
++    if not isinstance(models, dict) or not models:
++        raise ValueError(f"{path}: `models` must be a non-empty mapping")
++    required = {"model", "needs_think_false", "vision", "context_window"}
++    out: dict[str, dict] = {}
++    for name, value in models.items():
++        if not isinstance(value, dict):
++            raise ValueError(f"{path}: models.{name} must be a mapping")
++        missing = sorted(required - value.keys())
++        if missing:
++            raise ValueError(f"{path}: models.{name} is missing {missing}")
++        spec = dict(value)
++        if env_name := spec.get("model_env"):
++            spec["model"] = os.getenv(str(env_name), str(spec["model"]))
++        if not isinstance(spec["context_window"], int) or spec["context_window"] <= 0:
++            raise ValueError(f"{path}: models.{name}.context_window must be a positive integer")
++        out[str(name)] = spec
++    return out
++
++
+ def build_providers(cache_store):
+     """Worker pool — the LLMs that do real work for the agent.
+ 
+@@ -1276,13 +1311,21 @@ def build_providers(cache_store):
+         )
+     if k := os.getenv("GITHUB_ACCESS_TOKEN"):
+         out["github"] = GitHubProvider(k, os.getenv("GITHUB_MODEL", "openai/gpt-4.1-mini"))
+-    if om := os.getenv("OLLAMA_MODEL"):
+-        out["ollama"] = OllamaProvider(om, os.getenv("OLLAMA_URL", "http://localhost:11434"))
++    ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
++    for name, spec in load_local_models().items():
++        provider = OllamaProvider(spec["model"], ollama_url, local_config=spec)
++        provider.name = name
++        out[name] = provider
++        limits = dict(_LIMITS["ollama"])
++        limits["max_ctx"] = spec["context_window"]
++        _LIMITS[name] = limits
+     # V9: bake per-model capability overrides (vision/reasoning) into each
+     # instance, so Router.pick() — which reads provider.capabilities directly —
+     # sees the resolved truth instead of the class-level default.
+     for name, p in out.items():
+         p.capabilities = model_capabilities(name, p.model, getattr(p, "capabilities", {}))
++        if isinstance(p, OllamaProvider):
++            p.capabilities["vision"] = bool(p.local_config.get("vision"))
+     return out
+ 
+ 
+diff --git a/glc/local_models.yaml b/glc/local_models.yaml
+new file mode 100644
+--- /dev/null
++++ b/glc/local_models.yaml
+@@ -0,0 +1,25 @@
++version: 1
++
++# Every entry is a separately addressable provider backed by the same Ollama
++# daemon. `model_env` keeps the general-purpose entries operator-configurable;
++# profile-owned entries are deliberately exact pins.
++models:
++  ollama:
++    model: gemma4:31b
++    model_env: OLLAMA_MODEL
++    needs_think_false: true
++    vision: true
++    context_window: 32000
++  gemma:
++    model: gemma4:12b
++    model_env: GEMMA_LOCAL_MODEL
++    needs_think_false: true
++    vision: true
++    context_window: 131072
++  phi4-local:
++    model: phi4:14b-q4_K_M
++    needs_think_false: true
++    vision: false
++    context_window: 16000
++  cover-vision-local:
++    model: gemma4:12b
++    needs_think_false: true
++    vision: true
++    context_window: 262144
+diff --git a/tests/test_local_models.py b/tests/test_local_models.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_local_models.py
+@@ -0,0 +1,68 @@
++from __future__ import annotations
++
++import pytest
++
++from glc import providers as P
++from glc.routing import LIMITS
++
++
++class _Response:
++    status_code = 200
++    text = ""
++
++    def __init__(self, done_reason: str = "stop"):
++        self.done_reason = done_reason
++
++    def json(self):
++        return {
++            "message": {"content": "ok"},
++            "prompt_eval_count": 2,
++            "eval_count": 1,
++            "done_reason": self.done_reason,
++        }
++
++
++class _Client:
++    def __init__(self, response: _Response, seen: list[dict]):
++        self.response = response
++        self.seen = seen
++
++    async def __aenter__(self):
++        return self
++
++    async def __aexit__(self, *args):
++        return False
++
++    async def post(self, url, json):
++        self.seen.append(json)
++        return self.response
++
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize("done_reason", ["length", "max_tokens"])
++async def test_ollama_config_disables_thinking_and_normalizes_truncation(monkeypatch, done_reason):
++    seen: list[dict] = []
++    monkeypatch.setattr(
++        P.httpx,
++        "AsyncClient",
++        lambda **kwargs: _Client(_Response(done_reason), seen),
++    )
++    provider = P.OllamaProvider(
++        "test-model",
++        local_config={"needs_think_false": True},
++    )
++    result = await provider.chat([{"role": "user", "content": "hello"}], max_tokens=1)
++    assert seen[0]["think"] is False
++    assert result["stop_reason"] == "max_tokens"
++
++
++def test_all_local_models_are_registered(monkeypatch):
++    for key in list(P.os.environ):
++        if key.endswith("API_KEY") or key.startswith("GEMINI_API_KEY_"):
++            monkeypatch.delenv(key, raising=False)
++    built = P.build_providers(cache_store=None)
++    assert {"ollama", "gemma", "phi4-local", "cover-vision-local"} <= set(built)
++    specs = P.load_local_models()
++    for name, spec in specs.items():
++        assert built[name].base_url == P.os.getenv("OLLAMA_URL", "http://localhost:11434")
++        assert built[name].capabilities["vision"] is spec["vision"]
++        assert LIMITS[name]["max_ctx"] == spec["context_window"]

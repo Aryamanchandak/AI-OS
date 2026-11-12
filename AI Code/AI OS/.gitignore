@@ -1,0 +1,7 @@
+__pycache__/
+gateway/.pytest_cache/
+.mypy_cache/
+shell/node_modules/
+shell/dist/
+shell/*.tsbuildinfo
+.DS_Store

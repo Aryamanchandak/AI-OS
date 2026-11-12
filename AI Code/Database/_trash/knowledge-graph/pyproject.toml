@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "knowledge_graph"
+version = "0.2.0"
+description = "Generic Neo4j-backed knowledge graph store with LLM ingestion pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0.0",
+    "neo4j>=5.0",
+]
+
+[project.optional-dependencies]
+extraction = [
+    # Required for KGIngester and extract_triplets (LLM triplet extraction)
+    "anthropic>=0.25",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov",
+    "mypy>=1.8",
+    "anthropic>=0.25",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true

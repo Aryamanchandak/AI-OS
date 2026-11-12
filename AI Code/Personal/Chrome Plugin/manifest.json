@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Sharpen",
+  "version": "1.0.0",
+  "description": "Counterarguments, bias detection, and debate practice for any webpage.",
+  "permissions": ["activeTab", "tabs", "scripting", "storage", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Open Sharpen"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  }
+}

@@ -47,6 +47,7 @@ def service_for(tmp_path: Path, providers: list[FakeProvider], *, price: float =
 def test_finalization_runs_after_retry_and_failover(tmp_path: Path) -> None:
     failing, working = FakeProvider("failing", fail=True), FakeProvider("working")
     service, ledger = service_for(tmp_path, [failing, working])
+    service.pipeline.provider_call.max_retries = 1  # explicitly exercise optional retries
     result = asyncio.run(service.chat(ChatRequest(prompt="hello")))
     assert result["provider"] == "working"
     assert failing.calls == 2

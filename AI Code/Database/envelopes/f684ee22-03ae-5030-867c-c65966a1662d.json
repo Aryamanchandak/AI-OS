@@ -1,0 +1,863 @@
+{
+  "access_policy": {
+    "allowed_consumers": [
+      "kg",
+      "sqlite",
+      "vector"
+    ],
+    "classification": "private"
+  },
+  "canonical_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+  "captured_at": "2026-08-17T06:51:01.381384Z",
+  "created_at": "2026-08-20T06:47:56.467716Z",
+  "envelope_id": "f684ee22-03ae-5030-867c-c65966a1662d",
+  "extracted_metadata": {},
+  "extraction_version": "semantic_extraction_v1",
+  "highlight_boundary_origin": "document_segment",
+  "highlight_containing_sentence": null,
+  "highlight_context_text": "wouudl go for momentum not growth\n3. IT and consumer staples, is a good trade, energy has record low crowding, real estate is also incredibly cheap\n4. LArgely mid and small buy maybe ? [\u2026]",
+  "highlight_end_char": 1933,
+  "highlight_index": 2,
+  "highlight_parent_end_char": null,
+  "highlight_parent_source_ref": null,
+  "highlight_parent_start_char": null,
+  "highlight_start_char": 277,
+  "highlight_text": "5. AI\n\t1. lavanya looks pissed that her name wasnt taken in ai champion, dont let her be known as, GOD TIER HATER, remember to make the AI OS submission amazing and getting a lot oftheinvestment team on linkedin and write an amazingf post on it\n\t2. there has to be a hyrbid approach in terms of vendors and internal building\n\t\t1. the internal team is building on things that involve internal data\n\t\t2. the third party vendor will have all the models which can optimise based on query type\n\t\t\t1. here you dont need extensive prompt engineering tools and integrate shred drives etc\n\t\t3. there are a lot of alternatives to alphasense\n\t\t4. finster AI, linkalpha (plug and play, is a research thing), broker resaerch can also be linkedin in the above tools\n\t\t5. analyst AI product is very sophesticated in the market, her recommendation is not building for analysts. the office suite agents are already avaialbel, approx 5-7K\n\t\t6. the qualiity of internal building will always be worse than external\n\t\t7. finster has the ability to add an entire market in a wekk\n\t\t8. **mittul suggest model building and scenario testing**\n\t\t9. daloopa ai, also gives you data\n\t\t10. claude has changed pricing with 200dollars + usage cost\n\t\t11. claude for financial services, wil be a lot of people from the industry\n\t\t12. finster, linkaplha or rogo\n\t\t13. execution and order generation on bloomberg they really arent happy\n\t\t14. Quantconnect license\n\t\t15. ai analyses fms behaviours and pyschology\n\t\t16. podcast agent, summary, if you don t have the time to sit and listen\n\t\t17. gleen is very popular for enterpise intelligence\n\t\t18. aiera is a broker platform to look at\n\t\t19.",
+  "metadata": {
+    "note_title": "Equity Meeting with Bernstein",
+    "origin_kind": "obsidian_note",
+    "vault_relative_path": "ICICI Prudential/Equity Meeting with Bernstein.md"
+  },
+  "model_confidence": 0.65,
+  "normalization_version": "structural_normalization_v1",
+  "normalized_content_hash": "f06ea81c0d5e220974c072dbfe69ee417dda4844069bce3b9652212519a9ab7f",
+  "normalized_origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Equity Meeting with Bernstein.md",
+  "observed_at": null,
+  "origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Equity Meeting with Bernstein.md",
+  "raw_content_hash": "71bc70d3b4f2d5ffb14e21259a1a65b53b99cc472687c8c79a601630b44997bf",
+  "raw_content_ref": "/Users/aryamanchandak/Documents/AI Code/Database/raw/12fa28ec-300f-5117-97fa-6039cb8650ce.md",
+  "review_policy_version": "deterministic_review_v1",
+  "review_signals": [
+    {
+      "code": "overall_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "source_quality_signal",
+      "detail": "Numerous typos throughout ('hyrbid','sophesticated','avaialbel','wekk','enterpise','pyschology','amazingf','resaerch','linkaplha'). Informal meeting-note style. Some items are incomplete or ambiguous (e.g. item 19 is blank). Personal/interpersonal commentary mixed with technical content.",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-14:h2",
+      "proposal_type": "claim",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-6:h2",
+      "proposal_type": "claim",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-10:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-11:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-12:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-13:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-14:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-15:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-6:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-7:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-9:h2",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-3:h2",
+      "proposal_type": "relation",
+      "scope": "proposal"
+    }
+  ],
+  "review_status": "pending",
+  "semantic": {
+    "claims": [
+      {
+        "concept_labels": [
+          "AI Strategy",
+          "Internal AI Team",
+          "Third Party AI Vendor"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 324,
+            "normalized_char_start": 249,
+            "quote": "there has to be a hyrbid approach in terms of vendors and internal building",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.8,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "There has to be a hybrid approach in terms of vendors and internal building for AI.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Internal AI Team"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 396,
+            "normalized_char_start": 330,
+            "quote": "the internal team is building on things that involve internal data",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.8,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-1:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "The internal team is building on things that involve internal data.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Third Party AI Vendor"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 488,
+            "normalized_char_start": 402,
+            "quote": "the third party vendor will have all the models which can optimise based on query type",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.8,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-2:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "The third party vendor will have all the models which can optimise based on query type.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "AlphaSense"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 630,
+            "normalized_char_start": 585,
+            "quote": "there are a lot of alternatives to alphasense",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-3:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "There are a lot of alternatives to AlphaSense.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "LinkAlpha"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 694,
+            "normalized_char_start": 648,
+            "quote": "linkalpha (plug and play, is a research thing)",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-4:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "LinkAlpha is a plug and play research tool.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Analyst AI Product"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 860,
+            "normalized_char_start": 757,
+            "quote": "analyst AI product is very sophesticated in the market, her recommendation is not building for analysts",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-5:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Analyst AI product is very sophisticated in the market and the recommendation is not to build for analysts.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Analyst AI Product"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 920,
+            "normalized_char_start": 862,
+            "quote": "the office suite agents are already avaialbel, approx 5-7K",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.7,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-6:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Office suite agents are already available at approximately 5-7K.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Internal AI Team",
+          "Third Party AI Vendor"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 994,
+            "normalized_char_start": 926,
+            "quote": "the qualiity of internal building will always be worse than external",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-7:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "The quality of internal building will always be worse than external.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Finster AI"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 1057,
+            "normalized_char_start": 1000,
+            "quote": "finster has the ability to add an entire market in a wekk",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-8:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Finster has the ability to add an entire market in a week.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Mittul"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 1115,
+            "normalized_char_start": 1065,
+            "quote": "mittul suggest model building and scenario testing",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-9:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Mittul suggests model building and scenario testing.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Daloopa AI"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 1154,
+            "normalized_char_start": 1123,
+            "quote": "daloopa ai, also gives you data",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-10:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Daloopa AI also gives you data.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Claude"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 1216,
+            "normalized_char_start": 1161,
+            "quote": "claude has changed pricing with 200dollars + usage cost",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.8,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-11:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Claude has changed pricing to 200 dollars plus usage cost.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Gleen"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 1606,
+            "normalized_char_start": 1558,
+            "quote": "gleen is very popular for enterpise intelligence",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.8,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-12:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Gleen is very popular for enterprise intelligence.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Aiera"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 1650,
+            "normalized_char_start": 1613,
+            "quote": "aiera is a broker platform to look at",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-13:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Aiera is a broker platform to look at.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "AI Strategy"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 1476,
+            "normalized_char_start": 1435,
+            "quote": "ai analyses fms behaviours and pyschology",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.7,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-14:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "AI analyses fund managers' behaviours and psychology.",
+        "valid_from": null,
+        "valid_to": null
+      }
+    ],
+    "concepts": [
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 324,
+            "normalized_char_start": 249,
+            "quote": "there has to be a hyrbid approach in terms of vendors and internal building",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "AI Strategy",
+        "model_confidence": 0.8,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 396,
+            "normalized_char_start": 330,
+            "quote": "the internal team is building on things that involve internal data",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Internal AI Team",
+        "model_confidence": 0.8,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-1:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 488,
+            "normalized_char_start": 402,
+            "quote": "the third party vendor will have all the models which can optimise based on query type",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Third Party AI Vendor",
+        "model_confidence": 0.8,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-2:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 630,
+            "normalized_char_start": 585,
+            "quote": "there are a lot of alternatives to alphasense",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "AlphaSense",
+        "model_confidence": 0.75,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-3:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 751,
+            "normalized_char_start": 636,
+            "quote": "finster AI, linkalpha (plug and play, is a research thing), broker resaerch can also be linkedin in the above tools",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Finster AI",
+        "model_confidence": 0.75,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-4:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 751,
+            "normalized_char_start": 636,
+            "quote": "finster AI, linkalpha (plug and play, is a research thing), broker resaerch can also be linkedin in the above tools",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "LinkAlpha",
+        "model_confidence": 0.75,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-5:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 811,
+            "normalized_char_start": 757,
+            "quote": "analyst AI product is very sophesticated in the market",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Analyst AI Product",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-6:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1154,
+            "normalized_char_start": 1123,
+            "quote": "daloopa ai, also gives you data",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Daloopa AI",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-7:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1216,
+            "normalized_char_start": 1161,
+            "quote": "claude has changed pricing with 200dollars + usage cost",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Claude",
+        "model_confidence": 0.75,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-8:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1428,
+            "normalized_char_start": 1408,
+            "quote": "Quantconnect license",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "QuantConnect",
+        "model_confidence": 0.65,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-9:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1606,
+            "normalized_char_start": 1558,
+            "quote": "gleen is very popular for enterpise intelligence",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Gleen",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-10:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1650,
+            "normalized_char_start": 1613,
+            "quote": "aiera is a broker platform to look at",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Aiera",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-11:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1327,
+            "normalized_char_start": 1301,
+            "quote": "finster, linkaplha or rogo",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Rogo",
+        "model_confidence": 0.65,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-12:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 71,
+            "normalized_char_start": 10,
+            "quote": "lavanya looks pissed that her name wasnt taken in ai champion",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Lavanya",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-13:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 160,
+            "normalized_char_start": 127,
+            "quote": "make the AI OS submission amazing",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "AI OS Submission",
+        "model_confidence": 0.65,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-14:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1115,
+            "normalized_char_start": 1065,
+            "quote": "mittul suggest model building and scenario testing",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Mittul",
+        "model_confidence": 0.65,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-15:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      }
+    ],
+    "field_tags": [
+      "AI",
+      "fintech",
+      "investment technology",
+      "vendor selection",
+      "enterprise AI",
+      "financial services"
+    ],
+    "relations": [
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 396,
+            "normalized_char_start": 330,
+            "quote": "the internal team is building on things that involve internal data",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.8,
+        "object": "Internal Data",
+        "predicate": "USES",
+        "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "subject": "Internal AI Team"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 488,
+            "normalized_char_start": 402,
+            "quote": "the third party vendor will have all the models which can optimise based on query type",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.75,
+        "object": "Query Type",
+        "predicate": "OPTIMISES_BY",
+        "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-1:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "subject": "Third Party AI Vendor"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 324,
+            "normalized_char_start": 249,
+            "quote": "there has to be a hyrbid approach in terms of vendors and internal building",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          },
+          {
+            "normalized_char_end": 994,
+            "normalized_char_start": 926,
+            "quote": "the qualiity of internal building will always be worse than external",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.8,
+        "object": "Third Party AI Vendor",
+        "predicate": "CONTRASTS_WITH",
+        "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-2:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "subject": "Internal AI Team"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 630,
+            "normalized_char_start": 585,
+            "quote": "there are a lot of alternatives to alphasense",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          },
+          {
+            "normalized_char_end": 751,
+            "normalized_char_start": 636,
+            "quote": "finster AI, linkalpha (plug and play, is a research thing), broker resaerch can also be linkedin in the above tools",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.65,
+        "object": "AlphaSense",
+        "predicate": "CONTRASTS_WITH",
+        "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-3:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "subject": "Finster AI"
+      },
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 1216,
+            "normalized_char_start": 1161,
+            "quote": "claude has changed pricing with 200dollars + usage cost",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.8,
+        "object": "200 dollars plus usage cost",
+        "predicate": "HAS_PRICING",
+        "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-4:h2",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "subject": "Claude"
+      }
+    ],
+    "source_quality_signals": [
+      "Numerous typos throughout ('hyrbid','sophesticated','avaialbel','wekk','enterpise','pyschology','amazingf','resaerch','linkaplha'). Informal meeting-note style. Some items are incomplete or ambiguous (e.g. item 19 is blank). Personal/interpersonal commentary mixed with technical content."
+    ]
+  },
+  "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+  "source_status": "current",
+  "source_type": "obsidian_note",
+  "supersedes_highlight_count": null,
+  "supersedes_record_id": null,
+  "version": 1
+}

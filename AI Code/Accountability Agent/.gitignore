@@ -1,0 +1,7 @@
+node_modules/
+dist/
+build-server/
+.env
+.DS_Store
+coverage/
+.praxis-data/

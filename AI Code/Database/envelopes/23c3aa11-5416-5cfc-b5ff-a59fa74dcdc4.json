@@ -1,0 +1,215 @@
+{
+  "access_policy": {
+    "allowed_consumers": [
+      "kg",
+      "sqlite",
+      "vector"
+    ],
+    "classification": "private"
+  },
+  "canonical_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+  "captured_at": "2026-08-17T07:02:45.855661Z",
+  "created_at": "2026-08-17T07:03:16.818854Z",
+  "envelope_id": "23c3aa11-5416-5cfc-b5ff-a59fa74dcdc4",
+  "extracted_metadata": {},
+  "extraction_version": "semantic_extraction_v1",
+  "highlight_boundary_origin": "document_segment",
+  "highlight_containing_sentence": null,
+  "highlight_context_text": null,
+  "highlight_end_char": 203,
+  "highlight_index": 0,
+  "highlight_parent_end_char": null,
+  "highlight_parent_source_ref": null,
+  "highlight_parent_start_char": null,
+  "highlight_start_char": 0,
+  "highlight_text": "This is your new *vault*.\n\nMake a note of something, [[create a link]], or try [the Importer](https://help.obsidian.md/Plugins/Importer)!\n\nWhen you're ready, delete this note and make the vault your own.",
+  "metadata": {
+    "note_title": "Welcome",
+    "origin_kind": "obsidian_note",
+    "vault_relative_path": "Welcome.md"
+  },
+  "model_confidence": 0.75,
+  "normalization_version": "structural_normalization_v1",
+  "normalized_content_hash": "8973433019f918777967c09d572403fb8792175acc3ed454245e23dc23208faf",
+  "normalized_origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/Welcome.md",
+  "observed_at": null,
+  "origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/Welcome.md",
+  "raw_content_hash": "ecd0dfb6b21143ff52cfe36f93636df57e5b21773c101491b86f10ce17556ca8",
+  "raw_content_ref": "/Users/aryamanchandak/Documents/AI Code/Database/raw/07f7a65f-d6ca-5c12-b1d9-e9dbda535c70.md",
+  "review_policy_version": "deterministic_review_v1",
+  "review_signals": [
+    {
+      "code": "source_quality_signal",
+      "detail": "Passage is an onboarding/template note with minimal factual content; extracted claims are largely instructional rather than declarative facts.",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-2:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    }
+  ],
+  "review_status": "pending",
+  "semantic": {
+    "claims": [
+      {
+        "concept_labels": [
+          "Vault"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 25,
+            "normalized_char_start": 0,
+            "quote": "This is your new *vault*.",
+            "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70"
+          }
+        ],
+        "model_confidence": 0.9,
+        "observed_at": null,
+        "proposal_id": "claim-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-0:h0",
+        "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+        "status": "proposed",
+        "text": "The user has a new vault.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Vault",
+          "Link",
+          "Obsidian Importer"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 136,
+            "normalized_char_start": 27,
+            "quote": "Make a note of something, [[create a link]], or try [the Importer](https://help.obsidian.md/Plugins/Importer)",
+            "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70"
+          }
+        ],
+        "model_confidence": 0.85,
+        "observed_at": null,
+        "proposal_id": "claim-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-1:h0",
+        "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+        "status": "proposed",
+        "text": "The user can make a note, create a link, or try the Importer.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Vault"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 203,
+            "normalized_char_start": 139,
+            "quote": "When you're ready, delete this note and make the vault your own.",
+            "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70"
+          }
+        ],
+        "model_confidence": 0.85,
+        "observed_at": null,
+        "proposal_id": "claim-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-2:h0",
+        "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+        "status": "proposed",
+        "text": "When ready, the user should delete this note and make the vault their own.",
+        "valid_from": null,
+        "valid_to": null
+      }
+    ],
+    "concepts": [
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 25,
+            "normalized_char_start": 0,
+            "quote": "This is your new *vault*.",
+            "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70"
+          }
+        ],
+        "label": "Vault",
+        "model_confidence": 0.9,
+        "proposal_id": "concept-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-0:h0",
+        "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 136,
+            "normalized_char_start": 75,
+            "quote": "try [the Importer](https://help.obsidian.md/Plugins/Importer)",
+            "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70"
+          }
+        ],
+        "label": "Obsidian Importer",
+        "model_confidence": 0.8,
+        "proposal_id": "concept-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-1:h0",
+        "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 70,
+            "normalized_char_start": 53,
+            "quote": "[[create a link]]",
+            "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70"
+          }
+        ],
+        "label": "Link",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-2:h0",
+        "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+        "status": "proposed"
+      }
+    ],
+    "field_tags": [
+      "onboarding",
+      "obsidian",
+      "note-taking",
+      "knowledge-management"
+    ],
+    "relations": [
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 136,
+            "normalized_char_start": 75,
+            "quote": "try [the Importer](https://help.obsidian.md/Plugins/Importer)",
+            "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.75,
+        "object": "Vault",
+        "predicate": "ACCESSIBLE_VIA",
+        "proposal_id": "relation-07f7a65f-d6ca-5c12-b1d9-e9dbda535c70-0:h0",
+        "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+        "status": "proposed",
+        "subject": "Obsidian Importer"
+      }
+    ],
+    "source_quality_signals": [
+      "Passage is an onboarding/template note with minimal factual content; extracted claims are largely instructional rather than declarative facts."
+    ]
+  },
+  "source_record_id": "07f7a65f-d6ca-5c12-b1d9-e9dbda535c70",
+  "source_status": "current",
+  "source_type": "obsidian_note",
+  "supersedes_highlight_count": null,
+  "supersedes_record_id": null,
+  "version": 1
+}

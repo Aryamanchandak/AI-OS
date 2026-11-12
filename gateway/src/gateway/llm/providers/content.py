@@ -1,9 +1,8 @@
 """Provider-agnostic content-block normalization.
 
 These helpers translate the *neutral* request shape (system blocks, message
-content lists, tool-call arguments) into the plain values each provider package
-then dresses in its own dialect. Nothing here knows about a specific vendor —
-the per-vendor translation lives in `providers/<name>/`.
+content lists, tool-call arguments) into the plain values the active adapter in `llm.py` sends through any-llm. Vendor translation is
+handled by that adapter and any-llm.
 
 Ported from `glc_v5/glc/providers.py` (`_flatten_system`, `_extract_text_blocks`,
 `_iter_image_blocks`) and `glc_v5/glc/direct_providers.py`

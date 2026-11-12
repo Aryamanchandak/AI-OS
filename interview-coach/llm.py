@@ -73,7 +73,7 @@ Do not repeat or closely paraphrase these recent questions:
 {recent}
 
 Generate one question now."""
-    q = _json_call(GEN_SYSTEM if system_prompt is None else system_prompt, user, 2500,
+    q = _json_call(GEN_SYSTEM if system_prompt is None else system_prompt, user, 6000,
                    validate=schema.validate_question)
     q["type"] = q.get("type") or qtype
     if q["type"] != "chart":

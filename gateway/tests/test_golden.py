@@ -36,6 +36,8 @@ def test_golden_case(case, tmp_path, monkeypatch) -> None:
 
     assert response.status_code == expect.get("status", 200), response.text
     assert len(rows) == expect["ledger_rows"]
+    if status := expect.get("ledger_status"):
+        assert rows[0]["status"] == status
     if response.status_code != 200:
         return
     if case["call"] == "embed":

@@ -1,0 +1,2 @@
+- [Podcast Agent Architecture](project_architecture.md) — two-layer design: orchestrator.py backend + app.py Streamlit UI; podcast_v1.py is reference only
+- [Known Bugs and Gaps](known_bugs.md) — 9 confirmed bugs/gaps found in 2026-05-10 documentation pass, including filename collision and dead code

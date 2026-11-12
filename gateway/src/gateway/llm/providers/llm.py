@@ -116,15 +116,7 @@ class LLMProvider:
             call["think"] = False
 
         try:
-            try:
-                completion = await self.client.acompletion(**call)
-            except AnyLLMError as exc:
-                # A model that does not take the thinking dial should not fail the call over it.
-                if "thinking" not in call or exc.status_code != 400:
-                    raise
-                del call["thinking"]
-                reasoning_applied = False
-                completion = await self.client.acompletion(**call)
+            completion = await self.client.acompletion(**call)
         except AnyLLMError as exc:
             raise _error(exc) from exc
 

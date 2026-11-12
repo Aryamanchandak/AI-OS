@@ -18,7 +18,7 @@ from gateway.llm.orchestration.finalization import FinalizationStage
 from gateway.llm.orchestration.normalization import NormalizationStage
 from gateway.llm.orchestration.pipeline import LLMPipeline
 from gateway.llm.orchestration.profile_resolution import ProfileResolutionStage
-from gateway.llm.orchestration.provider_call import ProviderCallStage
+from gateway.llm.orchestration.provider_call import ProviderCallStage, permanent_client_error, provider_failure
 from gateway.llm.orchestration.routing import RoutingStage
 from gateway.llm.orchestration.structured_output import StructuredOutputStage
 from gateway.llm.orchestration.validation import RequestValidationStage
@@ -30,7 +30,7 @@ from gateway.llm.providers.registry import ProviderRegistry, build_provider_regi
 class LLMService:
     def __init__(self, *, registry: ProviderRegistry, profiles: ProfileRegistry,
                  pricing: PricingTable, budget: BudgetController, ledger: CallLedger,
-                 max_retries: int = 1, max_concurrency: int = 32) -> None:
+                 max_retries: int = 0, max_concurrency: int = 32) -> None:
         self.registry, self.profiles, self.pricing = registry, profiles, pricing
         self.budget, self.ledger = budget, ledger
         self.pipeline = LLMPipeline(validation=RequestValidationStage(), profiles=ProfileResolutionStage(profiles),
@@ -68,15 +68,25 @@ class LLMService:
             for provider in candidates:
                 if not provider.capabilities.embeddings: continue
                 try:
-                    vector = await provider.embed(request.text, model=model, task_type=request.task_type)
-                    if expected_dim is not None and len(vector) != expected_dim: raise ProviderError(f"embedding profile '{request.profile}' expected dimension {expected_dim} but provider '{provider.name}' returned {len(vector)}")
+                    async def embed_vector() -> list[float]:
+                        vector = await provider.embed(request.text, model=model, task_type=request.task_type)
+                        if expected_dim is not None and len(vector) != expected_dim:
+                            raise ProviderError(f"embedding profile '{request.profile}' expected dimension {expected_dim} but provider '{provider.name}' returned {len(vector)}")
+                        return vector
+
+                    vector = await self.pipeline.provider_call.call(provider, embed_vector, attempts)
                     result = {"provider": provider.name, "model": model or provider.model, "embedding": vector, "dim": len(vector), "latency_ms": int((time.monotonic() - started) * 1000), "attempted": attempts, "profile": request.profile}; return result
-                except BaseException as exc:
-                    error = exc; attempts.append({"provider": provider.name, "reason": str(exc)[:120]})
-                    if selected: break
-            raise HTTPException(502 if selected else 503, f"embedding providers unavailable. attempts: {attempts}")
+                except HTTPException:
+                    raise
+                except Exception as exc:
+                    error = exc
+                    if selected or permanent_client_error(exc): break
+            raise provider_failure(error, selected, attempts)
+        except BaseException as exc:
+            error = exc
+            raise
         finally:
-            await asyncio.to_thread(self.ledger.append, kind="embed", provider=result["provider"] if result else selected or "(any)", model=result["model"] if result else model or "(none)", input_tokens=max(1, len(request.text) // 4), latency_ms=int((time.monotonic() - started) * 1000), status="error" if error else "ok", error=str(error)[:500] if error else None, attempted=attempts, profile=request.profile)
+            await asyncio.to_thread(self.ledger.append, kind="embed", provider=result["provider"] if result else selected or "(any)", model=result["model"] if result else model or "(none)", input_tokens=max(1, len(request.text) // 4), latency_ms=int((time.monotonic() - started) * 1000), status="ok" if result else "error", error=str(error)[:500] if error and not result else None, attempted=attempts, profile=request.profile)
 
 
     def providers(self) -> dict[str, Any]:

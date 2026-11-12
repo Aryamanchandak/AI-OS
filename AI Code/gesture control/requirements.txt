@@ -1,0 +1,16 @@
+# Pinned deliberately. Read this before "just upgrading".
+#
+# mediapipe 1.0.x hard-crashes on macOS arm64 -- its TensorsToDetectionsCalculator
+# forces a Metal path that aborts the process with
+#   "graph_service.h:139] Check failed: service_ Service is unavailable"
+# regardless of delegate=CPU. 0.10.21 is the last line that works here.
+#
+# mediapipe 0.10.x pins numpy<2, so opencv must stay on the 4.x line
+# (opencv-python 5.x requires numpy>=2). These three move together.
+mediapipe==0.10.21
+opencv-python==4.11.0.86
+numpy==1.26.4
+
+# Synthetic OS events + the non-gesture kill switch.
+pynput==1.8.2
+pyobjc-framework-Quartz==12.2.2

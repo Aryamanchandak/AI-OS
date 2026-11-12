@@ -1,0 +1,252 @@
+{
+  "access_policy": {
+    "allowed_consumers": [
+      "kg",
+      "sqlite",
+      "vector"
+    ],
+    "classification": "private"
+  },
+  "canonical_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+  "captured_at": "2026-08-17T06:51:01.381384Z",
+  "created_at": "2026-08-20T06:47:56.457605Z",
+  "envelope_id": "d306d400-af1e-5cd1-8efb-d7f1198090ba",
+  "extracted_metadata": {},
+  "extraction_version": "semantic_extraction_v1",
+  "highlight_boundary_origin": "document_segment",
+  "highlight_containing_sentence": null,
+  "highlight_context_text": "[\u2026] 3. IT and consumer staples, is a good trade, energy has record low crowding, real estate is also incredibly cheap\n4. LArgely mid and small buy maybe ?",
+  "highlight_end_char": 125,
+  "highlight_index": 0,
+  "highlight_parent_end_char": null,
+  "highlight_parent_source_ref": null,
+  "highlight_parent_start_char": null,
+  "highlight_start_char": 0,
+  "highlight_text": "1. As a basket momentum has fallen from the peak,\n\t1. Why do they use 9 month momentum ?\n2. wouudl go for momentum not growth",
+  "metadata": {
+    "note_title": "Equity Meeting with Bernstein",
+    "origin_kind": "obsidian_note",
+    "vault_relative_path": "ICICI Prudential/Equity Meeting with Bernstein.md"
+  },
+  "model_confidence": 0.6,
+  "normalization_version": "structural_normalization_v1",
+  "normalized_content_hash": "f06ea81c0d5e220974c072dbfe69ee417dda4844069bce3b9652212519a9ab7f",
+  "normalized_origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Equity Meeting with Bernstein.md",
+  "observed_at": null,
+  "origin": "/Users/aryamanchandak/Documents/Obsidian Vault/Aryamans Vault/ICICI Prudential/Equity Meeting with Bernstein.md",
+  "raw_content_hash": "71bc70d3b4f2d5ffb14e21259a1a65b53b99cc472687c8c79a601630b44997bf",
+  "raw_content_ref": "/Users/aryamanchandak/Documents/AI Code/Database/raw/12fa28ec-300f-5117-97fa-6039cb8650ce.md",
+  "review_policy_version": "deterministic_review_v1",
+  "review_signals": [
+    {
+      "code": "overall_model_confidence_below_threshold",
+      "detail": "0.6 < 0.75",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "source_quality_signal",
+      "detail": "Informal/note-taking style with typos ('wouudl'). Incomplete sentences and unclear context make interpretation uncertain.",
+      "proposal_id": null,
+      "proposal_type": null,
+      "scope": "envelope"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-1:h0",
+      "proposal_type": "claim",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-1:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.7 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-2:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.6 < 0.75",
+      "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-3:h0",
+      "proposal_type": "concept",
+      "scope": "proposal"
+    },
+    {
+      "code": "proposal_model_confidence_below_threshold",
+      "detail": "0.65 < 0.75",
+      "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h0",
+      "proposal_type": "relation",
+      "scope": "proposal"
+    }
+  ],
+  "review_status": "pending",
+  "semantic": {
+    "claims": [
+      {
+        "concept_labels": [
+          "Basket Momentum"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 48,
+            "normalized_char_start": 3,
+            "quote": "As a basket momentum has fallen from the peak",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.75,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h0",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "Basket momentum has fallen from the peak.",
+        "valid_from": null,
+        "valid_to": null
+      },
+      {
+        "concept_labels": [
+          "Momentum Factor",
+          "Growth Factor"
+        ],
+        "evidence": [
+          {
+            "normalized_char_end": 125,
+            "normalized_char_start": 92,
+            "quote": "wouudl go for momentum not growth",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "model_confidence": 0.7,
+        "observed_at": null,
+        "proposal_id": "claim-12fa28ec-300f-5117-97fa-6039cb8650ce-1:h0",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "text": "The author would prefer momentum over growth as an investment factor.",
+        "valid_from": null,
+        "valid_to": null
+      }
+    ],
+    "concepts": [
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 48,
+            "normalized_char_start": 3,
+            "quote": "As a basket momentum has fallen from the peak",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Basket Momentum",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h0",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 88,
+            "normalized_char_start": 54,
+            "quote": "Why do they use 9 month momentum ?",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "9 Month Momentum",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-1:h0",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 125,
+            "normalized_char_start": 92,
+            "quote": "wouudl go for momentum not growth",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Momentum Factor",
+        "model_confidence": 0.7,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-2:h0",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      },
+      {
+        "aliases": [],
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 125,
+            "normalized_char_start": 92,
+            "quote": "wouudl go for momentum not growth",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "label": "Growth Factor",
+        "model_confidence": 0.6,
+        "proposal_id": "concept-12fa28ec-300f-5117-97fa-6039cb8650ce-3:h0",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed"
+      }
+    ],
+    "field_tags": [
+      "investing",
+      "factor investing",
+      "momentum",
+      "equities"
+    ],
+    "relations": [
+      {
+        "domain": null,
+        "evidence": [
+          {
+            "normalized_char_end": 125,
+            "normalized_char_start": 92,
+            "quote": "wouudl go for momentum not growth",
+            "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce"
+          }
+        ],
+        "hierarchical": false,
+        "model_confidence": 0.65,
+        "object": "Growth Factor",
+        "predicate": "CONTRASTS_WITH",
+        "proposal_id": "relation-12fa28ec-300f-5117-97fa-6039cb8650ce-0:h0",
+        "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+        "status": "proposed",
+        "subject": "Basket Momentum"
+      }
+    ],
+    "source_quality_signals": [
+      "Informal/note-taking style with typos ('wouudl'). Incomplete sentences and unclear context make interpretation uncertain."
+    ]
+  },
+  "source_record_id": "12fa28ec-300f-5117-97fa-6039cb8650ce",
+  "source_status": "current",
+  "source_type": "obsidian_note",
+  "supersedes_highlight_count": null,
+  "supersedes_record_id": null,
+  "version": 1
+}

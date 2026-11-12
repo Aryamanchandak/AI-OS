@@ -1,0 +1,4 @@
+openai==3.35.1
+anthropic==0.125.0
+python-dotenv==1.2.3
+jsonschema==4.26.0

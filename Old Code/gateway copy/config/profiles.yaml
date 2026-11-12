@@ -1,0 +1,34 @@
+version: 1
+
+embedding:
+  chunker-v1:
+    provider: ollama
+    model: nomic-embed-text
+    dim: 768
+    description: Stable local retrieval vector space for document chunking.
+
+chat:
+  knowledge-extraction-v1:
+    provider: anthropic-sonnet
+    model: claude-sonnet-4-6
+    description: High-quality structured knowledge extraction.
+  document-segmentation-v1:
+    provider: phi4-local
+    model: phi4:14b-q4_K_M
+    description: Exact local document segmentation model.
+  highlight-photo-summary-v1:
+    provider: anthropic-haiku
+    model: claude-haiku-4-5
+    description: Fast multimodal highlight-photo summaries.
+  cover-classification-v1:
+    provider: cover-vision-local
+    model: gemma4:12b
+    description: Exact local vision model for cover classification.
+  ocr-cleanup-v1:
+    provider: gemma
+    model: gemma4:12b
+    description: Local OCR passage correction with no hosted fallback.
+  spelling-review-v1:
+    provider: gemma
+    model: gemma4:12b
+    description: Local structured spelling review with no hosted fallback.

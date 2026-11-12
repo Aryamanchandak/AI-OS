@@ -1,0 +1,1199 @@
+# MIRFISH seed entity graph — India macro/rates/credit/FX/sector transmission map.
+#
+# This is a Claude-drafted FIRST PASS. It is the domain-leverage point of the
+# whole system and MUST be reviewed by the user before Milestone M3 (propagation)
+# begins. Edges flagged "# REVIEW" are the ones most likely to be wrong,
+# contested among practitioners, or oversimplified — look at those first.
+#
+# Every edge has: src, dst, channel, mechanism (one sentence, named), sign_hint,
+# typical_lag. `provenance` defaults to "curated" and is omitted below — LLM-
+# proposed edges discovered at runtime are quarantined separately and never
+# written here automatically (see mirfish graph review-proposed).
+#
+# node types: issuer | sector | commodity | currency | sovereign | policy_inst
+#             | rate_instrument | macro_var | flow
+# edge channels: policy | inflation | funding | fx | trade | supply_chain
+#                | risk_sentiment | liquidity | flows
+# sign_hint: pos | neg | ambiguous   typical_lag: intraday | days | weeks | months
+
+nodes:
+  # --- Policy / macro ---------------------------------------------------
+  - node_id: rbi-mpc
+    name: RBI Monetary Policy Committee
+    type: policy_inst
+    aliases: [RBI, Reserve Bank of India, MPC]
+  - node_id: repo-rate
+    name: Repo Rate
+    type: rate_instrument
+    aliases: [policy repo rate]
+  - node_id: sdf-rate
+    name: Standing Deposit Facility Rate
+    type: rate_instrument
+    aliases: [SDF]
+  - node_id: msf-rate
+    name: Marginal Standing Facility Rate
+    type: rate_instrument
+    aliases: [MSF]
+  - node_id: crr
+    name: Cash Reserve Ratio
+    type: policy_inst
+    aliases: [CRR]
+  - node_id: goi-fiscal
+    name: Government of India Fiscal Stance
+    type: policy_inst
+    aliases: [Union Budget, GoI Budget, fiscal policy, budget]
+  - node_id: fiscal-deficit-gdp
+    name: Fiscal Deficit (% of GDP)
+    type: macro_var
+    aliases: [fiscal deficit, gross fiscal deficit, GFD]
+  - node_id: cpi
+    name: Consumer Price Index (headline)
+    type: macro_var
+    aliases: [CPI inflation, headline inflation, CPI]
+  - node_id: core-cpi
+    name: Core CPI (ex food and fuel)
+    type: macro_var
+    aliases: [core inflation]
+  - node_id: wpi
+    name: Wholesale Price Index
+    type: macro_var
+    aliases: [WPI inflation, WPI]
+  - node_id: crude-brent
+    name: Brent Crude Oil Price
+    type: commodity
+    aliases: [crude oil, Brent, oil price, crude]
+  - node_id: food-prices
+    name: Food Prices
+    type: macro_var
+    aliases: [food inflation]
+  - node_id: monsoon
+    name: Monsoon Rainfall
+    type: macro_var
+    aliases: [SW monsoon, rainfall, monsoon rains]
+  - node_id: fed
+    name: US Federal Reserve
+    type: policy_inst
+    aliases: [Federal Reserve, FOMC, the Fed]
+  - node_id: fed-funds-rate
+    name: Federal Funds Rate
+    type: rate_instrument
+    aliases: [Fed funds rate, US policy rate]
+  - node_id: dxy
+    name: US Dollar Index
+    type: macro_var
+    aliases: [DXY, dollar index]
+  - node_id: us-10y
+    name: US 10-Year Treasury Yield
+    type: rate_instrument
+    aliases: [US 10y, US Treasury yield, UST 10y]
+  - node_id: us-2y
+    name: US 2-Year Treasury Yield
+    type: rate_instrument
+    aliases: [US 2y, UST 2y]
+
+  # --- Rates -------------------------------------------------------------
+  - node_id: gsec-2y
+    name: India 2Y G-Sec Yield
+    type: rate_instrument
+    aliases: [2y gsec, 2-year government bond]
+  - node_id: gsec-5y
+    name: India 5Y G-Sec Yield
+    type: rate_instrument
+    aliases: [5y gsec]
+  - node_id: gsec-10y
+    name: India 10Y G-Sec Yield
+    type: rate_instrument
+    aliases: [10y gsec, benchmark G-sec, 10-year bond, G-sec]
+  - node_id: gsec-30y
+    name: India 30Y G-Sec Yield
+    type: rate_instrument
+    aliases: [30y gsec, long bond]
+  - node_id: term-spread-10y-2y
+    name: India G-Sec 10y-2y Term Spread
+    type: rate_instrument
+    aliases: [curve steepness, term spread, yield curve]
+  - node_id: ois-1y
+    name: 1Y OIS Rate
+    type: rate_instrument
+    aliases: [1y OIS, overnight index swap 1y]
+  - node_id: ois-5y
+    name: 5Y OIS Rate
+    type: rate_instrument
+    aliases: [5y OIS]
+  - node_id: sdl-spread
+    name: State Development Loan Spread
+    type: rate_instrument
+    aliases: [SDL spread, state loan spread]
+  - node_id: t-bill
+    name: Treasury Bill Yield
+    type: rate_instrument
+    aliases: [T-bill, treasury bill]
+  - node_id: laf-liquidity
+    name: Liquidity Adjustment Facility Balance
+    type: macro_var
+    aliases: [LAF, system liquidity, banking system liquidity]
+  - node_id: vrrr
+    name: Variable Rate Reverse Repo
+    type: rate_instrument
+    aliases: [VRRR]
+
+  # --- FX / flows ----------------------------------------------------------
+  - node_id: inr
+    name: Indian Rupee (USD/INR)
+    type: currency
+    aliases: [rupee, INR, USDINR]
+  - node_id: fpi-debt-flows
+    name: FPI Debt Flows
+    type: flow
+    aliases: [foreign debt inflows, FII debt flows]
+  - node_id: fpi-equity-flows
+    name: FPI Equity Flows
+    type: flow
+    aliases: [foreign equity inflows, FII equity flows]
+  - node_id: index-inclusion-flows
+    name: Bond Index Inclusion Flows
+    type: flow
+    aliases: [JPM GBI-EM inclusion, index inclusion, GBI-EM]
+  - node_id: rbi-fx-intervention
+    name: RBI FX Intervention
+    type: policy_inst
+    aliases: [RBI dollar sales, spot intervention]
+  - node_id: forex-reserves
+    name: India Forex Reserves
+    type: macro_var
+    aliases: [FX reserves, import cover]
+  - node_id: current-account-deficit
+    name: Current Account Deficit
+    type: macro_var
+    aliases: [CAD]
+
+  # --- Credit --------------------------------------------------------------
+  - node_id: aaa-corp-spread
+    name: AAA Corporate Bond Spread
+    type: rate_instrument
+    aliases: [AAA spread]
+  - node_id: aa-spread
+    name: AA Corporate Bond Spread
+    type: rate_instrument
+    aliases: [AA spread]
+  - node_id: nbfc-spread
+    name: NBFC Credit Spread
+    type: rate_instrument
+    aliases: [NBFC spread]
+  - node_id: hfc-spread
+    name: Housing Finance Company Spread
+    type: rate_instrument
+    aliases: [HFC spread]
+  - node_id: psu-bank-credit
+    name: PSU Bank Credit Conditions
+    type: issuer
+    aliases: [PSU banks, public sector banks]
+  - node_id: private-bank-credit
+    name: Private Bank Credit Conditions
+    type: issuer
+    aliases: [private banks]
+  - node_id: mfi
+    name: Microfinance Institutions
+    type: issuer
+    aliases: [MFI, microfinance]
+
+  # --- Sectors / issuers (sector-level only in Phase 1) ---------------------
+  - node_id: omcs
+    name: Oil Marketing Companies
+    type: sector
+    aliases: [OMCs, fuel retailers]
+  - node_id: upstream-oil
+    name: Upstream Oil and Gas Producers
+    type: sector
+    aliases: [upstream E&P]
+  - node_id: gas-utilities
+    name: Gas Utilities / City Gas Distribution
+    type: sector
+    aliases: [CGD, gas distribution]
+  - node_id: power
+    name: Power / Electricity Generation
+    type: sector
+    aliases: [power sector, electricity]
+  - node_id: coal
+    name: Coal
+    type: sector
+    aliases: [coal mining]
+  - node_id: cement
+    name: Cement
+    type: sector
+    aliases: [cement sector]
+  - node_id: steel
+    name: Steel
+    type: sector
+    aliases: [steel sector]
+  - node_id: autos
+    name: Automobiles
+    type: sector
+    aliases: [auto sector, automotive]
+  - node_id: it-services
+    name: IT Services
+    type: sector
+    aliases: [IT sector, technology services]
+  - node_id: pharma
+    name: Pharmaceuticals
+    type: sector
+    aliases: [pharma sector, generics]
+  - node_id: telecom
+    name: Telecom
+    type: sector
+    aliases: [telecom sector]
+  - node_id: airlines
+    name: Airlines
+    type: sector
+    aliases: [aviation]
+  - node_id: paints
+    name: Paints
+    type: sector
+    aliases: [paints sector, decorative paints]
+  - node_id: fmcg-input-cost
+    name: FMCG Input Costs
+    type: sector
+    aliases: [FMCG, consumer staples input cost]
+  - node_id: real-estate
+    name: Real Estate
+    type: sector
+    aliases: [realty, housing sector]
+  - node_id: chemicals
+    name: Specialty and Commodity Chemicals
+    type: sector
+    aliases: [chemicals sector]
+
+  # --- Additional commodities / macro / sentiment ---------------------------
+  - node_id: natural-gas-price
+    name: Natural Gas / LNG Price
+    type: commodity
+    aliases: [LNG price, gas price]
+  - node_id: gold
+    name: Gold Price
+    type: commodity
+    aliases: [gold]
+  - node_id: edible-oil-imports
+    name: Edible Oil Import Prices
+    type: commodity
+    aliases: [vegetable oil, cooking oil price]
+  - node_id: vix-india
+    name: India VIX
+    type: macro_var
+    aliases: [India VIX, implied volatility]
+  - node_id: global-risk-sentiment
+    name: Global Risk Sentiment
+    type: macro_var
+    aliases: [risk-on/risk-off, EM risk appetite, risk sentiment]
+  - node_id: china-growth
+    name: China Growth
+    type: macro_var
+    aliases: [China GDP, China demand]
+  - node_id: real-gdp-growth
+    name: India Real GDP Growth
+    type: macro_var
+    aliases: [India GDP growth, growth cycle]
+  - node_id: bank-nim
+    name: Bank Net Interest Margin
+    type: macro_var
+    aliases: [NIM, bank margins]
+  - node_id: rural-demand
+    name: Rural Demand
+    type: macro_var
+    aliases: [rural consumption]
+
+  # --- Sovereign -------------------------------------------------------------
+  - node_id: india-sovereign
+    name: Republic of India (Sovereign)
+    type: sovereign
+    aliases: [India, GoI, sovereign]
+  - node_id: india-sovereign-rating
+    name: India Sovereign Credit Rating
+    type: sovereign
+    aliases: [sovereign rating, S&P rating, Moody's rating, Fitch rating]
+
+edges:
+  # ===== Policy rate transmission =====
+  - src: rbi-mpc
+    dst: repo-rate
+    channel: policy
+    mechanism: RBI MPC sets the repo rate at scheduled and off-cycle meetings.
+    sign_hint: pos
+    typical_lag: intraday
+  - src: repo-rate
+    dst: sdf-rate
+    channel: policy
+    mechanism: SDF is fixed 25bp below repo, the floor of the LAF corridor.
+    sign_hint: pos
+    typical_lag: intraday
+  - src: repo-rate
+    dst: msf-rate
+    channel: policy
+    mechanism: MSF is fixed 25bp above repo, the ceiling of the LAF corridor.
+    sign_hint: pos
+    typical_lag: intraday
+  - src: repo-rate
+    dst: t-bill
+    channel: funding
+    mechanism: T-bill yields re-price toward the new repo-anchored short rate at auction.
+    sign_hint: pos
+    typical_lag: days
+  - src: repo-rate
+    dst: ois-1y
+    channel: funding
+    mechanism: 1y OIS reprices near-term policy rate expectations directly.
+    sign_hint: pos
+    typical_lag: intraday
+  - src: repo-rate
+    dst: ois-5y
+    channel: funding
+    mechanism: 5y OIS shifts with the expected repo path, damped by term premium.
+    sign_hint: pos
+    typical_lag: days
+  - src: repo-rate
+    dst: gsec-2y
+    channel: funding
+    mechanism: 2y G-sec tracks the front end of the policy rate path most closely.
+    sign_hint: pos
+    typical_lag: days
+  - src: ois-1y
+    dst: gsec-2y
+    channel: funding
+    mechanism: The OIS curve is the primary hedging and pricing reference for short-dated G-secs.
+    sign_hint: pos
+    typical_lag: intraday
+  - src: gsec-2y
+    dst: gsec-5y
+    channel: funding
+    mechanism: Curve moves propagate from the front end to the belly via relative-value trading.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: gsec-5y
+    dst: gsec-10y
+    channel: funding
+    mechanism: Curve moves propagate from the belly to the 10y benchmark via relative-value trading.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: gsec-10y
+    dst: gsec-30y
+    channel: funding
+    mechanism: The long end re-prices in sympathy with the 10y benchmark, duration-adjusted.
+    sign_hint: pos
+    typical_lag: days
+  - src: gsec-2y
+    dst: term-spread-10y-2y
+    channel: funding
+    mechanism: The term spread is mechanically the 10y yield minus the 2y yield.
+    sign_hint: ambiguous
+    typical_lag: intraday
+  - src: gsec-10y
+    dst: term-spread-10y-2y
+    channel: funding
+    mechanism: The term spread is mechanically the 10y yield minus the 2y yield.
+    sign_hint: ambiguous
+    typical_lag: intraday
+  - src: crr
+    dst: laf-liquidity
+    channel: liquidity
+    mechanism: A CRR hike locks incremental deposits with RBI, draining banking-system liquidity.
+    sign_hint: neg
+    typical_lag: days
+  - src: laf-liquidity
+    dst: t-bill
+    channel: liquidity
+    mechanism: Surplus or deficit system liquidity drives banks' demand for short-duration T-bills.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: laf-liquidity
+    dst: vrrr
+    channel: liquidity
+    mechanism: RBI runs VRRR auctions to absorb surplus liquidity signalled by the LAF balance.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: vrrr
+    dst: gsec-2y
+    channel: liquidity
+    mechanism: The VRRR cut-off proxies the effective short rate and re-anchors front-end G-secs.
+    sign_hint: pos
+    typical_lag: days
+  - src: t-bill
+    dst: laf-liquidity
+    channel: liquidity
+    mechanism: Heavy T-bill issuance absorbs banking-system liquidity at auction settlement.
+    sign_hint: neg
+    typical_lag: days
+    # REVIEW: direction of causality (issuance calendar vs liquidity state) is debated
+  - src: laf-liquidity
+    dst: nbfc-spread
+    channel: liquidity
+    mechanism: Tight system liquidity first squeezes wholesale-funded NBFCs via CP/NCD rollover cost.
+    sign_hint: neg
+    typical_lag: days
+  - src: laf-liquidity
+    dst: aaa-corp-spread
+    channel: liquidity
+    mechanism: A system liquidity deficit tightens the marginal funding cost even for top-rated corporate borrowers.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: repo-rate
+    dst: nbfc-spread
+    channel: funding
+    mechanism: A higher policy rate raises NBFC marginal cost of funds relative to deposit-funded bank peers.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: repo-rate
+    dst: hfc-spread
+    channel: funding
+    mechanism: Housing financiers reprice wholesale borrowing cost off the repo-anchored curve.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: repo-rate
+    dst: aaa-corp-spread
+    channel: funding
+    mechanism: AAA paper is priced as a spread over the G-sec curve, which itself resets with policy rate moves.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: aaa-corp-spread
+    dst: aa-spread
+    channel: funding
+    mechanism: AA spreads move with the AAA curve plus an idiosyncratic quality premium that widens faster in stress.
+    sign_hint: ambiguous
+    typical_lag: weeks
+  - src: gsec-10y
+    dst: sdl-spread
+    channel: funding
+    mechanism: State development loan yields are quoted as a spread over the matched-maturity G-sec benchmark.
+    sign_hint: ambiguous
+    typical_lag: weeks
+  - src: gsec-10y
+    dst: aaa-corp-spread
+    channel: funding
+    mechanism: AAA corporate bonds are priced as a spread over the risk-free G-sec curve.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: gsec-10y
+    dst: hfc-spread
+    channel: funding
+    mechanism: Housing financiers' wholesale bond funding is priced as a spread over the G-sec curve.
+    sign_hint: ambiguous
+    typical_lag: weeks
+  - src: repo-rate
+    dst: psu-bank-credit
+    channel: funding
+    mechanism: External-benchmark-linked (EBLR) loan books reprice with the repo rate on a quarterly reset.
+    sign_hint: pos
+    typical_lag: months
+  - src: repo-rate
+    dst: private-bank-credit
+    channel: funding
+    mechanism: External-benchmark-linked loan books reprice with the repo rate on a quarterly reset.
+    sign_hint: pos
+    typical_lag: months
+  - src: repo-rate
+    dst: bank-nim
+    channel: funding
+    mechanism: NIM direction depends on whether faster EBLR-linked loan repricing outpaces slower deposit repricing.
+    sign_hint: ambiguous
+    typical_lag: months
+    # REVIEW: NIM sensitivity to rate direction varies significantly by bank funding mix
+  - src: bank-nim
+    dst: psu-bank-credit
+    channel: funding
+    mechanism: NIM compression pressures bank profitability and willingness to extend fresh credit at the margin.
+    sign_hint: ambiguous
+    typical_lag: months
+    # REVIEW: weak, indirect link — flagged for user judgement
+  - src: bank-nim
+    dst: private-bank-credit
+    channel: funding
+    mechanism: NIM compression pressures bank profitability and willingness to extend fresh credit at the margin.
+    sign_hint: ambiguous
+    typical_lag: months
+    # REVIEW: weak, indirect link — flagged for user judgement
+
+  # ===== Inflation transmission =====
+  - src: crude-brent
+    dst: cpi
+    channel: inflation
+    mechanism: Fuel and transport components of CPI reprice with a lag to crude oil moves.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: crude-brent
+    dst: wpi
+    channel: inflation
+    mechanism: The WPI fuel and power group tracks crude and refined product prices closely and quickly.
+    sign_hint: pos
+    typical_lag: days
+  - src: food-prices
+    dst: cpi
+    channel: inflation
+    mechanism: Food and beverages carry the largest single weight in India's CPI basket.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: monsoon
+    dst: food-prices
+    channel: supply_chain
+    mechanism: Deficient or excess rainfall drives kharif crop output and hence food supply and prices.
+    sign_hint: ambiguous
+    typical_lag: months
+  - src: monsoon
+    dst: cpi
+    channel: inflation
+    mechanism: A poor monsoon's food-price effect is large enough to move headline CPI directly.
+    sign_hint: pos
+    typical_lag: months
+    # REVIEW: partially redundant with monsoon -> food-prices -> cpi; kept as a distinct faster channel
+  - src: wpi
+    dst: cpi
+    channel: inflation
+    mechanism: Producer price pressure passes through to consumer prices with a lag as input costs are passed on.
+    sign_hint: pos
+    typical_lag: months
+  - src: cpi
+    dst: core-cpi
+    channel: inflation
+    mechanism: Core CPI is CPI ex food and fuel; headline food/fuel prints are reported alongside but not directly causal.
+    sign_hint: ambiguous
+    typical_lag: intraday
+    # REVIEW: this edge mostly captures reporting co-occurrence, not a real economic mechanism
+  - src: cpi
+    dst: rbi-mpc
+    channel: policy
+    mechanism: CPI prints materially above or below the 4% +/- 2% target shift the MPC's rate decision.
+    sign_hint: ambiguous
+    typical_lag: weeks
+  - src: core-cpi
+    dst: rbi-mpc
+    channel: policy
+    mechanism: Sticky core inflation is the MPC's primary read on underlying demand-side price pressure.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: core-cpi
+    dst: ois-5y
+    channel: inflation
+    mechanism: Sticky core inflation raises the market's medium-term policy rate expectations priced into the OIS curve.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: core-cpi
+    dst: aaa-corp-spread
+    channel: inflation
+    mechanism: Persistent core inflation raises real funding costs across the credit curve, not only the sovereign curve.
+    sign_hint: pos
+    typical_lag: weeks
+    # REVIEW: indirect; effect is usually dominated by the sovereign-curve channel already captured elsewhere
+  - src: omcs
+    dst: cpi
+    channel: inflation
+    mechanism: OMC retail fuel pricing decisions are a direct, high-weight pass-through into the CPI fuel sub-index.
+    sign_hint: pos
+    typical_lag: days
+  - src: inr
+    dst: cpi
+    channel: inflation
+    mechanism: INR depreciation raises the landed cost of imported crude, edible oil, and other dollar-priced inputs.
+    sign_hint: pos
+    typical_lag: weeks
+
+  # ===== Fiscal =====
+  - src: crude-brent
+    dst: fiscal-deficit-gdp
+    channel: policy
+    mechanism: Elevated crude raises the OMC/fertiliser subsidy bill, widening the fiscal deficit.
+    sign_hint: neg
+    typical_lag: months
+  - src: fiscal-deficit-gdp
+    dst: gsec-10y
+    channel: policy
+    mechanism: A wider fiscal deficit raises the government's gross borrowing programme, pressuring G-sec yields.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: goi-fiscal
+    dst: fiscal-deficit-gdp
+    channel: policy
+    mechanism: The Union Budget sets the government's revenue and expenditure plan and hence the deficit path.
+    sign_hint: ambiguous
+    typical_lag: intraday
+  - src: goi-fiscal
+    dst: gsec-10y
+    channel: policy
+    mechanism: The Budget's gross and net borrowing calendar is the single biggest annual G-sec supply signal.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: goi-fiscal
+    dst: sdl-spread
+    channel: policy
+    mechanism: State borrowing calendars are coordinated with the Union Budget's overall market borrowing plan.
+    sign_hint: ambiguous
+    typical_lag: weeks
+    # REVIEW: coordination is loose in practice; states retain independent borrowing autonomy
+  - src: fiscal-deficit-gdp
+    dst: sdl-spread
+    channel: policy
+    mechanism: Aggregate centre-plus-state government borrowing supply pressure widens SDL spreads over G-secs.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: omcs
+    dst: fiscal-deficit-gdp
+    channel: policy
+    mechanism: GoI compensates OMCs for under-recoveries via subsidy payouts when retail prices are held down.
+    sign_hint: neg
+    typical_lag: months
+  - src: fiscal-deficit-gdp
+    dst: india-sovereign-rating
+    channel: risk_sentiment
+    mechanism: Persistent fiscal slippage versus the consolidation glide path is a primary input to rating agency reviews.
+    sign_hint: neg
+    typical_lag: months
+  - src: current-account-deficit
+    dst: india-sovereign-rating
+    channel: risk_sentiment
+    mechanism: External vulnerability (CAD, reserve cover) is assessed by rating agencies alongside fiscal metrics.
+    sign_hint: neg
+    typical_lag: months
+  - src: forex-reserves
+    dst: india-sovereign-rating
+    channel: risk_sentiment
+    mechanism: Reserve adequacy (import cover) is a standard external-vulnerability input to sovereign rating reviews.
+    sign_hint: pos
+    typical_lag: months
+    # REVIEW: one of several inputs; weighting versus fiscal/growth metrics varies by agency
+  - src: india-sovereign-rating
+    dst: fpi-debt-flows
+    channel: flows
+    mechanism: A rating action changes India's eligibility and weight in global sovereign bond indices and mandates.
+    sign_hint: pos
+    typical_lag: months
+  - src: india-sovereign-rating
+    dst: gsec-10y
+    channel: risk_sentiment
+    mechanism: A sovereign rating change re-prices the risk-free curve's credit-risk premium directly.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: india-sovereign
+    dst: global-risk-sentiment
+    channel: risk_sentiment
+    mechanism: Geopolitical or security incidents involving India are read by global investors as a country risk-premium event.
+    sign_hint: neg
+    typical_lag: days
+    # REVIEW: magnitude highly event-specific; kept generic pending a concrete fixture
+
+  # ===== US rates / dollar / global =====
+  - src: fed
+    dst: fed-funds-rate
+    channel: policy
+    mechanism: The FOMC sets the federal funds rate at scheduled meetings.
+    sign_hint: pos
+    typical_lag: intraday
+  - src: us-2y
+    dst: fed-funds-rate
+    channel: funding
+    mechanism: 2y UST is the market's primary pricing vehicle for the near-term Fed path.
+    sign_hint: pos
+    typical_lag: intraday
+    # REVIEW: causality runs both ways in practice (market pricing also informs Fed reaction function)
+  - src: us-2y
+    dst: us-10y
+    channel: funding
+    mechanism: The long end re-prices in sympathy with front-end rate expectations, curve-shape dependent.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: fed-funds-rate
+    dst: us-10y
+    channel: funding
+    mechanism: The US 10y Treasury yield reprices with the expected Fed policy path.
+    sign_hint: pos
+    typical_lag: days
+  - src: fed-funds-rate
+    dst: dxy
+    channel: fx
+    mechanism: A hawkish or dovish Fed shifts US rate differentials and hence dollar demand.
+    sign_hint: pos
+    typical_lag: days
+  - src: us-10y
+    dst: dxy
+    channel: fx
+    mechanism: Rising US real yields attract capital into dollar assets, supporting the dollar index.
+    sign_hint: pos
+    typical_lag: days
+  - src: dxy
+    dst: inr
+    channel: fx
+    mechanism: A stronger dollar mechanically weighs on INR and most EM currencies via the DXY basket.
+    sign_hint: neg
+    typical_lag: intraday
+  - src: us-10y
+    dst: fpi-debt-flows
+    channel: flows
+    mechanism: Higher US Treasury yields raise the opportunity cost of holding EM local debt, driving outflows.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: fed-funds-rate
+    dst: fpi-equity-flows
+    channel: risk_sentiment
+    mechanism: Fed tightening cycles compress the EM equity risk premium and trigger outflows toward US assets.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: fed-funds-rate
+    dst: gsec-10y
+    channel: risk_sentiment
+    mechanism: Fed hikes tighten global dollar liquidity and compress EM local-currency bond risk premia, pressuring yields higher.
+    sign_hint: pos
+    typical_lag: weeks
+    # REVIEW: magnitude is usually second-order versus domestic policy and fiscal drivers
+  - src: dxy
+    dst: fpi-debt-flows
+    channel: fx
+    mechanism: A strengthening dollar erodes unhedged INR-debt returns for foreign holders, prompting outflows.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: dxy
+    dst: fpi-equity-flows
+    channel: fx
+    mechanism: A broadly stronger dollar tightens global dollar liquidity, a headwind for EM equity flows.
+    sign_hint: neg
+    typical_lag: weeks
+    # REVIEW: overlaps with the fed-funds-rate -> fpi-equity-flows channel; kept distinct for the pure-FX leg
+  - src: us-10y
+    dst: global-risk-sentiment
+    channel: risk_sentiment
+    mechanism: A sharp US Treasury sell-off (duration shock) typically tightens global financial conditions and sours risk appetite.
+    sign_hint: neg
+    typical_lag: days
+    # REVIEW: threshold-dependent; small UST moves do not reliably trigger this
+
+  # ===== FX / reserves / CAD =====
+  - src: rbi-fx-intervention
+    dst: inr
+    channel: fx
+    mechanism: RBI buys or sells dollars via spot and forwards to smooth INR volatility around a level.
+    sign_hint: ambiguous
+    typical_lag: intraday
+  - src: rbi-fx-intervention
+    dst: forex-reserves
+    channel: fx
+    mechanism: Spot dollar sales to defend INR directly draw down forex reserves.
+    sign_hint: neg
+    typical_lag: days
+  - src: forex-reserves
+    dst: rbi-fx-intervention
+    channel: fx
+    mechanism: Reserve adequacy (import cover) determines how aggressively RBI can defend INR before conserving reserves.
+    sign_hint: ambiguous
+    typical_lag: months
+  - src: current-account-deficit
+    dst: inr
+    channel: fx
+    mechanism: A widening CAD means more dollars must be bought via the current account, pressuring INR.
+    sign_hint: neg
+    typical_lag: months
+  - src: crude-brent
+    dst: current-account-deficit
+    channel: trade
+    mechanism: India imports roughly 85% of its crude; higher prices directly widen the oil import bill and CAD.
+    sign_hint: neg
+    typical_lag: months
+  - src: inr
+    dst: aaa-corp-spread
+    channel: risk_sentiment
+    mechanism: Sharp INR depreciation is read as a risk-off signal, widening corporate spreads via foreign-currency-linked stress.
+    sign_hint: neg
+    typical_lag: weeks
+    # REVIEW: mainly relevant for issuers with material unhedged FX borrowing; not universal
+  - src: index-inclusion-flows
+    dst: fpi-debt-flows
+    channel: flows
+    mechanism: Passive index-tracking funds must buy included G-secs, mechanically adding foreign debt inflows.
+    sign_hint: pos
+    typical_lag: months
+  - src: index-inclusion-flows
+    dst: inr
+    channel: flows
+    mechanism: Passive bond-index inflows are settled in dollars, adding to INR demand over the phase-in window.
+    sign_hint: pos
+    typical_lag: months
+  - src: fpi-debt-flows
+    dst: gsec-10y
+    channel: flows
+    mechanism: Sustained foreign buying or selling of G-secs moves the benchmark 10y yield directly through demand.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: fpi-equity-flows
+    dst: inr
+    channel: fx
+    mechanism: FPI equity inflows and outflows are settled in dollars, adding to INR demand or supply.
+    sign_hint: pos
+    typical_lag: days
+  - src: fpi-debt-flows
+    dst: inr
+    channel: fx
+    mechanism: Debt inflows and outflows are dollar-settled and directly affect INR supply and demand.
+    sign_hint: pos
+    typical_lag: days
+  - src: global-risk-sentiment
+    dst: fpi-equity-flows
+    channel: risk_sentiment
+    mechanism: Broad EM risk-off or risk-on regimes drive the marginal allocation decision for foreign equity investors.
+    sign_hint: ambiguous
+    typical_lag: days
+  - src: global-risk-sentiment
+    dst: fpi-debt-flows
+    channel: risk_sentiment
+    mechanism: Risk-off regimes trigger EM local-currency debt outflows largely independent of India-specific fundamentals.
+    sign_hint: neg
+    typical_lag: days
+  - src: global-risk-sentiment
+    dst: gsec-10y
+    channel: risk_sentiment
+    mechanism: In a growth-scare risk-off shock, domestic investors rotate from equity and credit into safe-haven G-secs, bidding yields down.
+    sign_hint: neg
+    typical_lag: days
+    # REVIEW: contested — this directly opposes the hawkish-RBI selloff path (cpi -> rbi-mpc -> repo-rate -> gsec-2y -> gsec-10y). Which dominates depends on whether the shock is read as inflationary or growth-negative. See critique stage.
+  - src: global-risk-sentiment
+    dst: nbfc-spread
+    channel: risk_sentiment
+    mechanism: Wholesale-funded NBFCs are the first credit-market segment to reprice in a broad risk-off shock.
+    sign_hint: neg
+    typical_lag: days
+  - src: global-risk-sentiment
+    dst: aaa-corp-spread
+    channel: risk_sentiment
+    mechanism: Broad risk-off episodes widen credit spreads across the curve as investors demand more compensation for credit risk.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: global-risk-sentiment
+    dst: it-services
+    channel: risk_sentiment
+    mechanism: IT services stocks trade as a high-beta global-risk proxy within the Indian market.
+    sign_hint: ambiguous
+    typical_lag: days
+    # REVIEW: direction depends on whether the shock is a growth scare (negative for IT demand) or a pure liquidity/rate scare
+  - src: vix-india
+    dst: fpi-equity-flows
+    channel: risk_sentiment
+    mechanism: A spike in India VIX reflects and reinforces near-term hedging demand, often coinciding with FPI selling.
+    sign_hint: neg
+    typical_lag: days
+  - src: vix-india
+    dst: gsec-10y
+    channel: risk_sentiment
+    mechanism: Elevated equity volatility often coincides with FPI debt outflows that pressure G-sec yields.
+    sign_hint: pos
+    typical_lag: days
+    # REVIEW: correlational rather than a clean mechanism; can invert if the volatility spike is itself a flight-to-safety event
+  - src: crude-brent
+    dst: vix-india
+    channel: risk_sentiment
+    mechanism: A sudden oil supply shock is a classic volatility trigger for Indian risk assets.
+    sign_hint: pos
+    typical_lag: days
+  - src: crude-brent
+    dst: global-risk-sentiment
+    channel: risk_sentiment
+    mechanism: A sharp oil supply shock is read as a growth-negative shock for oil-importing EMs, souring broad risk sentiment.
+    sign_hint: neg
+    typical_lag: days
+    # REVIEW: this is the origin of the contested gsec-10y node — see the global-risk-sentiment -> gsec-10y edge above
+  - src: china-growth
+    dst: global-risk-sentiment
+    channel: trade
+    mechanism: A China growth shock is read as a broad EM demand shock, shifting risk appetite for all EM assets including India.
+    sign_hint: ambiguous
+    typical_lag: weeks
+  - src: china-growth
+    dst: crude-brent
+    channel: trade
+    mechanism: China is the largest marginal buyer of crude; a China demand shock moves global oil prices.
+    sign_hint: ambiguous
+    typical_lag: weeks
+
+  # ===== Gold / edible oil =====
+  - src: global-risk-sentiment
+    dst: gold
+    channel: risk_sentiment
+    mechanism: Gold is a canonical safe-haven asset that is bid in broad risk-off episodes.
+    sign_hint: pos
+    typical_lag: days
+  - src: dxy
+    dst: gold
+    channel: fx
+    mechanism: Gold is dollar-priced; a stronger dollar mechanically weighs on the gold price.
+    sign_hint: neg
+    typical_lag: days
+  - src: gold
+    dst: current-account-deficit
+    channel: trade
+    mechanism: India is one of the world's largest gold importers; higher prices and volumes widen the import bill and CAD.
+    sign_hint: neg
+    typical_lag: months
+  - src: edible-oil-imports
+    dst: food-prices
+    channel: supply_chain
+    mechanism: India imports roughly 60% of its edible oil consumption; global price moves pass through to retail cooking-oil prices.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: crude-brent
+    dst: edible-oil-imports
+    channel: supply_chain
+    mechanism: Vegetable oil and biodiesel demand compete for the same agri-feedstock and freight, linking prices to the energy complex.
+    sign_hint: pos
+    typical_lag: months
+    # REVIEW: indirect commodity-complex linkage; effect size is modest and regime-dependent
+
+  # ===== Commodity / sector supply chains =====
+  - src: crude-brent
+    dst: omcs
+    channel: supply_chain
+    mechanism: OMCs buy crude as feedstock; a spike compresses marketing margins unless retail prices are raised.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: crude-brent
+    dst: upstream-oil
+    channel: supply_chain
+    mechanism: Upstream producers realise higher prices for crude oil and gas output directly.
+    sign_hint: pos
+    typical_lag: days
+  - src: crude-brent
+    dst: autos
+    channel: supply_chain
+    mechanism: Higher fuel prices raise the total cost of vehicle ownership, dampening demand at the margin.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: crude-brent
+    dst: paints
+    channel: supply_chain
+    mechanism: Crude derivatives (titanium dioxide feedstock, solvents) are key raw material inputs for paints.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: crude-brent
+    dst: fmcg-input-cost
+    channel: supply_chain
+    mechanism: Packaging (plastics) and logistics costs for FMCG scale with crude-linked input prices.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: crude-brent
+    dst: airlines
+    channel: supply_chain
+    mechanism: Aviation turbine fuel is the single largest operating cost line for airlines.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: crude-brent
+    dst: chemicals
+    channel: supply_chain
+    mechanism: Naphtha and other crude derivatives are the primary feedstock for petrochemical producers.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: crude-brent
+    dst: gas-utilities
+    channel: supply_chain
+    mechanism: City gas distribution margins are squeezed when crude-linked APM/spot gas costs rise faster than tariff pass-through.
+    sign_hint: neg
+    typical_lag: weeks
+    # REVIEW: tariff pass-through mechanics are regulator-dependent and vary by state/city gas licensee
+  - src: crude-brent
+    dst: natural-gas-price
+    channel: supply_chain
+    mechanism: LNG spot contracts are frequently oil-indexed, linking gas prices to crude moves with a lag.
+    sign_hint: pos
+    typical_lag: months
+  - src: natural-gas-price
+    dst: gas-utilities
+    channel: supply_chain
+    mechanism: City gas distributors and gas-based power source their feedstock at spot or contracted LNG prices.
+    sign_hint: ambiguous
+    typical_lag: weeks
+    # REVIEW: sign depends on whether tariffs pass costs through quickly or margins absorb the shock
+  - src: natural-gas-price
+    dst: power
+    channel: supply_chain
+    mechanism: Gas-based power plants' variable cost scales directly with input gas prices.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: coal
+    dst: power
+    channel: supply_chain
+    mechanism: Thermal power, roughly 70% of India's generation mix, sources coal as its primary variable input cost.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: coal
+    dst: cement
+    channel: supply_chain
+    mechanism: Coal and pet-coke are the dominant kiln fuel cost for cement manufacturing.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: coal
+    dst: steel
+    channel: supply_chain
+    mechanism: Coking coal is a key blast-furnace input cost for integrated steel producers.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: power
+    dst: cement
+    channel: supply_chain
+    mechanism: Cement manufacturing is power-intensive; grid tariff changes flow through to production cost.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: power
+    dst: steel
+    channel: supply_chain
+    mechanism: Electric-arc-furnace steelmaking is highly power-cost sensitive.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: steel
+    dst: autos
+    channel: supply_chain
+    mechanism: Steel is a primary raw material input for auto body and chassis manufacturing.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: chemicals
+    dst: paints
+    channel: supply_chain
+    mechanism: Speciality resins and pigments are chemicals-sector inputs to paint formulations.
+    sign_hint: neg
+    typical_lag: weeks
+    # REVIEW: overlaps with the direct crude-brent -> paints edge; kept as the intermediate step for chains that pass through chemicals
+  - src: chemicals
+    dst: autos
+    channel: supply_chain
+    mechanism: Specialty chemicals such as adhesives, coatings, and tyre feedstock are inputs to auto component manufacturing.
+    sign_hint: neg
+    typical_lag: weeks
+    # REVIEW: minor cost share; flagged as a weaker link than the steel -> autos or crude-brent -> autos channels
+
+  # ===== China / trade =====
+  - src: china-growth
+    dst: steel
+    channel: trade
+    mechanism: China is the marginal global steel producer and consumer; a China slowdown depresses global and Indian steel realisations via import competition.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: china-growth
+    dst: cement
+    channel: trade
+    mechanism: A China construction slowdown reduces global demand for cement-linked commodities and freight, an indirect drag.
+    sign_hint: neg
+    typical_lag: months
+    # REVIEW: indirect and freight/commodity-cycle mediated; India's cement sector is largely domestically driven
+  - src: china-growth
+    dst: chemicals
+    channel: trade
+    mechanism: China is the dominant global capacity setter for commodity chemicals; its demand and supply shifts move the global spreads Indian producers realise.
+    sign_hint: ambiguous
+    typical_lag: months
+    # REVIEW: sign depends on whether China moves are demand-driven (negative for Indian spreads) or capacity-driven (ambiguous)
+
+  # ===== Domestic demand / growth cycle =====
+  - src: real-gdp-growth
+    dst: autos
+    channel: supply_chain
+    mechanism: Vehicle sales are a high-beta discretionary category that tracks the domestic growth cycle closely.
+    sign_hint: pos
+    typical_lag: months
+  - src: real-gdp-growth
+    dst: real-estate
+    channel: supply_chain
+    mechanism: Residential and commercial demand scales with income growth and business confidence.
+    sign_hint: pos
+    typical_lag: months
+  - src: real-gdp-growth
+    dst: telecom
+    channel: supply_chain
+    mechanism: Data consumption growth and ARPU realisation scale with broader income and consumption growth.
+    sign_hint: pos
+    typical_lag: months
+    # REVIEW: telecom ARPU is often driven more by tariff-hike cycles than by GDP growth directly
+  - src: real-estate
+    dst: cement
+    channel: supply_chain
+    mechanism: Construction activity is the primary demand driver for cement volumes.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: real-estate
+    dst: steel
+    channel: supply_chain
+    mechanism: Construction and infrastructure are the largest end-demand segments for long steel products.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: rural-demand
+    dst: autos
+    channel: supply_chain
+    mechanism: Two-wheeler and tractor demand are disproportionately linked to rural income levels.
+    sign_hint: pos
+    typical_lag: months
+  - src: monsoon
+    dst: rural-demand
+    channel: supply_chain
+    mechanism: A good monsoon lifts agricultural income and hence rural discretionary spending.
+    sign_hint: pos
+    typical_lag: months
+  - src: mfi
+    dst: rural-demand
+    channel: supply_chain
+    mechanism: Microfinance credit availability directly funds rural consumption and small-enterprise activity.
+    sign_hint: pos
+    typical_lag: months
+
+  # ===== Credit -> sectors =====
+  - src: nbfc-spread
+    dst: mfi
+    channel: funding
+    mechanism: MFIs are largely NBFC-funded; wider NBFC spreads raise their marginal cost of on-lending.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: nbfc-spread
+    dst: autos
+    channel: funding
+    mechanism: A large share of vehicle financing, especially commercial vehicles and two-wheelers, is NBFC-originated.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: hfc-spread
+    dst: real-estate
+    channel: funding
+    mechanism: Housing finance cost is a direct driver of mortgage affordability and hence housing demand.
+    sign_hint: neg
+    typical_lag: months
+  - src: psu-bank-credit
+    dst: real-estate
+    channel: funding
+    mechanism: PSU banks are large financiers of real estate and infrastructure project loans.
+    sign_hint: ambiguous
+    typical_lag: months
+    # REVIEW: "credit conditions" as a node is a proxy for willingness/cost to lend, not a single observable series — treat with care
+  - src: private-bank-credit
+    dst: autos
+    channel: funding
+    mechanism: Private banks are a major channel for retail auto loan financing.
+    sign_hint: ambiguous
+    typical_lag: months
+    # REVIEW: same proxy-node caveat as psu-bank-credit -> real-estate above
+
+  # ===== FX -> export sectors =====
+  - src: inr
+    dst: it-services
+    channel: fx
+    mechanism: IT services revenue is dollar-denominated while costs are largely rupee; INR depreciation is margin-accretive.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: inr
+    dst: pharma
+    channel: fx
+    mechanism: Export-oriented generics pharma earns a meaningful share of revenue in dollars, benefiting from INR weakness.
+    sign_hint: pos
+    typical_lag: weeks
+  - src: inr
+    dst: airlines
+    channel: fx
+    mechanism: Aircraft leases and fuel are dollar-denominated while ticket revenue is largely rupee, so depreciation compresses margins.
+    sign_hint: neg
+    typical_lag: weeks
+  - src: inr
+    dst: telecom
+    channel: fx
+    mechanism: Telecom equipment and tower capex are significantly imported or dollar-linked, so INR depreciation raises capital cost.
+    sign_hint: neg
+    typical_lag: months
+    # REVIEW: capex cycles are lumpy; the sign holds for capex years but is muted in maintenance-capex years
+  - src: us-10y
+    dst: it-services
+    channel: risk_sentiment
+    mechanism: Rising US rates pressure US corporate IT budgets, a demand headwind for India's outsourcing-heavy IT sector.
+    sign_hint: neg
+    typical_lag: months

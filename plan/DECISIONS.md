@@ -1,0 +1,19 @@
+# Decisions
+
+- 2026-11-02 — The capstone is still live; anything it needs can't be delayed. Why: hard deadline; smaller stages cover it, no dates set yet.
+- 2026-11-02 — The gateway gets a one-hour push to work end to end and becomes the model node for Stage 0. Why: it should serve real calls, not stay frozen.
+- 2026-11-02 — Claude and Codex may build in parallel, judged case by case on whether the code works. Why: AI time is cheap; human review is the bottleneck.
+- 2026-11-02 — Every stage is outlined; only the next one gets a detailed plan. Why: keeps re-planning cheap when things change.
+- 2026-11-02 — Plans live under nodes (`plan/nodes/`), interfaces in one file (`plan/interfaces.md`); node plans name interfaces, never redefine them. Why: one shared definition keeps the parts compatible.
+- 2026-11-02 — Answers marked "Assumed" in the plans were chosen by Claude and await your review. Why: you asked to review later rather than answer now.
+- 2026-11-03 — AI OS code reaches models only through the gateway (I1, `core/llm.py`); `gateway/simple_llm/` stays a copy-out tool for side projects. Why: every call needs the ledger and cost row.
+- 2026-11-03 — py-fsrs, python-telegram-bot and Pydantic are approved for Stage 1, each behind one adapter. Why: so Stage 1 builds without stopping.
+- 2026-11-03 — I7 (buttons) and I14 (eval file shape) move into Stage 1; I1 takes `images` from day one. Why: Stage 1 already uses those shapes, so later stages reuse them instead of rewriting.
+- 2026-11-03 — Capstone code is due end of Dec / Jan. The submission is the learning-centred system covering all five asks; scope is frozen until then: no new modules or improvements outside `stages.md`. Why: build it properly once, not grow it.
+- 2026-11-03 — You control the plans; Claude and Codex write and review the code under ADLC. Disagreements are flagged in `stages.md` → Open for you to settle. Why: your time goes on plans, not code.
+- 2026-11-03 — No Research MCP. Ask 1 ("is this true?") delegates to Claude or GPT through the gateway (I1). You treat those providers as hardened against injection; the leftover risk is Open #4 in `stages.md`. Why: you don't want to own that problem.
+- 2026-11-03 — Steelman and Decision Tracker move before submission (asks 3 and 4). Both are hand-written fixed steps, never LangGraph, because the capstone bans orchestration frameworks. Why: they are capstone asks.
+- 2026-11-03 — Finish the gateway; `core/llm.py` is a thin client over it. Why: keeps the ledger and OpenTelemetry tracing that Stage 5 needs.
+- 2026-11-03 — A bare deploy (`/health` at the public URL, no provider keys on the box) moves into Stage 0. Why: so deploying can't fail in the last week.
+- 2026-11-03 — `plan/` is the only source of truth. The Stage Map and the plan page are views of it, and are updated from it, never the other way. Why: three copies had already drifted apart.
+- 2026-11-03 — The old plan page and the Stage Map are merged into one view, `AI OS plan.html` (https://claude.ai/artifact/Xzz4s8ojdqtBc596iKZjCH); originals in `Old Code/plan-pages-2026-11-03/`. Why: you asked for one document.

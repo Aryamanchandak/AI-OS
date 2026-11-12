@@ -1,0 +1,2174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI OS plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style id="app-css">
+.sgraph{display:block}
+.sgnode rect{fill:var(--sheet);stroke:var(--rule);stroke-width:1.5}
+.sgnode.planned rect{stroke:var(--built);stroke-width:2.5}
+.sgnode.seeded rect{stroke:var(--specced);stroke-width:2.5}
+.sgnode.empty rect{stroke:var(--idea);stroke-dasharray:4 3;stroke-width:2}
+.sgnode text{fill:var(--ink);font-size:12px}
+.sgnode{cursor:pointer}
+.sgedge{stroke:var(--plateEdge);stroke-width:1.5;fill:none}
+.stagecard{border:1px solid var(--rule);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--sheet)}
+.stagecard h4{margin:0 0 4px;font-size:1rem}
+.pstate{font-size:.75rem;font-weight:700;border-radius:999px;padding:2px 8px;margin-left:6px}
+.pstate.planned{background:var(--built);color:#fff}.pstate.seeded{background:var(--specced);color:#fff}.pstate.empty{background:var(--idea);color:#fff}
+.planbox{white-space:pre-wrap;background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:10px;font-size:.9rem}
+#seedTa{width:100%;min-height:90px;padding:8px;border:1px solid var(--rule);border-radius:8px;background:var(--paper)}
+:root{
+  --paper:#E9EDF2;--sheet:#F7F9FB;--ink:#16243A;--ink2:#56637A;--rule:#C7CFDA;--plate:#D6DDE7;--plateEdge:#AEB9C8;
+  --built:#17766A;--rough:#5E8F3A;--specced:#3651C9;--idea:#B07012;--shelf:#8A94A5;--retired:#A23B3B;
+  --pink:#B02A6E;--glow:#FFD15C;
+  color-scheme:light;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#111925;--sheet:#192333;--ink:#E6EBF2;--ink2:#A3AFC2;--rule:#33405A;--plate:#24314A;--plateEdge:#3A4A66;
+  --built:#4CC2B1;--rough:#9BCB6E;--specced:#8EA2FF;--idea:#F0B45A;--shelf:#7E899B;--retired:#FF8A8A;--pink:#FF7AB8;--glow:#FFD15C;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#111925;--sheet:#192333;--ink:#E6EBF2;--ink2:#A3AFC2;--rule:#33405A;--plate:#24314A;--plateEdge:#3A4A66;
+  --built:#4CC2B1;--rough:#9BCB6E;--specced:#8EA2FF;--idea:#F0B45A;--shelf:#7E899B;--retired:#FF8A8A;--pink:#FF7AB8;--glow:#FFD15C;color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.5;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--specced);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.top{padding:24px 0 4px}
+h1{font-size:clamp(2.1rem,6vw,3.4rem);line-height:1;margin:0;font-weight:800;letter-spacing:-.035em}
+.lede{max-width:64ch;color:var(--ink2);margin:10px 0 0}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--rule);margin-top:14px}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+nav.tabs a{flex:none;padding:13px 12px 11px;text-decoration:none;color:var(--ink2);font-weight:600;border-bottom:3px solid transparent}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--ink)}
+section.view{display:none;padding:18px 0 90px}
+section.view.on{display:block}
+h2{font-size:1.45rem;margin:0 0 6px;letter-spacing:-.015em}
+h3{font-size:1.06rem;margin:0 0 4px}
+p{max-width:70ch}
+.muted{color:var(--ink2)}
+.small{font-size:.86rem}
+.btn{border:1px solid var(--rule);background:var(--sheet);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:.9rem}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.45;cursor:default}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.toolbar .sp{flex:1}
+.status{font-size:.86rem;color:var(--ink2)}
+.status.dirty{color:var(--pink);font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+
+/* approach strip */
+.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;border-top:2px solid var(--ink);border-bottom:1px solid var(--rule);margin:6px 0 18px}
+.principles div{padding:10px 14px 12px 0}
+.principles b{display:block;font-size:.95rem}
+.principles span{font-size:.86rem;color:var(--ink2)}
+
+/* stack */
+.stackwrap{position:relative;background:linear-gradient(180deg,var(--sheet),var(--paper));border:1px solid var(--rule);border-radius:18px;overflow:auto;-webkit-overflow-scrolling:touch}
+svg#stack{display:block;margin:0 auto}
+svg text{font-family:"Schibsted Grotesk",system-ui,sans-serif}
+.pl-top{fill:var(--plate);stroke:var(--plateEdge)}
+.pl-front{fill:var(--plateEdge)}
+.pl-shadow{fill:var(--ink);opacity:.07}
+.pl.shelf .pl-shadow{opacity:0}
+.pl.shelf .pl-top{fill:none;stroke-dasharray:5 5}
+.pl.shelf .pl-front{fill:none}
+.pl-num{fill:var(--ink);font-size:30px;font-weight:800;letter-spacing:-.03em}
+.pl-t{fill:var(--ink);font-size:15px;font-weight:700}
+.pl-s{fill:var(--ink2);font-size:12px}
+.pl{cursor:pointer}
+.blk{cursor:pointer;transition:opacity .15s}
+.blk .f{fill:var(--c)}
+.blk .tp{fill:var(--c);opacity:.62}
+.blk .sd{fill:var(--c);filter:brightness(.72)}
+.blk .ol{fill:none;stroke:var(--glow);stroke-width:3;opacity:0}
+.blk.sel .ol,.blk.rel .ol{opacity:1}
+.blk.rel .ol{stroke-dasharray:4 3}
+.blk.dim{opacity:.18}
+.cap{fill:var(--ink);font-size:12.5px;font-weight:700;paint-order:stroke;stroke:var(--sheet);stroke-width:4px;pointer-events:none}
+.legendrow{display:flex;flex-wrap:wrap;gap:14px;font-size:.84rem;color:var(--ink2);margin:10px 2px 0}
+.legendrow span{display:inline-flex;align-items:center;gap:6px}
+.heights{display:inline-flex;align-items:flex-end;gap:3px}
+.heights i{display:block;width:8px;background:var(--ink2);border-radius:1px}
+
+/* tiers */
+.tier{margin-top:34px;display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:900px){.tier{grid-template-columns:280px 1fr;gap:28px}}
+.tier-head .num{font-size:3.4rem;font-weight:800;line-height:.9;letter-spacing:-.05em}
+.tier-head h3{font-size:1.35rem;margin:6px 0 6px;letter-spacing:-.01em}
+.tier-head p{margin:0 0 8px;font-size:.95rem}
+.done{border-left:3px solid var(--ink);padding:4px 0 4px 10px;font-size:.88rem}
+.rows{border-top:1px solid var(--rule)}
+.row{display:grid;grid-template-columns:14px 1fr;gap:4px 12px;padding:12px 6px;border-bottom:1px solid var(--rule);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left}
+.row:hover{background:var(--sheet)}
+.row.sel{background:var(--sheet);box-shadow:inset 3px 0 0 var(--glow)}
+.row.rel{box-shadow:inset 3px 0 0 var(--glow)}
+.row .bar{grid-row:1/4;width:6px;border-radius:3px;background:var(--c);align-self:stretch}
+.row .nm{font-weight:700;display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.row .nm small{font-weight:500;color:var(--ink2);font-size:.8rem}
+.row .wt{font-size:.92rem;color:var(--ink2)}
+.libs{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.lib{font-size:.78rem;border:1px solid var(--rule);border-radius:5px;padding:1px 7px;background:var(--paper)}
+.flag{color:var(--pink);font-size:.8rem;font-weight:600}
+
+/* generic blocks */
+.cols{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+@media (min-width:860px){.cols{grid-template-columns:1fr 1fr}}
+.box{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:15px 17px}
+.box.key{border:2px solid var(--ink)}
+ul.plain,ol.plain{margin:0;padding-left:1.2em}
+ul.plain li,ol.plain li{margin:6px 0}
+.src{display:inline-block;font-size:.72rem;font-weight:700;border-radius:4px;padding:0 6px;margin-left:6px;vertical-align:1px}
+.src.stated{background:var(--ink);color:var(--paper)}
+.src.proposed{border:1px solid var(--pink);color:var(--pink)}
+.src.checked{border:1px solid var(--ink2);color:var(--ink2)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+th,td{text-align:left;border-bottom:1px solid var(--rule);padding:8px 10px;vertical-align:top}
+th{font-weight:700;background:var(--sheet)}
+td:first-child{font-weight:700;white-space:nowrap}
+pre{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px;overflow-x:auto;font-size:.84rem;line-height:1.5}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.mchip{border:1px solid var(--rule);background:var(--paper);border-radius:999px;padding:3px 10px;font-size:.84rem;cursor:pointer}
+.ov{padding:14px 0;border-bottom:1px solid var(--rule)}
+.ov h3{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+
+/* graph */
+.tierbars{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0 6px}
+.tb{font-size:.84rem}
+.tb b{display:block;font-size:.92rem}
+.tb .track{height:6px;border-radius:3px;background:var(--rule);margin-top:5px;overflow:hidden}
+.tb .fill{height:100%;background:var(--built)}
+.kg-ring{fill:none;stroke:var(--rule);stroke-dasharray:2 5}
+.kg-rl{fill:var(--ink2);font-size:12px;font-weight:700;paint-order:stroke;stroke:var(--sheet);stroke-width:5px}
+.kg-e{stroke:var(--ink2);stroke-width:1.2;opacity:.18;fill:none}
+.kg-e.on{stroke:var(--ink);opacity:.85;stroke-width:2}
+.kg-e.off{opacity:.05}
+.kg-n{cursor:pointer}
+.kg-n .core{stroke:var(--sheet);stroke-width:2}
+.kg-n.ready .core{fill:var(--built)}
+.kg-n.prog .core{fill:var(--idea)}
+.kg-n.none .core{fill:var(--sheet);stroke:var(--ink2);stroke-width:1.5}
+.kg-n .trk{fill:none;stroke:var(--rule);stroke-width:4}
+.kg-n .arc{fill:none;stroke:var(--ink);stroke-width:4;stroke-linecap:round}
+.kg-n .notch{stroke:var(--pink);stroke-width:3}
+.kg-n text{fill:var(--ink);font-size:12px;font-weight:600;paint-order:stroke;stroke:var(--sheet);stroke-width:4px;pointer-events:none}
+.kg-n.center text{font-size:16px;font-weight:800}
+.kg-n.sel .core{stroke:var(--glow);stroke-width:4}
+.kg-n.dim{opacity:.2}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,15,25,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.scrim.on{opacity:1;pointer-events:auto}
+aside.panel{position:fixed;z-index:21;background:var(--sheet);color:var(--ink);border:1px solid var(--rule);left:0;right:0;bottom:0;max-height:84vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px calc(24px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .25s ease}
+aside.panel.on{transform:none}
+@media (min-width:900px){aside.panel{left:auto;top:0;bottom:0;width:440px;max-height:none;border-radius:0;transform:translateX(105%);padding-top:calc(18px + env(safe-area-inset-top,0px))}}
+.panel .x{float:right}
+.panel h3.title{font-size:1.45rem;margin:2px 0 6px;letter-spacing:-.015em}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px;font-size:.84rem}
+.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:999px;padding:2px 10px}
+.panel dt{font-weight:700;margin-top:14px;font-size:.9rem}
+.panel dd{margin:4px 0 0}
+.panel dd.chg{border-left:3px solid var(--pink);padding-left:10px}
+.field{display:block;margin-top:10px;font-size:.86rem;font-weight:600}
+.field input,.field select,.field textarea{display:block;width:100%;margin-top:4px;padding:7px 9px;border:1px solid var(--rule);border-radius:8px;background:var(--paper);font-weight:400;font-size:.95rem}
+.field textarea{min-height:70px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.danger{color:var(--pink);border-color:var(--pink)}
+.banner{border-left:3px solid var(--pink);background:var(--sheet);padding:9px 12px;border-radius:0 8px 8px 0;margin:0 0 10px;font-size:.92rem;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+textarea.json{width:100%;min-height:240px;font-size:.8rem;border:1px solid var(--rule);border-radius:8px;background:var(--sheet);padding:8px}
+@media (prefers-reduced-motion:reduce){aside.panel,.scrim,.blk{transition:none}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="application/json" id="state">
+{
+ "v": 6,
+ "updated": "2026-11-03",
+ "principles": [
+  {
+   "t": "Capstone freeze",
+   "d": "Until submission (end Dec / Jan), nothing is built outside plan/stages.md. You control the plans; Claude and Codex build under ADLC; disagreements are flagged for you."
+  },
+  {
+   "t": "CFA first",
+   "d": "Until the exam, one build session a week. Claude Code builds between sessions; you read its diffs. Only the critical path moves."
+  },
+  {
+   "t": "Simplify",
+   "d": "Fewer agents, merged where they overlap. Make one thing usable before the next."
+  },
+  {
+   "t": "Borrow plumbing, build judgment",
+   "d": "Open-source libraries for every piece of plumbing. Your code is the judgment layer only."
+  },
+  {
+   "t": "Delegate outward first",
+   "d": "If Claude, GPT or Instinct already does it, contract it out instead of building it."
+  },
+  {
+   "t": "Good enough, then move on",
+   "d": "Each component has a minimum level. Reach it, move to the next; improve in later passes."
+  },
+  {
+   "t": "Ship a tier before the next",
+   "d": "A tier is done when it’s in daily use, not when it’s coded."
+  },
+  {
+   "t": "Workflows, not agents",
+   "d": "Default to the simplest kind: a function, then one call, then fixed steps, and only then an agent. Anything that calls a model gets evals and traces."
+  },
+  {
+   "t": "One surface",
+   "d": "Everything happens in one Telegram chat. Any second app has to earn its place."
+  },
+  {
+   "t": "No new subscriptions",
+   "d": "Open source and free tiers first. Readwise is the only one left, and only if you use it daily."
+  },
+  {
+   "t": "Register once, call from anywhere",
+   "d": "Every function and workflow is one typed tool in one registry, run by one hand-written loop. Chat, scheduler and Claude all call the same thing; a prompt lives in a Markdown file beside its code."
+  },
+  {
+   "t": "Plans live on nodes",
+   "d": "You write a few sentences under a node; Claude expands them into a plan using the node’s stage, neighbours and interfaces; Claude Code builds the stage in dependency order."
+  }
+ ],
+ "tiers": [
+  {
+   "id": "p0",
+   "n": "1",
+   "title": "Offload",
+   "sub": "Special priority; its external half (bridge, Instinct, connectors) waits until after submission",
+   "approach": "One shared set of to-do lists that Claude, Instinct and ChatGPT maintain together, fed from anywhere, so you stop keeping lists yourself. The agents work through one keeper and one bridge, never independently. It is also capstone ask 5, so the same work counts twice.",
+   "done": "Done when you haven’t kept a to-do list by hand for two weeks."
+  },
+  {
+   "id": "p1",
+   "n": "2",
+   "title": "Learn and capture",
+   "sub": "High priority",
+   "approach": "Everything you read flows into one place, becomes review cards, and comes back on schedule. This is the heart of the capstone. Graphiti waits until after submission.",
+   "done": "Done when you’ve reviewed cards made from your own reading every day for two weeks."
+  },
+  {
+   "id": "p2",
+   "n": "3",
+   "title": "Connect",
+   "sub": "The capstone tier",
+   "approach": "A handmade orchestrator loop on the VPS hub, every agent a typed tool in one registry, each taken through the lifecycle with evals and traces. One mobile door, one notifier. Swap the loop for LangChain or LangGraph only once the handmade one works and you know what it lacks.",
+   "done": "Done when a request from your phone reaches the right agent and comes back, with a trace you can read."
+  },
+  {
+   "id": "p3",
+   "n": "4",
+   "title": "Think",
+   "sub": "Judgment built on what you learn",
+   "approach": "Agents that test your thinking against what Tier 2 captured. Claim check, Steelman and Decision Tracker are capstone asks 1, 3 and 4 and are built before submission; the rest wait. Most are fixed pipelines, not open-ended chat. They inform; you decide.",
+   "done": "Done when you’ve logged and later scored real decisions with probabilities."
+  },
+  {
+   "id": "p4",
+   "n": "5",
+   "title": "Run life",
+   "sub": "Delegate first, build second",
+   "approach": "Life admin goes to external agents first (Instinct for errands, Claude for email with approval). Build only what no external agent does, and merge the rest into one life loop.",
+   "done": "Done when the weekly review runs from real data without you assembling it."
+  },
+  {
+   "id": "p5",
+   "n": "6",
+   "title": "Extend",
+   "sub": "Only after Tiers 1–4 are in daily use",
+   "approach": "Builder discipline, practice tools, extra doors and dashboards. Each is cheap on its own; together they’re the sprawl that caused the scattering.",
+   "done": "Pick one at a time, only when a gap in daily use asks for it."
+  },
+  {
+   "id": "shelf",
+   "n": "—",
+   "title": "Shelf",
+   "sub": "Defined, deliberately not now",
+   "approach": "Each keeps its library list so restarting later doesn’t mean re-researching.",
+   "done": ""
+  }
+ ],
+ "nodes": [
+  {
+   "id": "todo",
+   "tier": "p0",
+   "status": "idea",
+   "name": "Tasks (to-dos and “what now?”)",
+   "what": "One table of named lists, fed from every door and kept by Claude, Instinct and ChatGPT through the bridge. “What now?” is one ranking call over the calendar and open tasks, run on request or on a timer. Absorbs Life-priority (capstone ask 5) and the promise ledger.",
+   "libs": [
+    "A table in the store (SQLite)",
+    "Google Calendar API (headless)",
+    "APScheduler for nudges"
+   ],
+   "with": [
+    "bridge",
+    "telegram",
+    "claude",
+    "chatgpt",
+    "instinct",
+    "eventlog"
+   ],
+   "note": "Todoist rejected: a subscription and a second app. The promise ledger folds in here: a promise is a task with a counterparty.",
+   "lvl": 0,
+   "min": 2,
+   "minDef": "Several named lists; you add from your phone; Claude, Instinct and ChatGPT can add; “what now?” answers from the calendar and the lists.",
+   "est": true,
+   "kind": "Function, plus one ranking call"
+  },
+  {
+   "id": "bridge",
+   "tier": "p0",
+   "status": "idea",
+   "name": "Bridge and policy",
+   "what": "The only way work reaches or leaves an external agent: one envelope per errand, checked against its contract before the call, with approvals held here too.",
+   "libs": [
+    "FastAPI",
+    "Pydantic (envelope schema)",
+    "A contracts table in the store",
+    "IMAP/SMTP or Gmail API for the email leg"
+   ],
+   "with": [
+    "todo",
+    "instinct",
+    "claude",
+    "chatgpt",
+    "telegram"
+   ],
+   "lvl": 0,
+   "min": 2,
+   "minDef": "An errand goes to Instinct in an envelope and its result lands back on the right list with evidence. Claude and ChatGPT can each read and add.",
+   "est": true,
+   "kind": "Function"
+  },
+  {
+   "id": "instinct",
+   "tier": "p0",
+   "status": "built",
+   "name": "Instinct (external)",
+   "what": "Consumer agent you’re setting up for errands. No API: reached by text, call or email, so every delegation is a message send and goes through policy. See the Contracts tab.",
+   "libs": [
+    "Use as is",
+    "Open Instinct (open source, has a /chat endpoint) if you ever need a callable one"
+   ],
+   "with": [
+    "bridge",
+    "todo"
+   ],
+   "note": "Checked 22 Oct: reports of email prompt injection and an unapproved send; its terms grant a broad licence over your materials, so send it the minimum.",
+   "lvl": 1,
+   "working": "Account set up; errands sent by hand.",
+   "min": 2,
+   "minDef": "Takes errands from the bridge and its replies reach the keeper.",
+   "est": true,
+   "kind": "External agent"
+  },
+  {
+   "id": "claude",
+   "tier": "p0",
+   "status": "built",
+   "name": "Claude",
+   "what": "Research, drafting and coding. Reads and adds to-dos from chat and from Claude Code through a small to-do connector, and takes work the bridge hands it.",
+   "libs": [
+    "Custom connector for the to-do list only (FastMCP)",
+    "Claude Code with the keeper’s API",
+    "Gmail and Calendar connectors you already have"
+   ],
+   "with": [
+    "bridge",
+    "todo"
+   ],
+   "note": "A to-do-only connector pulls a small slice of the shelved “OS as MCP server” forward. It needs a public URL, which the capstone VPS provides.",
+   "lvl": 0,
+   "working": "Used daily as apps; not yet connected to the lists.",
+   "min": 2,
+   "minDef": "Reads and adds to-dos from chat and from Claude Code.",
+   "est": true,
+   "kind": "External agent"
+  },
+  {
+   "id": "chatgpt",
+   "tier": "p0",
+   "status": "built",
+   "name": "ChatGPT",
+   "what": "Second opinions and research. Adds to-dos to the keeper and takes work the bridge hands it.",
+   "libs": [
+    "Custom GPT action calling the keeper’s API",
+    "Email to the keeper’s inbox",
+    "OpenAI API (called by the bridge)"
+   ],
+   "with": [
+    "bridge",
+    "todo"
+   ],
+   "note": "Which of these paths ChatGPT supports cleanly on your plan is unverified.",
+   "lvl": 0,
+   "working": "Used daily as apps; not yet connected to the lists.",
+   "min": 1,
+   "minDef": "Can add to-dos by one path that works on your phone.",
+   "est": true,
+   "kind": "External agent"
+  },
+  {
+   "id": "telegram",
+   "tier": "p0",
+   "status": "idea",
+   "name": "Telegram (the one surface)",
+   "what": "Everything happens in one chat: capture by text, voice, photo or link; card reviews with Again, Hard, Good and Easy buttons; tasks; questions; the morning brief and nudges. Mini Apps open a full screen inside the chat for a task board or a review session.",
+   "libs": [
+    "python-telegram-bot",
+    "Telegram Mini Apps (HTML screens inside the chat)",
+    "Voice notes transcribed through the gateway, or faster-whisper",
+    "iOS Shortcut posting to the bot (optional)"
+   ],
+   "with": [
+    "todo",
+    "orch"
+   ],
+   "lvl": 0,
+   "min": 2,
+   "minDef": "Capture, review and ask, all from the one chat.",
+   "est": true,
+   "note": "Bot chats aren’t end-to-end encrypted, so add that to the threat model.",
+   "kind": "Function"
+  },
+  {
+   "id": "learnsys",
+   "tier": "p1",
+   "status": "rough",
+   "name": "Learning system",
+   "what": "Your reading and CFA notes become cards and graph links. Reviews happen in Telegram: for concept cards you type or say your answer first, one cheap call grades it against the card, and the grade sets the FSRS rating, so scheduling follows what you can produce, not what you recognise. Formula and fact cards keep the four buttons. Wrong answers go straight to the mistake log. Understanding check and Sharpen live inside it; GMAT is another deck. Formulas render as images.",
+   "libs": [
+    "py-fsrs",
+    "Instructor (card generation, graded answers)",
+    "matplotlib mathtext (formula images)",
+    "Graphiti",
+    "ChromaDB"
+   ],
+   "with": [
+    "substrate",
+    "marginal",
+    "reader",
+    "gateway"
+   ],
+   "lvl": 1,
+   "min": 2,
+   "minDef": "You review CFA cards in Telegram every day, answering concept cards from memory.",
+   "est": true,
+   "kind": "Function (FSRS) plus one-call workflows",
+   "note": "Anki dropped: a second app, and the iOS app is paid. Graphiti and Chroma wait until Capture needs them; Stage 1 is SQLite and py-fsrs only."
+  },
+  {
+   "id": "marginal",
+   "tier": "p1",
+   "status": "built",
+   "name": "Marginal",
+   "what": "Your reading app: a highlighter and notebook for everything you read, with anchors that keep highlights attached to the right text even when the page changes. M3 waits until after submission.",
+   "libs": [
+    "Hypothesis client (anchoring reference)",
+    "dom-anchor-text-quote",
+    "Mozilla Readability"
+   ],
+   "with": [
+    "reader",
+    "learnsys",
+    "substrate"
+   ],
+   "lvl": 2,
+   "min": 2,
+   "minDef": "You use it for everything you read; highlights reach the learning system.",
+   "est": true,
+   "kind": "App"
+  },
+  {
+   "id": "reader",
+   "tier": "p1",
+   "status": "rough",
+   "name": "Capture (one ingester)",
+   "what": "Every source is an adapter onto one ingester: Readwise and feeds, Highlight Grabber screenshots, the Marginal extension, chat exports. One path into the store and the graph.",
+   "libs": [
+    "Readwise API",
+    "trafilatura",
+    "feedparser",
+    "Vision model via the gateway (Grabber)",
+    "WXT (extension)",
+    "Official chat exports"
+   ],
+   "with": [
+    "marginal",
+    "learnsys"
+   ],
+   "lvl": 2,
+   "min": 2,
+   "est": true,
+   "kind": "Multi-step workflow",
+   "note": "Reader and Grabber work today; the extension and chat harvester don’t yet. Readwise is the one subscription left: keep it only if Reader is in daily use."
+  },
+  {
+   "id": "substrate",
+   "tier": "p1",
+   "status": "rough",
+   "name": "Memory substrate",
+   "what": "All shared facts, keyed by one entity ID per real thing (CIN, ISIN, NSE symbol, BSE code). One ingester in. Migrating module by module, not rewritten.",
+   "libs": [
+    "Graphiti",
+    "Neo4j",
+    "ChromaDB or LanceDB",
+    "Pydantic v2",
+    "nomic-embed-vision-v1.5 (images, same 768-d space as your text vectors)"
+   ],
+   "with": [
+    "learnsys",
+    "gateway",
+    "orch"
+   ],
+   "note": "Extraction moving from Sonnet to open-source zero-retention models. Graphiti’s entity resolution still to verify. Images: their own vault_images collection, merged with text results by rank fusion; sha256 of the file as the ID so moves don’t re-embed.",
+   "lvl": 1,
+   "min": 2,
+   "minDef": "The learning system and the keeper read and write through it without hand-fixing.",
+   "est": true,
+   "kind": "Library"
+  },
+  {
+   "id": "gateway",
+   "tier": "p1",
+   "status": "built",
+   "name": "LLM Gateway (cut down)",
+   "what": "The only path to any model. Being cut down to only the code in use; a full copy is kept so features can come back. Priorities: logging and profiles.",
+   "libs": [
+    "FastAPI",
+    "httpx",
+    "SQLite",
+    "LiteLLM (provider adapters as reference only)"
+   ],
+   "with": [
+    "orch",
+    "substrate"
+   ],
+   "note": "Cut down from V7 (16 Oct), full copy kept. LiteLLM rejected as the gateway: March 2026 supply-chain compromise and several 2026 CVEs in the proxy.",
+   "lvl": 2,
+   "min": 2,
+   "minDef": "Every model call goes through it, with logging.",
+   "est": true,
+   "kind": "Function"
+  },
+  {
+   "id": "context",
+   "tier": "p1",
+   "status": "built",
+   "name": "Context files",
+   "what": "CLAUDE.md and AGENTS.md: the rules and state every coding session starts with.",
+   "libs": [
+    "Convention, no library"
+   ],
+   "with": [
+    "corrections"
+   ],
+   "lvl": 2,
+   "min": 2,
+   "est": true,
+   "kind": "Convention"
+  },
+  {
+   "id": "orch",
+   "tier": "p2",
+   "status": "rough",
+   "name": "Loop, registry and assistant",
+   "what": "One registry: every function and workflow is registered once as a typed tool (name, input schema, description). Three callers use it: the chat (buttons and commands call functions directly with no model; free-form questions go to one tool-calling agent), the scheduler, and an optional MCP server so Claude can call your system too. The runner is shaped like LangGraph so the swap is small.",
+   "libs": [
+    "Your own runner (until the capstone is submitted)",
+    "Pydantic and python-frontmatter (files and tool schemas)",
+    "Instructor (structured output)",
+    "FastMCP (optional MCP door, same registry)",
+    "LangGraph (the replacement; the registry becomes the agent’s tool list)"
+   ],
+   "with": [
+    "telegram",
+    "eventlog",
+    "substrate",
+    "trace",
+    "worker",
+    "evals"
+   ],
+   "note": "The handmade loop is what gets submitted (Option B bans orchestration frameworks). Swap to LangGraph after submission only if the loop shows a gap you can name. Keep node functions free of runner code so a swap only touches the runner.",
+   "lvl": 1,
+   "min": 2,
+   "minDef": "A free-form question in Telegram uses tools from two parts, such as Learning and Tasks, answers correctly, and shows up in Langfuse.",
+   "est": true,
+   "kind": "Runner, plus one tool-calling agent for free-form questions"
+  },
+  {
+   "id": "eventlog",
+   "tier": "p2",
+   "status": "idea",
+   "name": "Store",
+   "what": "One SQLite file on the hub holds the task queue, events, steering messages, run records, tasks, cards and reviews. Agents never call each other: they write events and read the store. Nothing is lost when the laptop is shut.",
+   "libs": [
+    "SQLite (WAL mode)",
+    "Litestream (continuous backup)",
+    "Postgres only if two machines must write at once"
+   ],
+   "with": [
+    "orch",
+    "telegram",
+    "decision"
+   ],
+   "lvl": 0,
+   "min": 2,
+   "est": true,
+   "kind": "Function"
+  },
+  {
+   "id": "host",
+   "tier": "p2",
+   "status": "rough",
+   "name": "Hub (VPS)",
+   "what": "One always-on VPS holds the orchestrator, task queue, memory and the doors, and is the capstone’s public URL. Mac Mini and Raspberry Pi both dropped (1 Nov). The laptop and any later machines join as workers over Tailscale; agents never talk to each other directly, only through the hub.",
+   "libs": [
+    "Hetzner CAX21, about €10/month (ordering was unavailable in August; check)",
+    "Oracle Always Free (good for a trial run; capacity and reclaim risk)",
+    "Tailscale",
+    "Docker Compose (one command deploys)",
+    "Caddy (automatic HTTPS for the public URL)"
+   ],
+   "with": [
+    "orch"
+   ],
+   "note": "Graphiti on Neo4j is RAM-heavy: size the VPS for it or keep it on Modal. Decide before agents move in.",
+   "lvl": 1,
+   "min": 2,
+   "minDef": "Capstone slice reachable at a public URL, deployed with one command.",
+   "est": true,
+   "kind": "Infrastructure"
+  },
+  {
+   "id": "trace",
+   "tier": "p2",
+   "status": "idea",
+   "name": "Traces (Langfuse)",
+   "what": "Every run: route, nodes, inputs, outputs, tokens, cost and time, tagged with the file name and version so a regression points at one file.",
+   "libs": [
+    "Langfuse Cloud, Hobby plan (free)",
+    "The gateway’s existing OpenTelemetry export, pointed at Langfuse (no second tracing path)"
+   ],
+   "with": [
+    "orch",
+    "gateway"
+   ],
+   "lvl": 0,
+   "min": 2,
+   "est": true,
+   "note": "Self-hosting Langfuse means six services (Postgres, ClickHouse, Redis, object storage, web, worker): too heavy for the hub. Cloud means traces leave your machine, so check it against your privacy threat model and mask sensitive fields.",
+   "kind": "Tooling",
+   "minDef": "Every run shows up with its route and cost."
+  },
+  {
+   "id": "worker",
+   "tier": "p2",
+   "status": "idea",
+   "name": "Laptop worker",
+   "what": "Runs on the MacBook as a background service. Claims tasks that need Mac apps, local files or logged-in browser sessions, and exposes those as an MCP server on the tailnet.",
+   "libs": [
+    "launchd (macOS background service)",
+    "FastMCP (HTTP transport)",
+    "Tailscale"
+   ],
+   "with": [
+    "host",
+    "eventlog",
+    "orch"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "minDef": "A task queued while the lid is shut runs when you open it.",
+   "est": true,
+   "kind": "Infrastructure"
+  },
+  {
+   "id": "evals",
+   "tier": "p2",
+   "status": "idea",
+   "name": "Evals and red team",
+   "what": "One eval file per model-calling file: normal, edge and hostile cases. Runs on every change; a change that lowers the score doesn’t merge.",
+   "libs": [
+    "pytest reading YAML cases (start here)",
+    "promptfoo (later, for red-team plugins)"
+   ],
+   "with": [
+    "orch",
+    "trace",
+    "maintainer"
+   ],
+   "note": "Course guardrail: write the cases yourself. Claude can propose categories, not the cases.",
+   "lvl": 0,
+   "min": 2,
+   "minDef": "Every in-scope agent has an eval file that runs in CI.",
+   "est": true,
+   "kind": "Tooling"
+  },
+  {
+   "id": "maintainer",
+   "tier": "p2",
+   "status": "idea",
+   "name": "Maintainer loop",
+   "what": "Claude Code in GitHub Actions reads failing checks and health alerts, opens a pull request and summarises the diff. Nothing merges without you, and nothing merges if the evals drop.",
+   "libs": [
+    "Claude Code GitHub Action",
+    "GitHub Actions",
+    "STATUS.md per module, kept by Claude"
+   ],
+   "with": [
+    "evals",
+    "host",
+    "telegram"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "minDef": "Claude fixes a deliberately broken module through a PR you approve.",
+   "est": true,
+   "kind": "Tooling"
+  },
+  {
+   "id": "claimcheck",
+   "tier": "p3",
+   "status": "idea",
+   "name": "Claim check",
+   "what": "Capstone ask 1: is this claim true, and where did I already establish it? The first half is one call to Claude or GPT through the gateway; the second searches your own cards and mistakes. Replaces the retired Research MCP.",
+   "libs": [
+    "Claude or GPT through the gateway",
+    "SQLite full-text search (built in; assumed)"
+   ],
+   "with": [
+    "learnsys",
+    "steelman",
+    "gateway"
+   ],
+   "lvl": 0,
+   "min": 2,
+   "est": true,
+   "kind": "One call plus a search",
+   "note": "Returned text is data, never instructions. Hostile input 1 (a source claiming it’s “already fact-checked”) is tested here."
+  },
+  {
+   "id": "decision",
+   "tier": "p3",
+   "status": "specced",
+   "name": "Decision Tracker",
+   "what": "Decisions with probabilities, logged before outcomes, scored on resolution. Its Watcher flags when an assumption breaks. Proposed to absorb the source ledger and author record as scoring modules.",
+   "libs": [
+    "Fatebook (scoring reference)",
+    "properscoring or own Brier code",
+    "hashlib (hash-chained log)"
+   ],
+   "with": [
+    "eventlog",
+    "forge",
+    "praxis",
+    "mirfish"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Function, one optional call",
+   "note": "Capstone ask 4, Stage 4. The Watcher may only emit falsifier_hit."
+  },
+  {
+   "id": "steelman",
+   "tier": "p3",
+   "status": "specced",
+   "name": "Steelman Generator",
+   "what": "Rebuilds the strongest version of a position and extracts the crux. A nine-stage pipeline.",
+   "libs": [
+    "Plain Python fixed steps (no LangGraph: the capstone bans frameworks)",
+    "Instructor"
+   ],
+   "with": [
+    "decision"
+   ],
+   "note": "Capstone ask 3, Stage 4. Its old verify_claim call now goes to Claim check. The nine stages get trimmed when the stage is detailed.",
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Multi-step workflow (nine stages)"
+  },
+  {
+   "id": "forge",
+   "tier": "p3",
+   "status": "specced",
+   "name": "Model Forge",
+   "what": "Turns reading into cause-and-effect models that make falsifiable predictions; flags contradictions between your models.",
+   "libs": [
+    "pgmpy",
+    "DoWhy",
+    "NetworkX",
+    "Graphiti validity windows"
+   ],
+   "with": [
+    "decision",
+    "mirfish",
+    "substrate"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Multi-step workflow"
+  },
+  {
+   "id": "praxis",
+   "tier": "p3",
+   "status": "specced",
+   "name": "PRAXIS",
+   "what": "A real situation in; the most relevant principle from your reading out, applied.",
+   "libs": [
+    "Graphiti retrieval",
+    "Pipecat (voice mode, later)"
+   ],
+   "with": [
+    "learnsys",
+    "decision"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "One-call workflow with retrieval"
+  },
+  {
+   "id": "mirfish",
+   "tier": "p3",
+   "status": "specced",
+   "name": "Mirfish",
+   "what": "News in, causal graph, propagated shock, four scenarios, ranked impact map. About five model calls.",
+   "libs": [
+    "NetworkX",
+    "pgmpy",
+    "Streamlit"
+   ],
+   "with": [
+    "forge",
+    "decision"
+   ],
+   "note": "Rename still open (collides with MiroFish).",
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Multi-step workflow (five fixed calls)"
+  },
+  {
+   "id": "lifeloop",
+   "tier": "p4",
+   "status": "idea",
+   "name": "Life loop",
+   "what": "Proposed merge of rituals and lapse guardian into one agent with skills, run when you switch the system on. Life-priority is folded into Tasks (capstone ask 5); the promise ledger folds in there too.",
+   "libs": [
+    "APScheduler or a run-on-wake batch",
+    "Paperless-ngx (documents and expiry dates)"
+   ],
+   "with": [
+    "instinct",
+    "planner",
+    "email",
+    "eventlog",
+    "todo"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Scheduled workflow"
+  },
+  {
+   "id": "planner",
+   "tier": "p4",
+   "status": "built",
+   "name": "Planner",
+   "what": "Apple Calendar and Reminders in plain English, confirming before any write.",
+   "libs": [
+    "Keep as is",
+    "caldav (if you leave Apple)"
+   ],
+   "with": [
+    "lifeloop"
+   ],
+   "lvl": 1,
+   "min": 1,
+   "est": true,
+   "kind": "Function",
+   "note": "Was marked level 2; level 2 needs an eval file and traces, which it doesn’t have yet."
+  },
+  {
+   "id": "email",
+   "tier": "p4",
+   "status": "built",
+   "name": "Email triage",
+   "what": "Prioritises, summarises, extracts actions and promises.",
+   "libs": [
+    "Inbox Zero (compare before investing more)",
+    "Gmail API"
+   ],
+   "with": [
+    "lifeloop",
+    "claude"
+   ],
+   "lvl": 1,
+   "min": 1,
+   "est": true,
+   "kind": "One call per email",
+   "note": "Was marked level 2; level 2 needs an eval file and traces, which it doesn’t have yet."
+  },
+  {
+   "id": "upi",
+   "tier": "p4",
+   "status": "built",
+   "name": "UPI ledger",
+   "what": "Spending from payment SMS, tagged with calendar context.",
+   "libs": [
+    "pandas",
+    "Firefly III (only for budgets and reports)"
+   ],
+   "with": [
+    "lifeloop"
+   ],
+   "lvl": 1,
+   "min": 1,
+   "est": true,
+   "kind": "Function",
+   "note": "Was marked level 2; level 2 needs an eval file and traces, which it doesn’t have yet."
+  },
+  {
+   "id": "meetio",
+   "tier": "p4",
+   "status": "idea",
+   "name": "Meeting debrief",
+   "what": "Voice debrief after a meeting, turned into decisions and promises. With the Meet listener shelved, input is your voice note.",
+   "libs": [
+    "faster-whisper",
+    "Telegram voice notes"
+   ],
+   "with": [
+    "lifeloop",
+    "decision"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Workflow: transcribe, then one call"
+  },
+  {
+   "id": "corrections",
+   "tier": "p5",
+   "status": "idea",
+   "name": "Builder tools",
+   "what": "Correction miner, project triage and the advisor idea as one set of workflows over your repos and session logs.",
+   "libs": [
+    "pandas over session JSONL",
+    "GitPython",
+    "PyDriller",
+    "RouteLLM (router idea)"
+   ],
+   "with": [
+    "context"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Multi-step workflows"
+  },
+  {
+   "id": "clarifier",
+   "tier": "p5",
+   "status": "built",
+   "name": "Clarifier",
+   "what": "Claude Code subagent that asks before building.",
+   "libs": [
+    "Native subagent"
+   ],
+   "with": [],
+   "lvl": 2,
+   "min": 1,
+   "est": true,
+   "kind": "Native subagent"
+  },
+  {
+   "id": "german",
+   "tier": "p5",
+   "status": "idea",
+   "name": "German partner",
+   "what": "Voice practice at your Netzwerk neu level; errors become cards.",
+   "libs": [
+    "Pipecat or LiveKit Agents",
+    "language_tool_python (LanguageTool)"
+   ],
+   "with": [
+    "learnsys"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Agent (live voice)"
+  },
+  {
+   "id": "cockpit",
+   "tier": "p5",
+   "status": "idea",
+   "name": "Daily cockpit",
+   "what": "One view of alerts, reviews due, deadlines, overnight output.",
+   "libs": [
+    "Glance or Homepage",
+    "Kokoro (spoken briefing)"
+   ],
+   "with": [
+    "telegram"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Function"
+  },
+  {
+   "id": "kgviz",
+   "tier": "p5",
+   "status": "specced",
+   "name": "KG visualizer",
+   "what": "Live view of graph neighbourhoods. First use: debugging the forensic pipeline.",
+   "libs": [
+    "Sigma.js",
+    "Cytoscape.js",
+    "neovis.js"
+   ],
+   "with": [
+    "substrate"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Interface"
+  },
+  {
+   "id": "deskvoice",
+   "tier": "p5",
+   "status": "specced",
+   "name": "Desk voice",
+   "what": "Wake word, speech in and out, spoken-vs-shown policy.",
+   "libs": [
+    "Pipecat",
+    "openWakeWord",
+    "faster-whisper",
+    "Kokoro"
+   ],
+   "with": [
+    "orch"
+   ],
+   "lvl": 0,
+   "min": 1,
+   "est": true,
+   "kind": "Agent (voice)"
+  },
+  {
+   "id": "meet",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "Meet listener",
+   "what": "Bot joins personal meetings and transcribes.",
+   "libs": [
+    "Vexa",
+    "Attendee"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  },
+  {
+   "id": "mcpdoor",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "OS as MCP server",
+   "what": "Exposes the OS as tools for Claude chat, Cowork and Code.",
+   "libs": [
+    "FastMCP"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true,
+   "note": "Now just a third caller of the same registry, through FastMCP. Optional; add when you want Claude to use your system."
+  },
+  {
+   "id": "jira",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "Jira",
+   "what": "Actions door and approval queue.",
+   "libs": [
+    "Jira free tier",
+    "Plane"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  },
+  {
+   "id": "gesture",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "Gesture control",
+   "what": "Desk-only passion project.",
+   "libs": [
+    "MediaPipe Hands"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  },
+  {
+   "id": "roomvoice",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "Room voice",
+   "what": "Talk to the OS anywhere at home.",
+   "libs": [
+    "Home Assistant Voice PE"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  },
+  {
+   "id": "worldsim",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "World Simulation",
+   "what": "Mirfish generalised to any situation.",
+   "libs": [
+    "Concordia",
+    "Mesa",
+    "OASIS"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  },
+  {
+   "id": "situation",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "Situation builder",
+   "what": "Simulated practice reps; blocked by persona drift.",
+   "libs": [
+    "Concordia"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  },
+  {
+   "id": "claims",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "Claims and disputes",
+   "what": "Refunds and claims over weeks. Now overlaps what Instinct does.",
+   "libs": [
+    "browser-use",
+    "Skyvern"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  },
+  {
+   "id": "wareader",
+   "tier": "shelf",
+   "status": "shelf",
+   "name": "Telegram reader",
+   "what": "Computer-use read of Telegram Desktop. Against Telegram’s terms.",
+   "libs": [
+    "browser-use"
+   ],
+   "with": [],
+   "lvl": 0,
+   "min": 0,
+   "est": true
+  }
+ ],
+ "retired": [
+  {
+   "name": "Research MCP",
+   "why": "Retired. Ask 1 goes to Claim check, which delegates to Claude or GPT through the gateway.",
+   "s": "stated"
+  },
+  {
+   "name": "LiteLLM as the gateway",
+   "why": "Security worries and more than you need. Gateway V7 cut down instead.",
+   "s": "stated"
+  },
+  {
+   "name": "Local model fleet",
+   "why": "Inference moved to managed zero-retention APIs.",
+   "s": "stated"
+  },
+  {
+   "name": "Merged on 2 Nov",
+   "why": "Life-priority into Tasks; Shortcuts, email-in, more doors and the notifier into Doors; policy into the bridge; steering queue into the Store; the agent registry into the Loop; Understanding check, Sharpen and GMAT Forge into the Learning system; Grabber, the extension and chat harvester into Capture; project triage and the advisor into Builder tools.",
+   "s": "proposed"
+  },
+  {
+   "name": "Postgres, Procrastinate and Phoenix",
+   "why": "One SQLite store and Langfuse cover them with fewer services.",
+   "s": "proposed"
+  },
+  {
+   "name": "WhatsApp as the door",
+   "why": "Meta’s terms (since 15 Jan 2026) limit general-purpose AI assistants on the Business Platform to markets where Meta must allow them, and India isn’t one. Service messages are also charged after 1,000 a month (since 1 Oct 2026). Telegram instead.",
+   "s": "stated"
+  },
+  {
+   "name": "Todoist and Anki",
+   "why": "Subscriptions and second apps. Your own tasks table and FSRS reviews in Telegram instead.",
+   "s": "stated"
+  },
+  {
+   "name": "Fixed-route router",
+   "why": "Too rigid for questions that span parts. Buttons and commands stay direct; free-form questions go to one agent over the registry.",
+   "s": "stated"
+  }
+ ],
+ "contracts": {
+  "stated": [
+   "Instinct is for errands. It does not get access to your personal documents for now.",
+   "Instinct is not allowed to send emails at all.",
+   "Claude may send emails, but asks for your approval on each one first.",
+   "Research goes to Claude or GPT, not to a research MCP of your own.",
+   "Keep complexity low and make the best use of each tool you already have.",
+   "External errands follow one envelope each: one errand, scoped, spend-capped, minimum data. A result counts as done only with evidence. (Saved on the structure page, 22 Oct.)"
+  ],
+  "template": [
+   {
+    "f": "Envelope",
+    "r": "One errand per envelope, with its scope, spend cap and the minimum data it needs. Done only with evidence."
+   },
+   {
+    "f": "Scope",
+    "r": "The named jobs it may do. Anything else is refused at the policy layer, not left to the agent."
+   },
+   {
+    "f": "Data out",
+    "r": "The minimum context for this one task, chosen by the orchestrator. Never a memory dump."
+   },
+   {
+    "f": "Side effects",
+    "r": "Sending, buying, posting, deleting: listed per agent as allowed, approval each time, or never."
+   },
+   {
+    "f": "Return path",
+    "r": "Results come back to the orchestrator and are written as events. External agents never write shared memory."
+   },
+   {
+    "f": "Trust",
+    "r": "Everything an external agent returns is data, never instructions. It can’t trigger other agents."
+   },
+   {
+    "f": "Identity",
+    "r": "It acts under its own account or address, never your passwords."
+   },
+   {
+    "f": "Audit",
+    "r": "Every handoff and result is logged and visible in the trace."
+   },
+   {
+    "f": "Exit",
+    "r": "One switch revokes it; nothing internal breaks because only the orchestrator knew about it."
+   }
+  ],
+  "agents": [
+   {
+    "name": "Instinct",
+    "role": "Errands",
+    "rows": [
+     [
+      "Scope",
+      "Errands",
+      1
+     ],
+     [
+      "Data out",
+      "No personal documents; send the minimum",
+      1
+     ],
+     [
+      "Email",
+      "Never sends",
+      1
+     ],
+     [
+      "Envelope",
+      "One errand each, scoped, spend-capped; done only with evidence",
+      1
+     ],
+     [
+      "Channel",
+      "No API: text, call or email, so each handoff is a send that passes policy",
+      2
+     ],
+     [
+      "Known risks",
+      "Reported email prompt injection and an unapproved send; broad licence in its terms",
+      2
+     ],
+     [
+      "Return path",
+      "errand_done or errand_failed event, which wakes the To-do keeper",
+      0
+     ]
+    ]
+   },
+   {
+    "name": "Claude",
+    "role": "Research, drafting, coding",
+    "rows": [
+     [
+      "Scope",
+      "Research and coding; email",
+      1
+     ],
+     [
+      "Email",
+      "May send, approval on each one",
+      1
+     ],
+     [
+      "To-dos",
+      "Reads and adds through a to-do-only connector",
+      0
+     ],
+     [
+      "Data out",
+      "Task context only; memory reads stay internal",
+      0
+     ],
+     [
+      "Return path",
+      "Results land on the list they belong to, with evidence",
+      0
+     ]
+    ]
+   },
+   {
+    "name": "ChatGPT",
+    "role": "Research, second opinion",
+    "rows": [
+     [
+      "Scope",
+      "Research",
+      1
+     ],
+     [
+      "To-dos",
+      "May add; closing needs evidence",
+      0
+     ],
+     [
+      "Side effects",
+      "None",
+      0
+     ],
+     [
+      "Return path",
+      "Same as Claude; disagreements between the two are flagged, not resolved silently",
+      0
+     ]
+    ]
+   },
+   {
+    "name": "Hark Pro",
+    "role": "Candidate only",
+    "rows": [
+     [
+      "Status",
+      "Candidate; no contract until tested",
+      0
+     ],
+     [
+      "Channel",
+      "App only (web, iOS, Android); no public API found",
+      2
+     ],
+     [
+      "Open question",
+      "Its Handoff model has published token prices, so an API may exist; unverified",
+      2
+     ]
+    ]
+   }
+  ],
+  "together": [
+   "You, Claude, ChatGPT or Instinct drop anything into the keeper: Telegram, email-in, the Claude connector or a ChatGPT action.",
+   "The keeper files it on the right list with its source, and merges duplicates.",
+   "For anything that needs an agent, the bridge picks one by its contract: Instinct for errands, Claude for research and drafting, ChatGPT for a second opinion.",
+   "The bridge sends one envelope per job, checked against policy on the way out.",
+   "The result comes back to the same list item. It closes only with evidence; otherwise it stays open and is flagged.",
+   "You get one daily summary on Telegram, not a stream of pings."
+  ]
+ },
+ "overlaps": [
+  {
+   "t": "Instinct’s email ban vs feeding the list",
+   "m": [
+    "instinct",
+    "telegram",
+    "bridge"
+   ],
+   "issue": "Your rule says Instinct may not send emails at all, but email is its main channel besides texts and calls. As written, Instinct can’t report back to the keeper by email.",
+   "p": "Your call: allow one exception (Instinct may email only the keeper’s own address), or give the keeper a channel Instinct can text. The first is simpler. Not needed before submission."
+  },
+  {
+   "t": "Claude’s path pulls a shelved item forward",
+   "m": [
+    "claude",
+    "mcpdoor"
+   ],
+   "issue": "The cleanest way for Claude to read and add to-dos is a small connector, which is a slice of the shelved “OS as MCP server”. Using email instead would need your approval on every add.",
+   "p": "Build only a to-do connector (list, add, update, close). The full OS-as-MCP stays shelved."
+  },
+  {
+   "t": "Three scorekeepers",
+   "m": [
+    "decision",
+    "praxis"
+   ],
+   "extra": [
+    "Source ledger",
+    "Author record"
+   ],
+   "issue": "Decision Tracker, source ledger, author record and PRAXIS’s scoring loop each keep their own score of how right things turned out.",
+   "p": "One scoring module inside the Decision Tracker. The others become views of it."
+  },
+  {
+   "t": "Three causal-graph engines",
+   "m": [
+    "forge",
+    "mirfish",
+    "worldsim"
+   ],
+   "issue": "Model Forge, Mirfish and World Simulation all build and propagate cause-and-effect graphs.",
+   "p": "One shared causal-graph library. Mirfish becomes Model Forge’s news-input mode; World Simulation stays shelved."
+  },
+  {
+   "t": "Three “check my thinking” agents",
+   "m": [
+    "steelman",
+    "praxis",
+    "learnsys"
+   ],
+   "issue": "Different inputs (a position, a situation, an explanation) but the orchestrator has to guess which one you meant.",
+   "p": "Keep all three; route by input type, and ask when it’s ambiguous rather than guessing."
+  },
+  {
+   "t": "Life admin, four agents and an external one",
+   "m": [
+    "lifeloop",
+    "todo",
+    "instinct"
+   ],
+   "extra": [
+    "Rituals",
+    "Promise ledger",
+    "Lapse guardian"
+   ],
+   "issue": "Life-priority, rituals, promise ledger and lapse guardian overlap with each other, with the new To-do keeper, and with what Instinct does.",
+   "p": "Promise ledger and Life-priority fold into Tasks (Life-priority is capstone ask 5). Rituals and lapse guardian become one life loop. Outward errands go to Instinct, after submission."
+  },
+  {
+   "t": "Authority leak",
+   "m": [
+    "decision",
+    "orch"
+   ],
+   "issue": "The Watcher runs on its own, which tempts it to call Steelman or PRAXIS directly when an assumption breaks.",
+   "p": "The Watcher may only publish falsifier_hit. Only the orchestrator decides what runs next, after you’ve given your read."
+  },
+  {
+   "t": "Orphaned claim checks",
+   "m": [
+    "learnsys",
+    "steelman"
+   ],
+   "issue": "Both called verify_claim on the Research MCP, which is now retired.",
+   "p": "Settled 3 Nov: both use Claim check (Stage 4), one call to Claude or GPT through the gateway."
+  },
+  {
+   "t": "Two front ends",
+   "m": [
+    "telegram",
+    "instinct"
+   ],
+   "issue": "You wanted Instinct as your front end; Telegram is the one surface for your own system. Two front ends that both route requests is the fish soup you’re worried about.",
+   "p": "Telegram is the front end for your system. Instinct stays an errand worker behind the bridge, handed errands from the chat under a contract. Revisit only if Instinct can call outside tools."
+  }
+ ],
+ "levels": [
+  [
+   "0",
+   "Not started"
+  ],
+  [
+   "1",
+   "Runs once",
+   "Works end to end once, by hand; its file passes the schema"
+  ],
+  [
+   "2",
+   "Usable daily",
+   "You rely on it; its eval file passes; every run is traced"
+  ],
+  [
+   "3",
+   "Reliable",
+   "Evals gate every change in CI; versioned; survives restarts"
+  ],
+  [
+   "4",
+   "Refined",
+   "Real failures become eval cases before fixes; improved from real use"
+  ]
+ ],
+ "stages": [
+  {
+   "id": "s0",
+   "title": "Stage 0: Spine",
+   "goal": "One real model call is logged; tools register; tables migrate. Gateway path is your open decision. Detail: plan/stages.md.",
+   "nodes": [
+    {
+     "id": "gateway",
+     "target": 2,
+     "deps": [],
+     "build": "Your call: finish the gateway, or simple_llm behind core/llm.py."
+    },
+    {
+     "id": "eventlog",
+     "target": 1,
+     "deps": [],
+     "build": "core/store.py (I2)."
+    },
+    {
+     "id": "orch",
+     "target": 1,
+     "deps": [],
+     "build": "Registry only (I3)."
+    }
+   ]
+  },
+  {
+   "id": "s1",
+   "title": "Stage 1: CFA review in Telegram",
+   "goal": "Ask 2. Review CFA cards and log mistakes from your phone, on the laptop.",
+   "nodes": [
+    {
+     "id": "learnsys",
+     "target": 1,
+     "deps": [],
+     "build": "Cards, py-fsrs, recall-graded reviews, mistake log."
+    },
+    {
+     "id": "telegram",
+     "target": 1,
+     "deps": [],
+     "build": "Long-polling bot; buttons call registry tools."
+    },
+    {
+     "id": "evals",
+     "target": 1,
+     "deps": [
+      "learnsys"
+     ],
+     "build": "Your grading cases, including fluent-but-wrong (hostile input 2)."
+    }
+   ]
+  },
+  {
+   "id": "s2",
+   "title": "Stage 2: Feed the loop",
+   "goal": "Real input becomes cards without typing. (Open: inside the freeze?)",
+   "nodes": [
+    {
+     "id": "reader",
+     "target": 2,
+     "deps": [],
+     "build": "Screenshot to mistake card."
+    },
+    {
+     "id": "learnsys",
+     "target": 2,
+     "deps": [
+      "reader"
+     ],
+     "build": "Card generation and formula images."
+    }
+   ]
+  },
+  {
+   "id": "s3",
+   "title": "Stage 3: Always on + Tasks",
+   "goal": "Ask 5 and the public URL. Tasks, “what now?”, 8am push with the laptop shut.",
+   "nodes": [
+    {
+     "id": "host",
+     "target": 2,
+     "deps": [],
+     "build": "VPS, Docker Compose, Litestream."
+    },
+    {
+     "id": "todo",
+     "target": 1,
+     "deps": [
+      "host"
+     ],
+     "build": "Tasks table, calendar read, “what now?”."
+    }
+   ]
+  },
+  {
+   "id": "s4",
+   "title": "Stage 4: Judgment",
+   "goal": "Asks 1, 3 and 4.",
+   "nodes": [
+    {
+     "id": "claimcheck",
+     "target": 1,
+     "deps": [],
+     "build": "Delegated check + search of your cards (I18)."
+    },
+    {
+     "id": "steelman",
+     "target": 1,
+     "deps": [
+      "claimcheck"
+     ],
+     "build": "Fixed steps, no framework (I19)."
+    },
+    {
+     "id": "decision",
+     "target": 1,
+     "deps": [],
+     "build": "Log, resolve, Brier (I20)."
+    }
+   ]
+  },
+  {
+   "id": "s5",
+   "title": "Stage 5: Assistant + hardening (submission)",
+   "goal": "All five asks from free text, traced, public, three hostile inputs handled.",
+   "nodes": [
+    {
+     "id": "orch",
+     "target": 2,
+     "deps": [],
+     "build": "Hand-written assistant loop over the registry (I12)."
+    },
+    {
+     "id": "trace",
+     "target": 2,
+     "deps": [
+      "orch"
+     ],
+     "build": "Gateway OpenTelemetry to Langfuse."
+    },
+    {
+     "id": "evals",
+     "target": 3,
+     "deps": [
+      "orch"
+     ],
+     "build": "All eval files in CI, including hostile input 3."
+    }
+   ]
+  }
+ ]
+}
+</script>
+<script id="app-js">
+(function(){
+"use strict";
+const STATUS={built:"Built",rough:"Built, rough",specced:"Specced",idea:"Idea",shelf:"Shelved"};
+const HEIGHT={built:58,rough:44,specced:30,idea:16,shelf:9};
+let S=JSON.parse(document.getElementById("state").textContent);
+const SAVED=JSON.stringify(S);
+let dirty=false,editing=false,sel=null,artifactNS=null,canSave=null;
+const DRAFT="aios-plan-draft";
+const $=(q,el=document)=>el.querySelector(q);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const byId=()=>Object.fromEntries(S.nodes.map(n=>[n.id,n]));
+const tierOf=id=>S.tiers.find(t=>t.id===id);
+function related(id){const N=byId();const n=N[id];if(!n)return new Set();const r=new Set(n.with||[]);S.nodes.forEach(x=>{if((x.with||[]).includes(id))r.add(x.id);});return r;}
+
+document.getElementById("root").innerHTML=`
+<header class="top wrap"><h1>AI OS, in order</h1>
+<p class="lede">Most important first. The graph shows what works and whether each piece has reached the minimum it needs to move on; the plan shows the tiers and the libraries each piece can stand on. Tap anything for detail.</p></header>
+<nav class="tabs" aria-label="Views"><div class="wrap">
+<a href="#graph">Graph</a><a href="#plan">Plan</a><a href="#stages">Stages</a><a href="#contracts">Contracts</a><a href="#overlaps">Overlaps</a><a href="#agents">How agents are built</a><a href="#retired">Shelf and retired</a><a href="#data">Data</a></div></nav>
+<main class="wrap">
+<section class="view" id="v-graph">
+  <h2>What works, and can we move on?</h2>
+  <p class="muted">Most important in the middle, then outward by tier. The ring around each node is its level out of 4; the notch is the minimum it needs before you move on. Green means good enough for now.</p>
+  <div id="tierBars" class="tierbars"></div>
+  <div class="toolbar"><span class="legendrow" style="margin:0" id="glegend"></span><span class="sp"></span><button class="btn" id="gOut" type="button" aria-label="Zoom out">−</button><button class="btn" id="gIn" type="button" aria-label="Zoom in">+</button></div>
+  <div class="stackwrap" id="gwrap"><svg id="kg" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Knowledge graph of components, most important in the centre"></svg></div>
+  <p class="muted small" style="margin-top:8px">Levels marked “estimated” are my guesses until Claude Code reports real ones. See the Data tab for how it updates them.</p>
+</section>
+<section class="view" id="v-plan">
+  <div id="draftBanner"></div>
+  <div class="box key" style="margin-bottom:18px"><h3>Build order, frozen until submission</h3>
+    <p>Capstone code is due end of Dec / Jan. Only these stages get built before then; the detailed plan is <code>plan/stages.md</code>, and the Stage Map shows how they connect.</p>
+    <ol class="plain" start="0">
+      <li><b>Spine.</b> Model call (gateway path is your call), store, tool registry.</li>
+      <li><b>CFA review in Telegram.</b> Recall-graded cards and the mistake log (ask 2).</li>
+      <li><b>Feed the loop.</b> Screenshots and notes become cards.</li>
+      <li><b>Always on, plus Tasks.</b> VPS, “what now?” (ask 5).</li>
+      <li><b>Judgment.</b> Claim check, Steelman, Decision Tracker (asks 1, 3, 4).</li>
+      <li><b>Assistant and hardening.</b> All five asks from free text, traced, three hostile inputs handled. Submit.</li>
+    </ol>
+    <p class="muted small">Everything else waits until after submission.</p>
+  </div>
+  <div class="cols" style="margin-bottom:18px">
+    <div class="box"><h3>What we cut</h3><ul class="plain">
+      <li>53 components to 44, by merging overlaps.</li>
+      <li>Most pieces are functions or one-call workflows. The only true agents are the chat assistant and the voice partners.</li>
+      <li>One SQLite store instead of Postgres plus a queue service.</li>
+      <li>Langfuse Cloud instead of six self-hosted services.</li>
+      <li>pytest instead of a second toolchain for evals.</li>
+      <li>One chat instead of five doors and two extra apps.</li>
+      <li>Buttons and commands call functions directly: no model, no cost, instant.</li>
+    </ul></div>
+    <div class="box"><h3>What you write, and what it costs</h3><ul class="plain">
+      <li><b>Claude and Codex write:</b> the registry and assistant loop, the Telegram adapter, cards and grading, Tasks with “what now?”, Claim check, Steelman and Decision Tracker. <b>You write</b> the plans, the done-when examples and the eval cases.</li>
+      <li><b>Everything else is borrowed:</b> py-fsrs, Pydantic, python-telegram-bot, Langfuse, Litestream. Graphiti comes after submission.</li>
+      <li><b>Monthly cost:</b> the VPS (or Oracle’s free tier), model calls through your gateway, and Readwise if kept. No other subscriptions.</li>
+    </ul></div>
+  </div>
+  <div class="principles" id="principles"></div>
+  <div class="stackwrap"><svg id="stack" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Priority tiers stacked, with components as blocks"></svg></div>
+  <div class="legendrow" id="legendrow"></div>
+  <div class="toolbar" style="margin-top:22px">
+    <button class="btn" id="editBtn" type="button" aria-pressed="false">Edit</button>
+    <button class="btn" id="addNode" type="button" hidden>Add component</button>
+    <button class="btn primary" id="saveBtn" type="button" hidden>Save</button>
+    <button class="btn" id="discardBtn" type="button" hidden>Discard changes</button>
+    <span class="status" id="saveStatus"></span>
+  </div>
+  <div id="tiers"></div>
+</section>
+<section class="view" id="v-stages">
+  <h2>Stages: what gets built, in what order</h2>
+  <p class="muted">A summary of <code>plan/stages.md</code>, which wins if they differ. Each stage is a small graph: the nodes it touches, what gets built in each, and what each depends on. Tap a node to write your notes or read its plan.</p>
+  <div class="box key" style="margin-bottom:16px"><h3>How a plan gets made</h3><ol class="plain">
+    <li><b>You</b> write a few sentences under a node: what you want, what you already know, what to avoid.</li>
+    <li><b>Claude</b> expands them into a plan, reading the node’s stage, its neighbours’ plans and the real interfaces: goal, non-goals, tools and tables it uses and adds, steps, acceptance tests, open questions.</li>
+    <li><b>You</b> approve or correct it.</li>
+    <li><b>Claude Code</b> builds the stage in dependency order; acceptance tests become the evals; status flows back here.</li></ol>
+    <p class="muted small">Outline borders: dashed means it needs your notes, blue means notes written, green means planned. <span class="src proposed">proposed</span></p></div>
+  <div id="stageList"></div>
+</section>
+<section class="view" id="v-contracts">
+  <h2>Contracts with external agents</h2>
+  <p class="muted">How your own system hands work to agents you don’t own. Filled badges are your recorded rules; grey ones are facts checked on 22 Oct; pink ones are proposals to accept, change or drop.</p>
+  <div class="cols">
+    <div class="box key"><h3>Your recorded rules</h3><ul class="plain" id="statedRules"></ul></div>
+    <div class="box"><h3>The internal side</h3><ul class="plain">
+      <li>Only the orchestrator talks to external agents. Internal agents never do. <span class="src proposed">proposed</span></li>
+      <li>The policy layer holds each contract and enforces it before the call, not after. <span class="src proposed">proposed</span></li>
+      <li>An external result enters the OS the same way reading does: through the ingester, as data. <span class="src proposed">proposed</span></li>
+    </ul></div>
+  </div>
+  <div class="box key" style="margin-top:14px"><h3>How they work together</h3><ol class="plain" id="together"></ol></div>
+  <h3 style="margin-top:24px">Contract template</h3>
+  <p class="muted small">Every external agent gets one row per field. <span class="src proposed">proposed</span></p>
+  <div class="tablewrap"><table><thead><tr><th>Field</th><th>Rule</th></tr></thead><tbody id="tmpl"></tbody></table></div>
+  <h3 style="margin-top:24px">Per agent</h3>
+  <div class="cols" id="extAgents"></div>
+</section>
+<section class="view" id="v-overlaps">
+  <h2>Overlaps and conflicts</h2>
+  <p class="muted">Yes, there are several. Two kinds: agents doing the same job, and agents tempted to break the chain of command. Each fix below is a proposal. Tap a component name to see it on the plan.</p>
+  <div id="ovList"></div>
+</section>
+<section class="view" id="v-agents">
+  <h2>How it’s built</h2>
+  <p class="muted">Most pieces are not agents. Pick the simplest kind that does the job; the file says which.</p>
+  <div class="tablewrap"><table><thead><tr><th>Kind</th><th>What it is</th><th>Examples</th></tr></thead><tbody>
+    <tr><td>Function</td><td>Plain code, no model</td><td>Store, FSRS scheduling, Brier scoring, UPI ledger</td></tr>
+    <tr><td>One call</td><td>Code around a single model call with a typed output</td><td>Understanding check, “what now?”, email triage</td></tr>
+    <tr><td>Workflow</td><td>Fixed steps, some of them calls</td><td>Capture, Steelman, Mirfish</td></tr>
+    <tr><td>Agent</td><td>The model picks the next step in a loop</td><td>The chat assistant (free-form questions over the registry), German partner, desk voice</td></tr>
+  </tbody></table></div>
+  <div class="cols" style="margin-top:14px">
+    <div class="box key"><h3>Register once, call from anywhere</h3>
+      <p>Each function is registered once as a typed tool. Every caller uses the same registry, so every part can answer through every door.</p>
+<pre>@tool("tasks.add")
+def add_task(title: str, list: str = "inbox") -> Task: ...
+
+@tool("learn.grade")
+def grade(card_id: str, rating: int) -> Card: ...
+
+# button in chat -> REGISTRY["learn.grade"](id, 3)   no model
+# free text      -> assistant(question, tools=REGISTRY)
+# scheduler      -> REGISTRY["learn.due_cards"]() at 8am
+# Claude (MCP)   -> the same REGISTRY via FastMCP</pre>
+      <p class="muted small">The assistant is the only open-ended loop. It’s shaped like LangGraph: when you swap, the registry becomes the agent’s tool list and the functions don’t change. Tag the handmade version first, because that’s what you submit.</p>
+    </div>
+    <div class="box"><h3>Example file</h3>
+<pre>---
+name: understanding_check
+version: 1.2.0
+kind: call             # function | call | workflow | agent
+purpose: Tell recognised vocabulary from real understanding.
+non_goals: [teach the material, grade style]
+acceptance: Flags a fluent but wrong explanation.
+model_profile: reasoning   # resolved by the gateway
+tools: [memory.search, cards.create]
+memory: {read: [highlights, cards], write: [cards]}
+limits: {max_cost_usd: 0.05}
+evals: evals/understanding_check.yaml
+---
+You check whether the explanation below shows
+understanding or only familiar vocabulary...</pre>
+      <p class="muted small">Functions need no file; they are code with pytest.</p></div>
+  </div>
+  <h3 style="margin-top:24px">The lifecycle for anything that calls a model</h3>
+  <p class="muted">Agent development lifecycle (ADLC), kept light. Each stage leaves a file in the repo, and the levels on the graph are its gates. <span class="src proposed">proposed</span></p>
+  <div class="tablewrap"><table><thead><tr><th>Stage</th><th>What it leaves in the repo</th><th>Tool</th><th>Gate</th></tr></thead><tbody>
+    <tr><td>1. Define</td><td>kind, purpose, non_goals and acceptance in the header</td><td>None</td><td>Level 1</td></tr>
+    <tr><td>2. Build</td><td>The prompt body, node functions, a model profile</td><td>Your runner, Instructor</td><td>Level 1</td></tr>
+    <tr><td>3. Evaluate</td><td>evals/&lt;name&gt;.yaml: normal, edge and hostile cases you write</td><td>pytest</td><td>Level 2</td></tr>
+    <tr><td>4. Release</td><td>version in the header; merge only if evals pass</td><td>GitHub Actions</td><td>Level 3</td></tr>
+    <tr><td>5. Operate</td><td>Every run traced with file name and version</td><td>Langfuse</td><td>Level 2</td></tr>
+    <tr><td>6. Improve</td><td>A failed run becomes an eval case before any fix; Claude proposes the fix as a PR</td><td>Builder tools, maintainer loop</td><td>Level 4</td></tr>
+  </tbody></table></div>
+  <div class="box" style="margin-top:14px"><h3>Repo layout</h3>
+<pre>core/      runner.py  registry.py  assistant.py  scheduler.py
+doors/     telegram.py  mcp.py (optional)
+flows/     understanding_check.md  what_now.md ...
+nodes/     python node functions and plain functions
+evals/     one yaml per model-calling file
+infra/     compose.yaml  Caddyfile
+STATUS.md  kept by Claude Code</pre></div>
+</section>
+<section class="view" id="v-retired">
+  <h2>Shelf and retired</h2>
+  <div class="cols">
+    <div class="box"><h3>On the shelf</h3><ul class="plain" id="shelfList"></ul></div>
+    <div class="box"><h3>Retired</h3><ul class="plain" id="retiredList"></ul></div>
+  </div>
+</section>
+<section class="view" id="v-data">
+  <h2>Status from Claude Code</h2>
+  <p class="muted">Claude Code keeps a status file in your repo and you paste it here. Only levels, minimums and notes change; nothing else is touched.</p>
+  <textarea class="json" id="statusTa" spellcheck="false" style="min-height:120px" placeholder='{"updated":"2026-10-23","nodes":[{"id":"todo","lvl":1,"working":"Adds from WhatsApp","next":"Email-in"}]}'></textarea>
+  <div class="toolbar"><button class="btn primary" id="mergeStatus" type="button">Merge status</button><span class="status" id="mergeMsg"></span></div>
+  <details class="box" style="margin:6px 0 26px"><summary style="cursor:pointer;font-weight:700">Instruction to put in your repo’s CLAUDE.md</summary>
+<pre id="ccSnippet"></pre><button class="btn" id="copySnippet" type="button">Copy instruction</button></details>
+  <h2>Data</h2>
+  <p class="muted">The whole plan as JSON, including contracts and overlaps. Edit here for anything the Edit button doesn’t cover, then apply and save.</p>
+  <textarea class="json" id="jsonTa" spellcheck="false"></textarea>
+  <div class="toolbar"><button class="btn" id="copyJson" type="button">Copy</button><button class="btn" id="applyJson" type="button">Apply pasted JSON</button><span class="status" id="jsonStatus"></span></div>
+</section>
+</main>
+<div class="scrim" id="scrim"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="pTitle" tabindex="-1"><div id="pBody"></div></aside>`;
+
+// ---------- principles + legend
+function renderPrinciples(){$("#principles").innerHTML=S.principles.map(p=>`<div><b>${esc(p.t)}</b><span>${esc(p.d)}</span></div>`).join("");}
+$("#legendrow").innerHTML=Object.entries(STATUS).map(([k,v])=>`<span><i class="dot" style="background:var(--${k})"></i>${v}</span>`).join("")+
+ `<span><span class="heights">${["shelf","idea","specced","rough","built"].map(k=>`<i style="height:${Math.round(HEIGHT[k]/4)}px"></i>`).join("")}</span>Taller = more built</span><span><i class="dot" style="background:var(--glow)"></i>Works with the selected one</span>`;
+
+// ---------- stacked plates (cabinet projection)
+const K=0.75,ANG=35*Math.PI/180,CX=Math.cos(ANG)*K,CY=Math.sin(ANG)*K;
+const PW=760,PD=140,DZ=160,LEFT=250,TOP=110;
+function P(ox,oy,x,y,z){return [ox+x+y*CX, oy-y*CY-z];}
+const pts=a=>a.map(p=>p.map(v=>v.toFixed(1)).join(",")).join(" ");
+function renderStack(){
+  const tiers=S.tiers;const N=byId();const rel=sel?related(sel):new Set();
+  const H=TOP+tiers.length*DZ+40, W=LEFT+PW+PD*CX+30;
+  const svg=$("#stack");svg.setAttribute("viewBox",`0 0 ${Math.round(W)} ${H}`);
+  const box=$(".stackwrap");const avail=Math.max(320,box.clientWidth-2);
+  const scale=avail<760?Math.max(.62,avail/W):Math.min(1,avail/W);
+  svg.setAttribute("width",Math.round(W*scale));svg.setAttribute("height",Math.round(H*scale));
+  let out="";const caps=[];
+  tiers.forEach((t,i)=>{
+    const oy=TOP+i*DZ+PD*CY;const ox=LEFT;
+    const shelf=t.id==="shelf";
+    const top=[P(ox,oy,0,0,0),P(ox,oy,PW,0,0),P(ox,oy,PW,PD,0),P(ox,oy,0,PD,0)];
+    const front=[P(ox,oy,0,0,0),P(ox,oy,PW,0,0),P(ox,oy,PW,0,-12),P(ox,oy,0,0,-12)];
+    out+=`<g class="pl${shelf?" shelf":""}" data-tier="${esc(t.id)}" tabindex="0" role="button" aria-label="Tier ${esc(t.n)}: ${esc(t.title)}">
+      <polygon class="pl-shadow" points="${pts(top.map(q=>[q[0]+10,q[1]+16]))}"/><polygon class="pl-front" points="${pts(front)}"/><polygon class="pl-top" points="${pts(top)}"/>
+      <text class="pl-num" x="18" y="${oy-28}">${esc(t.n)}</text>
+      <text class="pl-t" x="18" y="${oy-8}">${esc(t.title)}</text>
+      <text class="pl-s" x="18" y="${oy+9}">${esc(t.sub)}</text></g>`;
+    const items=S.nodes.filter(n=>n.tier===t.id);
+    const rows=items.length>7?2:1;const per=Math.ceil(items.length/rows)||1;
+    const sp=(PW-24)/per;const bw=Math.min(78,sp-22);const bd=rows===2?44:60;
+    const placed=items.map((n,k)=>{const r=rows===2?(k<per?1:0):0;const c=rows===2?(r===1?k:k-per):k;
+      return {n,x:14+c*sp,y:r===1?PD-bd-12:(rows===2?12:Math.round((PD-bd)/2))};});
+    placed.sort((a,b)=>b.y-a.y);
+    placed.forEach(({n,x,y})=>{
+      const h=HEIGHT[n.status]||16;const c=`var(--${n.status})`;
+      const f=[P(ox,oy,x,y,0),P(ox,oy,x+bw,y,0),P(ox,oy,x+bw,y,h),P(ox,oy,x,y,h)];
+      const tp=[P(ox,oy,x,y,h),P(ox,oy,x+bw,y,h),P(ox,oy,x+bw,y+bd,h),P(ox,oy,x,y+bd,h)];
+      const sd=[P(ox,oy,x+bw,y,0),P(ox,oy,x+bw,y+bd,0),P(ox,oy,x+bw,y+bd,h),P(ox,oy,x+bw,y,h)];
+      const ol=[P(ox,oy,x,y,0),P(ox,oy,x+bw,y,0),P(ox,oy,x+bw,y+bd,0),P(ox,oy,x+bw,y+bd,h),P(ox,oy,x,y+bd,h),P(ox,oy,x,y,h)];
+      let cls="blk";if(sel===n.id)cls+=" sel";else if(rel.has(n.id))cls+=" rel";else if(sel)cls+=" dim";
+      out+=`<g class="${cls}" data-id="${esc(n.id)}" style="--c:${c}" tabindex="0" role="button" aria-label="${esc(n.name)}, ${esc(STATUS[n.status])}"><title>${esc(n.name)}</title>
+        <polygon class="sd" points="${pts(sd)}"/><polygon class="tp" points="${pts(tp)}"/><polygon class="f" points="${pts(f)}"/><polygon class="ol" points="${pts(ol)}"/></g>`;
+      if(sel===n.id){const a=P(ox,oy,x+bw/2,y+bd/2,h);caps.push(`<text class="cap" x="${a[0].toFixed(1)}" y="${(a[1]-10).toFixed(1)}" text-anchor="middle">${esc(n.name)}</text>`);}
+    });
+  });
+  svg.innerHTML=out+caps.join("");
+}
+$("#stack").addEventListener("click",e=>{const b=e.target.closest(".blk");if(b){openNode(b.dataset.id);return;}
+  const p=e.target.closest(".pl");if(p){const el=document.getElementById("tier-"+p.dataset.tier);if(el)el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});return;}
+  sel=null;renderSel();});
+$("#stack").addEventListener("keydown",e=>{if(e.key!=="Enter"&&e.key!==" ")return;const b=e.target.closest(".blk,.pl");if(!b)return;e.preventDefault();b.dispatchEvent(new MouseEvent("click",{bubbles:true}));});
+window.addEventListener("resize",()=>renderStack());
+
+// ---------- knowledge graph
+const LVL=()=>S.levels||[["0","Not started"],["1","Runs once"],["2","Usable daily"],["3","Reliable"],["4","Refined"]];
+let gzoom=1;
+function nodeState(n){const l=+n.lvl||0,m=+n.min||0;return l>=m&&m>0?"ready":l>0?"prog":"none";}
+function renderGraph(){
+  const tiers=S.tiers.filter(t=>t.id!=="shelf");const N=byId();
+  const W=1160,C=W/2,RADII=[0,128,222,302,378,448,516,580],NR=[36,23,19,16,14,13,12,11];
+  const pos={};let ring=0;const ringsDrawn=[];
+  tiers.forEach((t,ti)=>{
+    let items=S.nodes.filter(n=>n.tier===t.id);
+    if(ti===0&&items.length){pos[items[0].id]={x:C,y:C,r:NR[0],center:true};items=items.slice(1);}
+    if(!items.length)return;ring++;const R=RADII[ring]||RADII[RADII.length-1]+70*(ring-RADII.length+1);const r=NR[ring]||11;
+    ringsDrawn.push({R,t});
+    const pref=items.map(n=>{const rel=[...related(n.id)].filter(id=>pos[id]&&!pos[id].center);if(!rel.length)return null;
+      let sx=0,sy=0;rel.forEach(id=>{sx+=pos[id].x-C;sy+=pos[id].y-C;});return Math.atan2(sy,sx);});
+    const idx=items.map((n,k)=>k).sort((a,b)=>{const pa=pref[a],pb=pref[b];if(pa==null&&pb==null)return a-b;if(pa==null)return 1;if(pb==null)return -1;return pa-pb;});
+    const step=2*Math.PI/items.length;let sx=0,sy=0,cnt=0;
+    idx.forEach((k,j)=>{if(pref[k]!=null){const d=pref[k]-j*step;sx+=Math.cos(d);sy+=Math.sin(d);cnt++;}});
+    const off=cnt?Math.atan2(sy,sx):-Math.PI/2+step/2+ring*0.35;
+    idx.forEach((k,j)=>{const a=off+j*step;pos[items[k].id]={x:C+R*Math.cos(a),y:C+R*Math.sin(a),r};});
+  });
+  const H=W;const svg=$("#kg");const wrap=$("#gwrap");const avail=Math.max(320,wrap.clientWidth-2);
+  const base=avail<700?Math.max(.55,avail/W):Math.min(1,avail/W);
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("width",Math.round(W*base*gzoom));svg.setAttribute("height",Math.round(H*base*gzoom));
+  const rel=sel?related(sel):new Set();let out="";
+  ringsDrawn.forEach(({R,t})=>{out+=`<circle class="kg-ring" cx="${C}" cy="${C}" r="${R}"/><text class="kg-rl" x="${C}" y="${C-R-6}" text-anchor="middle">${esc(t.n)} ${esc(t.title)}</text>`;});
+  const seen=new Set();
+  S.nodes.forEach(n=>{(n.with||[]).forEach(o=>{if(!pos[n.id]||!pos[o])return;const key=[n.id,o].sort().join("|");if(seen.has(key))return;seen.add(key);
+    const a=pos[n.id],b=pos[o];const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;const qx=mx+(C-mx)*0.18,qy=my+(C-my)*0.18;
+    let cls="kg-e";if(sel)cls+=(n.id===sel||o===sel)?" on":" off";
+    out+=`<path class="${cls}" d="M${a.x.toFixed(1)},${a.y.toFixed(1)} Q${qx.toFixed(1)},${qy.toFixed(1)} ${b.x.toFixed(1)},${b.y.toFixed(1)}"/>`;});});
+  S.nodes.forEach(n=>{const p=pos[n.id];if(!p)return;const st=nodeState(n);const l=Math.max(0,Math.min(4,+n.lvl||0)),m=Math.max(0,Math.min(4,+n.min||0));
+    const ar=p.r+6,circ=2*Math.PI*ar;const na=-Math.PI/2+m/4*2*Math.PI;
+    let cls=`kg-n ${st}`;if(p.center)cls+=" center";if(sel===n.id)cls+=" sel";else if(sel&&!rel.has(n.id))cls+=" dim";
+    const ly=p.y+p.r+(p.center?26:20);
+    out+=`<g class="${cls}" data-id="${esc(n.id)}" tabindex="0" role="button" aria-label="${esc(n.name)}: level ${l} of 4, minimum ${m}"><title>${esc(n.name)}: level ${l}, minimum ${m}</title>
+      <circle class="trk" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${ar}"/>
+      ${l>0?`<circle class="arc" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${ar}" stroke-dasharray="${(circ*l/4).toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 ${p.x.toFixed(1)} ${p.y.toFixed(1)})"/>`:""}
+      ${m>0?`<line class="notch" x1="${(p.x+(ar-5)*Math.cos(na)).toFixed(1)}" y1="${(p.y+(ar-5)*Math.sin(na)).toFixed(1)}" x2="${(p.x+(ar+5)*Math.cos(na)).toFixed(1)}" y2="${(p.y+(ar+5)*Math.sin(na)).toFixed(1)}"/>`:""}
+      <circle class="core" cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r}"/>
+      <text x="${p.x.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle">${esc(n.name)}</text></g>`;});
+  svg.innerHTML=out;
+  // tier bars
+  $("#tierBars").innerHTML=tiers.map(t=>{const it=S.nodes.filter(n=>n.tier===t.id);const ok=it.filter(n=>nodeState(n)==="ready").length;
+    return `<div class="tb"><b>${esc(t.n)} ${esc(t.title)}</b>${ok} of ${it.length} at minimum<div class="track"><div class="fill" style="width:${it.length?Math.round(ok/it.length*100):0}%"></div></div></div>`;}).join("");
+}
+$("#glegend").innerHTML=`<span><i class="dot" style="background:var(--built)"></i>At minimum, move on</span><span><i class="dot" style="background:var(--idea)"></i>Started, below minimum</span><span><i class="dot" style="background:var(--sheet);border:1.5px solid var(--ink2)"></i>Not started</span><span><i class="dot" style="background:var(--pink);border-radius:1px;width:4px"></i>Minimum notch</span>`;
+$("#kg").addEventListener("click",e=>{const g=e.target.closest(".kg-n");if(g){openNode(g.dataset.id);return;}sel=null;renderSel();});
+$("#kg").addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.closest(".kg-n")){e.preventDefault();openNode(e.target.closest(".kg-n").dataset.id);}});
+$("#gIn").onclick=()=>{gzoom=Math.min(2.2,gzoom+.2);renderGraph();};$("#gOut").onclick=()=>{gzoom=Math.max(.6,gzoom-.2);renderGraph();};
+window.addEventListener("resize",()=>renderGraph());
+
+// ---------- tier rows
+function renderTiers(){
+  const rel=sel?related(sel):new Set();
+  $("#tiers").innerHTML=S.tiers.map(t=>{const items=S.nodes.filter(n=>n.tier===t.id);
+    return `<div class="tier" id="tier-${esc(t.id)}"><div class="tier-head"><div class="num">${esc(t.n)}</div><h3>${esc(t.title)}</h3><p>${esc(t.approach)}</p>${t.done?`<div class="done">${esc(t.done)} <span class="src proposed">proposed</span></div>`:""}</div>
+    <div class="rows">${items.map(n=>`<button type="button" class="row${sel===n.id?" sel":rel.has(n.id)?" rel":""}" data-id="${esc(n.id)}" style="--c:var(--${n.status})">
+      <span class="bar"></span><span class="nm">${esc(n.name)} <small>${esc(STATUS[n.status])}</small>${n.note?`<span class="flag">open point</span>`:""}</span>
+      <span class="wt">${esc(n.what)}</span>
+      <span class="libs">${(n.libs||[]).map(l=>`<span class="lib">${esc(l)}</span>`).join("")}</span></button>`).join("")||`<p class="muted">Empty.</p>`}</div></div>`;}).join("");
+}
+$("#tiers").addEventListener("click",e=>{const r=e.target.closest(".row");if(r)openNode(r.dataset.id);});
+function renderSel(){renderStack();renderTiers();renderGraph();renderStages();}
+
+// ---------- drawer
+const panel=$("#panel"),scrim=$("#scrim"),pBody=$("#pBody");let lastFocus=null;
+function openNode(id){sel=id;lastFocus=document.activeElement;renderSel();renderPanel();panel.classList.add("on");scrim.classList.add("on");panel.focus();}
+function closePanel(){panel.classList.remove("on");scrim.classList.remove("on");if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+scrim.onclick=closePanel;document.addEventListener("keydown",e=>{if(e.key==="Escape"&&panel.classList.contains("on"))closePanel();});
+function renderPanel(){
+  const N=byId();const n=N[sel];if(!n){closePanel();return;}
+  const rel=[...related(n.id)].filter(id=>N[id]);
+  const ovs=S.overlaps.filter(o=>(o.m||[]).includes(n.id));
+  const head=`<button class="btn x" type="button" id="pClose">Close</button>`;
+  if(!editing){
+    pBody.innerHTML=`${head}<h3 class="title" id="pTitle">${esc(n.name)}</h3>
+    <div class="meta"><span class="tag"><i class="dot" style="background:var(--${n.status})"></i>${esc(STATUS[n.status])}</span><span class="tag">Tier ${esc(tierOf(n.tier)?.n)}: ${esc(tierOf(n.tier)?.title)}</span></div>
+    <dl><dt>Level</dt><dd>${(()=>{const L=LVL();const l=+n.lvl||0,m=+n.min||0;return `<b>${l} of 4: ${esc((L[l]||[])[1]||"")}</b>${n.est?` <span class="src proposed">estimated</span>`:""}<br>Minimum to move on: level ${m}${n.minDef?`. ${esc(n.minDef)}`:` (${esc((L[m]||[])[1]||"")})`}<br><b style="color:var(--${l>=m&&m>0?"built":"pink"})">${l>=m&&m>0?"Reached. Move on; improve later.":"Not reached yet."}</b>`;})()}</dd>
+    ${n.working?`<dt>Working now</dt><dd>${esc(n.working)}</dd>`:""}${n.next?`<dt>Next step</dt><dd>${esc(n.next)}</dd>`:""}${n.upd?`<dt>Last status update</dt><dd>${esc(n.upd)}</dd>`:""}
+    ${stagesOf(n.id).map(x=>`<dt>${esc(x.st.title)}</dt><dd>Target level ${x.sn.target}. ${esc(x.sn.build)}</dd>`).join("")}<dt>Your notes</dt><dd><textarea id="seedTa" placeholder="A few sentences: what you want, what you already know, what to avoid. Then save.">${esc(n.seed||"")}</textarea></dd><dt>Plan</dt><dd>${n.plan?`<div class="planbox">${esc(n.plan)}</div>`:`<span class="muted">Not written yet. Write your notes, save, then ask Claude to expand this node.</span>`}</dd>${n.kind?`<dt>Kind</dt><dd>${esc(n.kind)}</dd>`:""}<dt>What it does</dt><dd>${esc(n.what)}</dd>
+    <dt>Possible libraries</dt><dd><div class="libs">${(n.libs||[]).map(l=>`<span class="lib">${esc(l)}</span>`).join("")}</div></dd>
+    ${n.note?`<dt>Open point</dt><dd class="chg">${esc(n.note)}</dd>`:""}
+    <dt>Works with</dt><dd><div class="chiprow">${rel.map(id=>`<button class="mchip" type="button" data-jump="${esc(id)}">${esc(N[id].name)}</button>`).join("")||"<span class='muted'>Nothing yet</span>"}</div></dd>
+    ${ovs.length?`<dt>Overlaps</dt><dd>${ovs.map(o=>`<p style="margin:4px 0"><b>${esc(o.t)}.</b> ${esc(o.p)}</p>`).join("")}</dd>`:""}</dl>`;
+  }else{
+    const tierOpts=S.tiers.map(t=>`<option value="${esc(t.id)}"${t.id===n.tier?" selected":""}>${esc(t.n)} ${esc(t.title)}</option>`).join("");
+    const stOpts=Object.entries(STATUS).map(([k,v])=>`<option value="${k}"${k===n.status?" selected":""}>${v}</option>`).join("");
+    const others=S.nodes.filter(x=>x.id!==n.id&&!(n.with||[]).includes(x.id)).sort((a,b)=>a.name.localeCompare(b.name)).map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("");
+    pBody.innerHTML=`${head}<h3 class="title" id="pTitle">Edit ${esc(n.name)}</h3>
+    <label class="field">Name<input data-f="name" value="${esc(n.name)}"></label>
+    <div class="two"><label class="field">Tier<select data-f="tier">${tierOpts}</select></label><label class="field">Status<select data-f="status">${stOpts}</select></label></div>
+    <div class="two"><label class="field">Level now<select data-f="lvl">${LVL().map((x,k)=>`<option value="${k}"${k===(+n.lvl||0)?" selected":""}>${k} ${esc(x[1])}</option>`).join("")}</select></label>
+    <label class="field">Minimum to move on<select data-f="min">${LVL().map((x,k)=>`<option value="${k}"${k===(+n.min||0)?" selected":""}>${k} ${esc(x[1])}</option>`).join("")}</select></label></div>
+    <label class="field">What the minimum means here<input data-f="minDef" value="${esc(n.minDef||"")}"></label>
+    <label class="field">Working now<input data-f="working" value="${esc(n.working||"")}"></label>
+    <label class="field">Next step<input data-f="next" value="${esc(n.next||"")}"></label>
+    <label class="field">What it does<textarea data-f="what">${esc(n.what)}</textarea></label>
+    <label class="field">Possible libraries, one per line<textarea data-f="libs">${esc((n.libs||[]).join("\n"))}</textarea></label>
+    <label class="field">Open point (optional)<textarea data-f="note">${esc(n.note||"")}</textarea></label>
+    <div style="margin-top:14px;font-weight:700">Works with</div>
+    <div class="chiprow">${(n.with||[]).filter(id=>N[id]).map(id=>`<button class="mchip" type="button" data-unlink="${esc(id)}" aria-label="Remove ${esc(N[id].name)}">${esc(N[id].name)} ×</button>`).join("")}</div>
+    <div class="two"><select id="linkSel" class="field" style="margin:0;padding:7px;border:1px solid var(--rule);border-radius:8px;background:var(--paper)">${others}</select><button class="btn" type="button" id="linkAdd">Add</button></div>
+    <div class="toolbar" style="margin-top:16px"><button class="btn" type="button" id="mvUp">Move up in tier</button><button class="btn" type="button" id="mvDn">Move down</button></div>
+    <button class="btn danger" type="button" id="delNode" style="margin-top:14px">Delete ${esc(n.name)}</button>`;
+    pBody.querySelectorAll("[data-f]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{const f=el.dataset.f;
+      if(f==="libs")n.libs=el.value.split("\n").map(s=>s.trim()).filter(Boolean);else if(f==="note"){if(el.value.trim())n.note=el.value;else delete n.note;}else if(f==="lvl"||f==="min"){n[f]=+el.value;delete n.est;n.upd=new Date().toISOString().slice(0,10)+" (edited here)";}else n[f]=el.value;
+      markDirty();renderSel();if(f==="name")$("#pTitle").textContent="Edit "+n.name;}));
+    $("#linkAdd").onclick=()=>{const v=$("#linkSel").value;if(!v)return;n.with=n.with||[];n.with.push(v);markDirty();renderSel();renderPanel();};
+    pBody.querySelectorAll("[data-unlink]").forEach(b=>b.onclick=()=>{const id=b.dataset.unlink;n.with=(n.with||[]).filter(x=>x!==id);const o=N[id];if(o&&o.with)o.with=o.with.filter(x=>x!==n.id);markDirty();renderSel();renderPanel();});
+    const move=d=>{const sib=S.nodes.filter(x=>x.tier===n.tier);const k=sib.indexOf(n);const j=k+d;if(j<0||j>=sib.length)return;const a=S.nodes.indexOf(n),b=S.nodes.indexOf(sib[j]);[S.nodes[a],S.nodes[b]]=[S.nodes[b],S.nodes[a]];markDirty();renderSel();};
+    $("#mvUp").onclick=()=>move(-1);$("#mvDn").onclick=()=>move(1);
+    $("#delNode").onclick=()=>{if(!confirm(`Delete ${n.name}?`))return;S.nodes=S.nodes.filter(x=>x.id!==n.id);S.nodes.forEach(x=>{if(x.with)x.with=x.with.filter(y=>y!==n.id);});sel=null;markDirty();renderAll();closePanel();};
+  }
+  const sTa=$("#seedTa");if(sTa)sTa.addEventListener("input",()=>{if(sTa.value.trim())n.seed=sTa.value;else delete n.seed;markDirty();});
+  $("#pClose").onclick=closePanel;
+  pBody.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>{sel=b.dataset.jump;renderSel();renderPanel();});
+}
+
+
+// ---------- stages
+function stagesOf(id){return (S.stages||[]).flatMap(st=>st.nodes.filter(sn=>sn.id===id).map(sn=>({st,sn})));}
+function pState(n){return n&&n.plan?"planned":n&&n.seed?"seeded":"empty";}
+const PST={planned:"Planned",seeded:"Notes written",empty:"Needs your notes"};
+function renderStages(){const N=byId();const host=$("#stageList");if(!host)return;
+  host.innerHTML=(S.stages||[]).map(st=>{
+    const ids=st.nodes.map(x=>x.id),dep={};st.nodes.forEach(x=>dep[x.id]=(x.deps||[]).filter(d=>ids.includes(d)));
+    const depth={};const dget=(id,seen=new Set())=>{if(depth[id]!=null)return depth[id];if(seen.has(id))return 0;seen.add(id);const ds=dep[id]||[];return depth[id]=ds.length?1+Math.max(...ds.map(d=>dget(d,seen))):0;};
+    ids.forEach(id=>dget(id));const cols={};ids.forEach(id=>{(cols[depth[id]]=cols[depth[id]]||[]).push(id);});
+    const W=176,H=46,GX=56,GY=16,ncol=Math.max(...Object.keys(cols).map(Number))+1,nrow=Math.max(...Object.values(cols).map(c=>c.length));
+    const pos={};Object.entries(cols).forEach(([c,list])=>list.forEach((id,r)=>pos[id]={x:10+c*(W+GX),y:10+r*(H+GY)}));
+    const w=20+ncol*W+(ncol-1)*GX,h=20+nrow*H+(nrow-1)*GY;
+    const short=t=>t.length>24?t.slice(0,23)+"…":t;
+    const edges=ids.flatMap(id=>(dep[id]||[]).map(d=>{const a=pos[d],b=pos[id];const x1=a.x+W,y1=a.y+H/2,x2=b.x,y2=b.y+H/2,mx=(x1+x2)/2;return `<path class="sgedge" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;})).join("");
+    const nodes=ids.map(id=>{const n=N[id];if(!n)return"";const sn=st.nodes.find(x=>x.id===id);const p=pos[id];
+      return `<g class="sgnode ${pState(n)}" data-sgo="${esc(id)}" tabindex="0" role="button" aria-label="${esc(n.name)}"><rect x="${p.x}" y="${p.y}" width="${W}" height="${H}" rx="10"/><text x="${p.x+10}" y="${p.y+19}" font-weight="700">${esc(short(n.name))}</text><text x="${p.x+10}" y="${p.y+36}" fill="var(--ink2)">Level ${+n.lvl||0} → ${sn.target}</text></g>`;}).join("");
+    const cards=st.nodes.map(sn=>{const n=N[sn.id];if(!n)return"";const ps=pState(n);
+      return `<div class="stagecard"><h4>${esc(n.name)}<span class="pstate ${ps}">${PST[ps]}</span></h4><p style="margin:2px 0" class="small">Level ${+n.lvl||0} → ${sn.target}. ${esc(sn.build)}</p>${(sn.deps||[]).length?`<div class="chiprow">${sn.deps.filter(d=>N[d]).map(d=>`<span class="mchip" style="cursor:default">needs ${esc(N[d].name)}</span>`).join("")}</div>`:""}<button class="btn" type="button" data-sgo="${esc(sn.id)}" style="margin-top:6px">Notes and plan</button></div>`;}).join("");
+    return `<div class="box" style="margin-bottom:18px"><h3>${esc(st.title)}</h3><p class="muted">${esc(st.goal)}</p><div class="stackwrap" style="padding:6px"><svg class="sgraph" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(st.title)} dependency graph">${edges}${nodes}</svg></div>${cards}<button class="btn" type="button" data-copy="${esc(st.id)}" style="margin-top:8px">Copy this stage for Claude Code</button><textarea class="json" data-out="${esc(st.id)}" style="display:none;min-height:160px;margin-top:8px" readonly></textarea></div>`;}).join("");
+}
+function stageMarkdown(st){const N=byId();return `# ${st.title}\n\n${st.goal}\n\n`+st.nodes.map(sn=>{const n=N[sn.id]||{};return `## ${n.name} (level ${+n.lvl||0} → ${sn.target})\nKind: ${n.kind||"?"}\nNeeds: ${(sn.deps||[]).map(d=>(N[d]||{}).name).join(", ")||"nothing"}\nBuild in this stage: ${sn.build}\nMinimum: ${n.minDef||""}\n\nYour notes:\n${n.seed||"(none yet)"}\n\nPlan:\n${n.plan||"(not written yet)"}\n`;}).join("\n");}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-sgo]");if(g){openNode(g.dataset.sgo);return;}
+  const c=e.target.closest("[data-copy]");if(c){const st=(S.stages||[]).find(x=>x.id===c.dataset.copy);if(!st)return;const md=stageMarkdown(st);const ta=document.querySelector(`[data-out="${c.dataset.copy}"]`);ta.value=md;ta.style.display="block";
+    try{navigator.clipboard.writeText(md).then(()=>{c.textContent="Copied. Also shown below.";},()=>{c.textContent="Select the text below and copy it.";});}catch(_){c.textContent="Select the text below and copy it.";}}});
+document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;const g=e.target.closest&&e.target.closest("g[data-sgo]");if(g)openNode(g.dataset.sgo);});
+
+// ---------- other views
+function renderContracts(){
+  const C=S.contracts;
+  $("#statedRules").innerHTML=C.stated.map(r=>`<li>${esc(r)} <span class="src stated">your rule</span></li>`).join("");
+  $("#together").innerHTML=(C.together||[]).map(x=>`<li>${esc(x)}</li>`).join("");
+  $("#tmpl").innerHTML=C.template.map(r=>`<tr><td>${esc(r.f)}</td><td>${esc(r.r)}</td></tr>`).join("");
+  $("#extAgents").innerHTML=C.agents.map(a=>`<div class="box"><h3>${esc(a.name)}</h3><p class="muted small" style="margin:0 0 8px">${esc(a.role)}</p>
+    <div class="tablewrap"><table style="min-width:0"><tbody>${a.rows.map(r=>`<tr><td>${esc(r[0])}</td><td>${esc(r[1])} <span class="src ${r[2]===1?"stated":r[2]===2?"checked":"proposed"}">${r[2]===1?"your rule":r[2]===2?"checked 22 Oct":"proposed"}</span></td></tr>`).join("")}</tbody></table></div></div>`).join("");
+}
+function renderOverlaps(){const N=byId();
+  $("#ovList").innerHTML=S.overlaps.map(o=>`<div class="ov"><h3>${esc(o.t)} <span class="src proposed">proposed fix</span></h3>
+  <div class="chiprow">${(o.m||[]).filter(id=>N[id]).map(id=>`<button class="mchip" type="button" data-goto="${esc(id)}">${esc(N[id].name)}</button>`).join("")}${(o.extra||[]).map(x=>`<span class="mchip" style="cursor:default">${esc(x)}</span>`).join("")}</div>
+  <p style="margin:4px 0">${esc(o.issue)}</p><p style="margin:4px 0"><b>Fix:</b> ${esc(o.p)}</p></div>`).join("");}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-goto]");if(!g)return;location.hash="#plan";setTimeout(()=>openNode(g.dataset.goto),30);});
+function renderShelf(){
+  $("#shelfList").innerHTML=S.nodes.filter(n=>n.tier==="shelf").map(n=>`<li><b>${esc(n.name)}</b>: ${esc(n.what)} <span class="muted small">Libraries: ${esc((n.libs||[]).join(", "))}</span></li>`).join("");
+  $("#retiredList").innerHTML=S.retired.map(r=>`<li><b>${esc(r.name)}</b>: ${esc(r.why)}</li>`).join("");
+}
+
+// ---------- editing + saving
+function markDirty(){dirty=JSON.stringify(S)!==SAVED;try{dirty?localStorage.setItem(DRAFT,JSON.stringify(S)):localStorage.removeItem(DRAFT);}catch(_){}updateStatus();renderJson();}
+function updateStatus(){const st=$("#saveStatus");$("#saveBtn").hidden=!dirty;$("#discardBtn").hidden=!dirty;
+  if(dirty){st.className="status dirty";st.textContent=canSave===false?"Unsaved. Saving isn’t available in this view; changes stay in this browser.":"Unsaved changes";}
+  else{st.className="status";st.textContent=canSave===false?"Read-only here":"";}}
+$("#editBtn").onclick=()=>{editing=!editing;$("#editBtn").setAttribute("aria-pressed",editing);$("#editBtn").textContent=editing?"Done editing":"Edit";$("#addNode").hidden=!editing;if(panel.classList.contains("on"))renderPanel();};
+$("#addNode").onclick=()=>{const ids=new Set(S.nodes.map(n=>n.id));let i=1;while(ids.has("new"+i))i++;const n={id:"new"+i,tier:"p5",status:"idea",name:"New component",what:"",libs:[],with:[]};S.nodes.push(n);markDirty();renderAll();openNode(n.id);};
+$("#discardBtn").onclick=()=>{if(!confirm("Discard all unsaved changes?"))return;S=JSON.parse(SAVED);sel=null;markDirty();renderAll();closePanel();};
+function buildDoc(state){
+  const css=document.getElementById("app-css").textContent;const js=document.getElementById("app-js").textContent;
+  const data=JSON.stringify(state).replace(/</g,"\\u003c");
+  const font=document.head.querySelector('link[href*="fonts.googleapis.com/css2"]').getAttribute("href");
+  return "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, viewport-fit=cover\">\n<title>AI OS plan</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\""+font+"\" rel=\"stylesheet\">\n<style id=\"app-css\">"+css+"</"+"style>\n</head>\n<body>\n<div id=\"root\"></div>\n<script type=\"application/json\" id=\"state\">\n"+data+"\n</"+"script>\n<script id=\"app-js\">"+js+"</"+"script>\n</body>\n</html>\n";
+}
+$("#saveBtn").onclick=async()=>{if(!artifactNS){updateStatus();return;}
+  S.updated=new Date().toISOString().slice(0,10);const html=buildDoc(S);const st=$("#saveStatus");st.textContent="Saving…";$("#saveBtn").disabled=true;
+  let draft=null;try{draft=localStorage.getItem(DRAFT);localStorage.removeItem(DRAFT);}catch(_){}
+  try{await artifactNS.publish(html);st.textContent="Saved";}
+  catch(err){try{if(draft)localStorage.setItem(DRAFT,draft);}catch(_){}const c=err&&err.code;$("#saveBtn").disabled=false;
+    if(c==="conflict")st.textContent="A newer version was saved; reloading to it. Your changes are kept as a draft.";
+    else if(["not_writer","not_granted","capability_disabled","not_declared"].includes(c)){canSave=false;updateStatus();}
+    else if(c==="rate_limited")st.textContent="Saving too often. Wait a moment, then save again.";
+    else st.textContent="Couldn’t save. Your changes are kept in this browser; try again.";}};
+function renderJson(){const ta=$("#jsonTa");if(document.activeElement!==ta)ta.value=JSON.stringify(S,null,1);}
+$("#copyJson").onclick=async()=>{const ta=$("#jsonTa");ta.select();let ok=false;try{await navigator.clipboard.writeText(ta.value);ok=true;}catch(_){try{ok=document.execCommand("copy");}catch(__){}}$("#jsonStatus").textContent=ok?"Copied":"Select the text and copy it manually";};
+$("#applyJson").onclick=()=>{try{const v=JSON.parse($("#jsonTa").value);if(!Array.isArray(v.nodes)||!Array.isArray(v.tiers))throw 0;S=v;sel=null;markDirty();renderAll();$("#jsonStatus").textContent="Applied. Save to keep it.";}catch(_){$("#jsonStatus").textContent="That isn’t valid plan JSON (needs tiers and nodes).";}};
+const SNIP=`## AI OS status file
+Keep aios-status.json at the repo root. At the end of every session that changes
+a component, update its entry. Ids must match the AI OS plan page.
+Levels: 0 not started, 1 runs once, 2 usable daily, 3 reliable, 4 refined.
+Only raise a level with evidence (a command that ran, a test that passed).
+Format:
+{"updated":"YYYY-MM-DD","nodes":[
+  {"id":"todo","lvl":1,"working":"what works now","next":"the next step"}
+]}
+Optional per node: "min" and "minDef" if the minimum should change.
+Known ids: ${S.nodes.filter(n=>n.tier!=="shelf").map(n=>n.id).join(", ")}`;
+$("#ccSnippet").textContent=SNIP;
+$("#copySnippet").onclick=async()=>{let ok=false;try{await navigator.clipboard.writeText(SNIP);ok=true;}catch(_){}$("#copySnippet").textContent=ok?"Copied":"Select the text above and copy it";};
+$("#mergeStatus").onclick=()=>{const msg=$("#mergeMsg");let v;try{v=JSON.parse($("#statusTa").value);}catch(_){msg.textContent="That isn’t valid JSON.";return;}
+  const list=Array.isArray(v)?v:v.nodes;if(!Array.isArray(list)){msg.textContent="Expected a nodes list.";return;}
+  const N=byId();const unknown=[];let n=0;const date=(!Array.isArray(v)&&v.updated)||new Date().toISOString().slice(0,10);
+  list.forEach(x=>{const t=N[x&&x.id];if(!t){unknown.push(x&&x.id);return;}["lvl","min"].forEach(k=>{if(x[k]!=null&&!isNaN(+x[k]))t[k]=Math.max(0,Math.min(4,+x[k]));});
+    ["minDef","working","next"].forEach(k=>{if(typeof x[k]==="string")t[k]=x[k];});delete t.est;t.upd=date+" (Claude Code)";n++;});
+  markDirty();renderAll();msg.textContent=`Updated ${n} component${n===1?"":"s"}.${unknown.length?" Unknown ids: "+unknown.join(", ")+".":""} Save to keep it.`;};
+function checkDraft(){let d=null;try{d=localStorage.getItem(DRAFT);}catch(_){}if(!d||d===SAVED)return;const b=$("#draftBanner");
+  b.innerHTML=`<div class="banner">You have unsaved changes from an earlier visit in this browser.<button class="btn" type="button" id="restoreD">Restore them</button><button class="btn" type="button" id="dropD">Discard</button></div>`;
+  $("#restoreD").onclick=()=>{try{S=JSON.parse(d);}catch(_){}b.innerHTML="";markDirty();renderAll();};$("#dropD").onclick=()=>{try{localStorage.removeItem(DRAFT);}catch(_){}b.innerHTML="";};}
+
+const VIEWS=["graph","plan","stages","contracts","overlaps","agents","retired","data"];
+function show(){const t=(location.hash||"#graph").slice(1);const v=VIEWS.includes(t)?t:"graph";
+  VIEWS.forEach(k=>document.getElementById("v-"+k).classList.toggle("on",k===v));
+  document.querySelectorAll("nav.tabs a").forEach(a=>a.setAttribute("aria-current",a.getAttribute("href")==="#"+v?"page":"false"));if(v==="plan")renderStack();if(v==="graph")renderGraph();}
+window.addEventListener("hashchange",()=>{show();window.scrollTo({top:0});});
+function renderAll(){renderPrinciples();renderSel();renderContracts();renderOverlaps();renderShelf();renderJson();updateStatus();}
+show();renderAll();checkDraft();
+if(window.claude&&typeof window.claude.use==="function"){window.claude.use("artifact").then(ns=>{artifactNS=ns;canSave=ns?null:false;updateStatus();}).catch(()=>{canSave=false;updateStatus();});}else{canSave=false;updateStatus();}
+})();
+</script>
+</body>
+</html>

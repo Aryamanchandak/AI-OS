@@ -1,0 +1,17 @@
+[
+  {"code":"SA01","name":"Revenue recognition","prompt":"Could timing, cut-off, or contract terms explain the anomaly?"},
+  {"code":"SA02","name":"Receivables quality","prompt":"Could customer mix or billing cycles explain the receivables movement?"},
+  {"code":"SA03","name":"Inventory movement","prompt":"Could planned stocking, seasonality, or supply constraints explain the change?"},
+  {"code":"SA04","name":"Cash-flow divergence","prompt":"Could working-capital timing explain the profit-to-cash divergence?"},
+  {"code":"SA05","name":"Capitalized costs","prompt":"Could the costs meet a consistently applied capitalization policy?"},
+  {"code":"SA06","name":"Non-recurring adjustments","prompt":"Could the adjustment be genuinely unusual and transparently reconciled?"},
+  {"code":"SA07","name":"Related-party activity","prompt":"Could the transaction be arm's-length, disclosed, and economically necessary?"},
+  {"code":"SA08","name":"Acquisition accounting","prompt":"Could purchase accounting or integration timing explain the signal?"},
+  {"code":"SA09","name":"Margin discontinuity","prompt":"Could product mix, pricing, or input costs explain the margin shift?"},
+  {"code":"SA10","name":"Tax-rate anomaly","prompt":"Could jurisdiction mix or discrete tax items explain the effective rate?"},
+  {"code":"SA11","name":"Debt and liquidity","prompt":"Could committed facilities or ordinary refinancing explain the apparent pressure?"},
+  {"code":"SA12","name":"Auditor or control change","prompt":"Could normal rotation, growth, or remediation explain the governance event?"},
+  {"code":"SA13","name":"Management incentives","prompt":"Could compensation reflect legitimate retention or performance design?"},
+  {"code":"SA14","name":"Segment or KPI changes","prompt":"Could business evolution justify the reporting-definition change?"},
+  {"code":"SA15","name":"Disclosure inconsistency","prompt":"Could immateriality, timing, or drafting explain the inconsistency?"}
+]

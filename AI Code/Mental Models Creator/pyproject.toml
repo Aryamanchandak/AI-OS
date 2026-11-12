@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "model-forge"
+version = "0.1.0"
+description = "Forge typed causal mental models that emit falsifiable predictions."
+requires-python = ">=3.10"
+dependencies = ["pypdf>=4", "requests>=2.31"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+model-forge = "model_forge.cli:main"
+
+[tool.setuptools.package-data]
+model_forge = ["static/*"]

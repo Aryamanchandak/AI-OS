@@ -1,0 +1,41 @@
+# The 'Vcel' Movement | No Mercy / No Malice
+
+![rw-book-cover](https://www.profgalloway.com/wp-content/uploads/2026/01/illustration-3.png)
+
+## Metadata
+- Author: [[Scott Galloway]]
+- Full Title: The 'Vcel' Movement | No Mercy / No Malice
+- Category: #articles
+- Summary: Many young men struggle with dating and life but blaming others only makes things worse. To improve, they should work hard, exercise, and meet new people regularly. Society must support them while they take responsibility to grow and find real connections.
+- URL: https://www.profgalloway.com/the-vcel-movement/
+
+## Full Document
+[[Full Document Contents/Articles/The 'Vcel' Movement No Mercy No Malice.md|See full document content →]]
+
+## Highlights
+- The ‘Vcel’ Movement ([View Highlight](https://read.readwise.io/read/01kfp7xpztv3c4mwq2pggw2vqh))
+- Scott Galloway ([View Highlight](https://read.readwise.io/read/01kfp7xxn8qbv9h05rwvpdg7z5))
+- Published on January 16, 2026 ([View Highlight](https://read.readwise.io/read/01kfp7xz2tfx9bbpwmeveqhy2h))
+- Throughout 99% of history, 99% of men have been incels for long periods ([View Highlight](https://read.readwise.io/read/01kfp7y7za1qwnpe3dbvpsvgy8))
+- wanted a girlfriend in high school, but was largely sidelined from the dating game by afflictions common among teen boys: I was painfully skinny and insecure ([View Highlight](https://read.readwise.io/read/01kfp7zpzqphgx4dqj1cfd7fzx))
+- So I got to work. I enrolled at UCLA, hit the gym, focused on ways to demonstrate excellence (for me it was humor), built friendships with women, and surrounded myself with the impressive men of ZBT. I worked hard and developed the callouses that nearly every successful person has: I learned how to mourn and move on, to endure rejection. ([View Highlight](https://read.readwise.io/read/01kfp7zdeazg4seszb20nmhry6))
+- There were a lot of “firsts” in the relationship, but two stand out: Melanie was the first woman I was “me” around, instead of trying to be someone I thought she’d like. And we loved each other. Having an impressive person who could date other men choose and love *you* is profound. ([View Highlight](https://read.readwise.io/read/01kfp80f7p145694dgj9z5dcah))
+- many young men, who see their incel status as inevitable, and even embrace it, blaming women instead of trying to better themselves ([View Highlight](https://read.readwise.io/read/01kfp819eg5trx298gvvsby70c))
+- Many aren’t incels, but *vcels* — voluntary celibates who choose resentment over self-improvement. ([View Highlight](https://read.readwise.io/read/01kfp80wn5k9zzac521p85rr98))
+- American tax policy increasingly transfers money from the young to the old. We’ve adopted a scarcity mindset that only benefits incumbents — and the rising costs for housing and education that result take an especially heavy toll on young men, who are disproportionately evaluated on their economic prospects ([View Highlight](https://read.readwise.io/read/01kfp82xq37wf125ddmrsrnsqn))
+- Big Tech profits through sequestration and enragement, while digitizing dating has resulted in a winner-take-most environment. ([View Highlight](https://read.readwise.io/read/01kfp835yehbjzfheg25xmh2ac))
+- The left ignored young men in the lead-up to the last presidential election, espousing the belief that they didn’t have a problem, they were the problem ([View Highlight](https://read.readwise.io/read/01kfp847ea4kqnjx0rtr0p7r4s))
+- The far right filled the void with misogynistic, racist, and otherwise hateful messages, arguing that the answer was to send women and non-white people back to the 50s. ([View Highlight](https://read.readwise.io/read/01kfp84fvvsprbxm30ed06aa04))
+- How to Level Up: The Rule of Threes ([View Highlight](https://read.readwise.io/read/01kfp84qhpx3tevx5r4brs0bge))
+- These young men fail to recognize the agency they have to transform their lives, instead donning an incel badge to justify their sense of victimhood ([View Highlight](https://read.readwise.io/read/01kg711h4hxxn3anr23b5tqfz6))
+- It’s easier to get a job than it has been for most of the last 100 years. Youth unemployment is hovering around 10%, [historically low](https://fred.stlouisfed.org/series/LNS14024887). When I was young, unsure if I could pay tuition, I took any job. If you’re reading this and living with your parents, you should, too. I’m going to Davos next week on my own plane, but I got there by waiting tables, carrying groceries, and hauling golf bags 5 miles in the humid Ohio summer. ([View Highlight](https://read.readwise.io/read/01kg7133frv3bs9vt1ztrhvz0p))
+- Learn how to approach people. This is harder in an age when many people are addicted to YouTube and TikTok and [third spaces](https://theweek.com/culture-life/third-places-disappearing) are disappearing, but increasing your risk appetite for the real world is essential. ([View Highlight](https://read.readwise.io/read/01kg714pahczs8bnj10ar2n0yb))
+- Red Pill ([View Highlight](https://read.readwise.io/read/01kg714ttf58kh1pnrtmwz7arf))
+- Throughout history, 40% of men and 80% of women have reproduced. In the U.S. today, an estimated 75% and 85% of men and women will reproduce, respectively. American men today are twice as likely to procreate as their ancestors. ([View Highlight](https://read.readwise.io/read/01kg716pbxgwc0ycv964fggq37))
+- most men will never find romantic satisfaction, because 80% of women are attracted to 20% of men. The bottom 80% of male Tinder users, based on percentage of likes received, are competing for the bottom 22% of women. This leads me to the same conclusion: Young men need real-world venues where they can demonstrate excellence to women, who are more discerning than they are. ([View Highlight](https://read.readwise.io/read/01kg72140qmgtv2hzdzq99ay49))
+- About two-thirds of incels say [they’ve considered suicide](https://link.springer.com/article/10.1007/s10508-025-03161-y). Instead of retreating amid increased scrutiny, social media accounts are widening their audience and [rebranding](https://www.port.ac.uk/news-events-and-blogs/news/why-incel-social-media-accounts-are-encouraging-young-people-towards-extreme-looksmaxxing-procedures) to bypass bans ([View Highlight](https://read.readwise.io/read/01kg72bagxaqjw7hnb5zf04vb2))
+- Many young men are genuinely trying to forge connections but stumbling over economic and social hurdles — struggles that Democrats are finally starting to take seriously after watching this demographic help Donald Trump retake the White House. 
+  With young men continuing to feel frustation and malaise more than a year into the president’s second term, [the Democrats have a chance](https://www.nbcnews.com/politics/2026-election/fight-young-men-2026-midterm-elections-rcna249513) to win them back. Empathy isn’t zero-sum. The party, and society more broadly, can build on the gains women have registered over the past three decades, while also supporting boys and men. ([View Highlight](https://read.readwise.io/read/01kg72dagnw932s86mesx2ddbk))
+- Young men themselves are part of the solution. Women aren’t to blame for their relationship woes, just as immigrants [aren’t responsible](https://nymag.com/intelligencer/article/blaming-immigrants-is-jd-vance-answer-for-every-problem.html) for America’s economic problems. Men need to seize the opportunity to become better, and we need to provide an off-ramp for red-pilled men who believe the mating market is rigged against them, helping to prevent their descent into bitterness and potential extremism. ([View Highlight](https://read.readwise.io/read/01kg72mft69ad0byaj5bdtwzqf))
+- Many young men struggle with mental health — understandable given the challenges they face. But here’s a truth the manosphere won’t tell you: In the end, meaningful relationships are the only things that matter. If you’re alone and resigned to being nutrition for Big Tech, you need to reset and commit to becoming voluntarily incelibate. If you sequester from other mammals, the anxiety and depression you’ll ultimately feel will dwarf any terror about disappointment that exists in the outside world — isolation is the only danger that compounds.
+  Life is so rich, ([View Highlight](https://read.readwise.io/read/01kg72nf1khadeqvfgycb13h8y))

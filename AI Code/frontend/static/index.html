@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planner + Optimizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0e0e11;
+      --border:   rgba(255,255,255,0.08);
+      --text:     rgba(255,255,255,0.75);
+      --dim:      rgba(255,255,255,0.28);
+      --accent:   #5cffc3;
+      --font:     'JetBrains Mono', monospace;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); overflow: hidden; }
+
+    canvas#bg { position: fixed; inset: 0; width: 100%; height: 100%; opacity: 0.18; pointer-events: none; z-index: 0; }
+
+    #app { position: relative; z-index: 1; height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Top nav ── */
+    #topnav {
+      flex-shrink: 0;
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      height: 44px;
+    }
+
+    .nav-tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0 16px;
+      height: 100%;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .nav-sep { flex: 1; }
+
+    /* ── Panels ── */
+    .panel { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .panel.active { display: flex; }
+
+    /* ════════════════════════════════════════
+       PLANNER PANEL
+    ════════════════════════════════════════ */
+    #planner-panel { align-items: center; }
+
+    #topbar, #chat, #plan-wrapper, #input-area {
+      width: 100%;
+      max-width: 640px;
+      border-left:  0.5px solid var(--border);
+      border-right: 0.5px solid var(--border);
+    }
+
+    #topbar {
+      flex-shrink: 0;
+      border-bottom: 0.5px solid var(--border);
+      padding: 13px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+
+    .model-pill {
+      display: flex; align-items: center; gap: 8px;
+      border: 0.5px solid var(--border); border-radius: 20px;
+      padding: 5px 12px; font-size: 11px; font-weight: 400;
+      color: var(--dim); letter-spacing: 0.03em;
+    }
+    .model-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+
+    #mode-badge {
+      font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 3px; border: 0.5px solid var(--border); color: var(--dim);
+      transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    #mode-badge.planning { color: rgba(255,200,80,0.85); border-color: rgba(255,200,80,0.3); background: rgba(255,200,80,0.06); }
+
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+
+    #daily-btn {
+      background: none; border: 0.5px solid var(--border); color: var(--dim);
+      font-family: var(--font); font-size: 10px; font-weight: 400; letter-spacing: 0.06em;
+      padding: 4px 11px; border-radius: 20px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    }
+    #daily-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    .topbar-action {
+      background: none; border: none; font-family: var(--font); font-size: 11px;
+      font-weight: 300; color: rgba(255,255,255,0.2); cursor: pointer; letter-spacing: 0.04em; transition: color 0.15s;
+    }
+    .topbar-action:hover { color: var(--dim); }
+
+    #chat {
+      flex: 1; overflow-y: auto; padding: 36px 32px;
+      display: flex; flex-direction: column; gap: 32px;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; scroll-behavior: smooth;
+    }
+    #chat::-webkit-scrollbar { width: 3px; }
+    #chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+    .message { display: flex; flex-direction: column; gap: 9px; }
+    .msg-label { font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
+    .msg-divider { border: none; border-top: 0.5px solid var(--border); }
+    .msg-body { font-size: 12.5px; font-weight: 300; line-height: 1.75; color: var(--text); }
+    .message.user .msg-body { color: rgba(255,255,255,0.55); }
+    .msg-body strong { font-weight: 500; }
+    .msg-body em { font-style: italic; }
+    .msg-body code { background: rgba(255,255,255,0.07); border-radius: 3px; padding: 0.1em 0.35em; font-family: var(--font); font-size: 11.5px; }
+
+    .typing-dots { display: flex; gap: 5px; align-items: center; height: 22px; }
+    .typing-dots span { width: 4px; height: 4px; border-radius: 50%; background: var(--dim); animation: blink 1.3s ease-in-out infinite; }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink { 0%, 80%, 100% { opacity: 0.15; transform: scaleY(0.8); } 40% { opacity: 1; transform: scaleY(1); } }
+
+    #plan-wrapper { flex-shrink: 0; padding: 0 32px 12px; }
+    #plan-wrapper.hidden { display: none; }
+
+    .plan-card { border: 0.5px solid rgba(255,255,255,0.1); border-radius: 6px; background: rgba(255,255,255,0.025); overflow: hidden; }
+    .plan-head { padding: 14px 16px; border-bottom: 0.5px solid var(--border); }
+    .plan-goal { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.85); letter-spacing: 0.02em; }
+    .plan-tasks { padding: 0 16px; }
+    .plan-task { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid rgba(255,255,255,0.06); }
+    .plan-task:last-child { border-bottom: none; }
+    .task-badge { margin-top: 2px; flex-shrink: 0; font-size: 9px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; border: 0.5px solid; }
+    .badge-work_block { color: rgba(120,160,255,0.85); border-color: rgba(120,160,255,0.3); background: rgba(120,160,255,0.07); }
+    .badge-deadline   { color: rgba(255,100,100,0.85);  border-color: rgba(255,100,100,0.3);  background: rgba(255,100,100,0.07); }
+    .badge-follow_up  { color: rgba(92,255,195,0.85);   border-color: rgba(92,255,195,0.3);   background: rgba(92,255,195,0.07); }
+    .badge-meeting    { color: rgba(200,150,255,0.85);  border-color: rgba(200,150,255,0.3);  background: rgba(200,150,255,0.07); }
+    .task-info { flex: 1; min-width: 0; }
+    .task-title { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.8); }
+    .task-meta { font-size: 10px; font-weight: 300; color: var(--dim); margin-top: 2px; }
+    .plan-foot { padding: 11px 16px; border-top: 0.5px solid var(--border); background: rgba(255,255,255,0.015); display: flex; align-items: center; gap: 8px; }
+    .plan-btn { background: none; border: 0.5px solid var(--border); color: var(--dim); font-family: var(--font); font-size: 10px; font-weight: 400; letter-spacing: 0.05em; padding: 5px 12px; border-radius: 4px; cursor: pointer; transition: color 0.15s, border-color 0.15s, background 0.15s; }
+    .plan-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.22); }
+    .plan-btn.primary { color: rgba(92,255,195,0.85); border-color: rgba(92,255,195,0.3); }
+    .plan-btn.primary:hover { background: rgba(92,255,195,0.08); border-color: rgba(92,255,195,0.55); }
+    .plan-btn.dismiss { margin-left: auto; font-size: 9px; }
+
+    #input-area { flex-shrink: 0; border-top: 0.5px solid var(--border); padding: 16px 20px 18px; }
+    .input-wrapper { border: 0.5px solid rgba(255,255,255,0.1); border-radius: 5px; padding: 11px 14px; transition: border-color 0.15s; }
+    .input-wrapper:focus-within { border-color: rgba(255,255,255,0.22); }
+    textarea#input { display: block; width: 100%; background: none; border: none; outline: none; resize: none; color: var(--text); font-family: var(--font); font-size: 12.5px; font-weight: 300; line-height: 1.75; min-height: 22px; max-height: 160px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+    textarea#input::placeholder { color: var(--dim); }
+    .input-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .input-hint { font-size: 9px; font-weight: 300; color: rgba(255,255,255,0.18); letter-spacing: 0.04em; }
+    #send-btn { background: none; border: none; font-family: var(--font); font-size: 9px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); cursor: pointer; padding: 4px 8px; border-radius: 3px; transition: color 0.15s, background 0.15s; }
+    #send-btn:hover:not(:disabled) { color: var(--accent); background: rgba(92,255,195,0.07); }
+    #send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ════════════════════════════════════════
+       OPTIMIZER PANEL  — three-pane layout
+    ════════════════════════════════════════ */
+    #optimizer-panel { flex-direction: row; overflow: hidden; }
+
+    /* left pane */
+    #opt-left {
+      width: 220px;
+      flex-shrink: 0;
+      border-right: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #opt-left-header {
+      flex-shrink: 0;
+      padding: 12px 14px 10px;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .mode-toggle {
+      display: flex;
+      gap: 6px;
+    }
+    .mode-btn {
+      flex: 1;
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 0;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .mode-btn.active { color: var(--accent); border-color: rgba(92,255,195,0.4); background: rgba(92,255,195,0.07); }
+
+    #new-doc-btn {
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+      width: 100%;
+    }
+    #new-doc-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    #section-list {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+
+    .section-item {
+      padding: 9px 14px;
+      border-bottom: 0.5px solid rgba(255,255,255,0.04);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: background 0.1s;
+    }
+    .section-item:hover { background: rgba(255,255,255,0.025); }
+    .section-item.selected { background: rgba(92,255,195,0.05); border-left: 2px solid var(--accent); }
+    .section-item-title { font-size: 11px; font-weight: 400; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .kind-badge {
+      display: inline-block;
+      font-size: 8px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 1px 5px; border-radius: 2px; border: 0.5px solid;
+    }
+    .kind-phase    { color: #5b9cf6; border-color: rgba(91,156,246,0.35); background: rgba(91,156,246,0.08); }
+    .kind-module   { color: #9b7ff4; border-color: rgba(155,127,244,0.35); background: rgba(155,127,244,0.08); }
+    .kind-criteria { color: rgba(255,200,80,0.85); border-color: rgba(255,200,80,0.3); background: rgba(255,200,80,0.06); }
+    .kind-rationale { color: var(--accent); border-color: rgba(92,255,195,0.3); background: rgba(92,255,195,0.06); }
+    .kind-overview, .kind-system, .kind-role, .kind-context, .kind-examples, .kind-output_format, .kind-constraints {
+      color: #7ab4f4; border-color: rgba(122,180,244,0.3); background: rgba(122,180,244,0.07);
+    }
+    .kind-other { color: var(--dim); border-color: rgba(255,255,255,0.1); }
+
+    /* empty state */
+    #opt-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 24px;
+    }
+    #opt-empty.hidden { display: none; }
+    .empty-hint { font-size: 10px; font-weight: 300; color: var(--dim); text-align: center; line-height: 1.7; }
+
+    #opt-paste-area { display: none; flex-direction: column; gap: 0; height: 100%; }
+    #opt-paste-area.visible { display: flex; }
+
+    #opt-paste-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      resize: none;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 11px;
+      font-weight: 300;
+      line-height: 1.7;
+      padding: 16px;
+      scrollbar-width: thin;
+    }
+    #opt-paste-input::placeholder { color: var(--dim); }
+
+    #opt-paste-footer {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .opt-action-btn {
+      background: none;
+      border: 0.5px solid var(--border);
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .opt-action-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .opt-action-btn.primary { color: var(--accent); border-color: rgba(92,255,195,0.35); }
+    .opt-action-btn.primary:hover { background: rgba(92,255,195,0.07); }
+    .opt-action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* center pane */
+    #opt-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 0.5px solid var(--border);
+    }
+
+    #opt-section-header {
+      flex-shrink: 0;
+      padding: 12px 18px;
+      border-bottom: 0.5px solid var(--border);
+    }
+    #opt-section-title { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.85); }
+    #opt-section-rationale { font-size: 10px; font-weight: 300; color: var(--dim); margin-top: 3px; line-height: 1.5; }
+
+    #opt-content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 18px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+
+    #opt-content-textarea {
+      width: 100%;
+      height: 100%;
+      min-height: 120px;
+      background: none;
+      border: none;
+      outline: none;
+      resize: none;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 11.5px;
+      font-weight: 300;
+      line-height: 1.75;
+      scrollbar-width: thin;
+    }
+
+    #opt-chat-area {
+      flex-shrink: 0;
+      border-top: 0.5px solid var(--border);
+      padding: 10px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #opt-chat-messages {
+      max-height: 160px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scrollbar-width: thin;
+    }
+
+    .opt-chat-msg {
+      font-size: 10.5px;
+      font-weight: 300;
+      line-height: 1.6;
+      padding: 5px 8px;
+      border-radius: 3px;
+    }
+    .opt-chat-msg.user { color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.03); }
+    .opt-chat-msg.assistant { color: var(--text); }
+    .opt-chat-msg .q { color: rgba(255,200,80,0.85); font-style: italic; margin-top: 3px; font-size: 10px; }
+
+    #opt-chat-input-row { display: flex; gap: 8px; align-items: flex-end; }
+    #opt-chat-input {
+      flex: 1; background: none; border: 0.5px solid rgba(255,255,255,0.1); outline: none;
+      resize: none; color: var(--text); font-family: var(--font); font-size: 11px; font-weight: 300;
+      line-height: 1.6; padding: 6px 10px; border-radius: 3px; min-height: 32px; max-height: 80px;
+      overflow-y: auto; transition: border-color 0.15s;
+    }
+    #opt-chat-input:focus { border-color: rgba(255,255,255,0.22); }
+    #opt-chat-input::placeholder { color: var(--dim); }
+
+    #opt-send-btn { flex-shrink: 0; }
+
+    /* right pane */
+    #opt-right {
+      width: 280px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #opt-right-tabs {
+      flex-shrink: 0;
+      display: flex;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .opt-rtab {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--dim);
+      font-family: var(--font);
+      font-size: 9px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 9px 0;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .opt-rtab:hover { color: var(--text); }
+    .opt-rtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .opt-right-pane { display: none; flex: 1; overflow-y: auto; padding: 14px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent; }
+    .opt-right-pane.active { display: block; }
+
+    /* Diff view */
+    .diff-line { font-size: 10.5px; font-weight: 300; line-height: 1.5; padding: 1px 6px; font-family: var(--font); white-space: pre-wrap; word-break: break-all; }
+    .diff-equal { color: var(--dim); }
+    .diff-add { color: rgba(92,255,195,0.9); background: rgba(92,255,195,0.06); }
+    .diff-remove { color: rgba(255,100,100,0.85); background: rgba(255,100,100,0.06); text-decoration: line-through; }
+
+    /* Conflicts */
+    .conflict-item {
+      padding: 9px 10px;
+      border: 0.5px solid rgba(255,200,80,0.2);
+      border-radius: 4px;
+      background: rgba(255,200,80,0.04);
+      margin-bottom: 8px;
+    }
+    .conflict-type { font-size: 8px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,200,80,0.7); margin-bottom: 3px; }
+    .conflict-desc { font-size: 10px; font-weight: 300; color: var(--text); line-height: 1.5; }
+    .conflict-jump { font-size: 9px; color: var(--accent); cursor: pointer; margin-top: 4px; display: inline-block; }
+    .conflict-jump:hover { text-decoration: underline; }
+
+    /* History / versions */
+    .version-item {
+      padding: 8px 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .version-item:hover { border-color: rgba(255,255,255,0.18); background: rgba(255,255,255,0.025); }
+    .version-ts { font-size: 9px; font-weight: 400; color: var(--dim); }
+    .version-btn-row { display: flex; gap: 6px; margin-top: 6px; }
+
+    #opt-snap-btn {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .no-content { font-size: 10px; font-weight: 300; color: var(--dim); text-align: center; padding: 20px 0; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="app">
+  <!-- ── Top nav ── -->
+  <nav id="topnav">
+    <button class="nav-tab active" data-tab="planner">Planner</button>
+    <button class="nav-tab" data-tab="optimizer">Optimizer</button>
+    <div class="nav-sep"></div>
+    <button class="topbar-action" style="font-size:10px;padding:0 4px;" onclick="newSession()">new session</button>
+  </nav>
+
+  <!-- ══════════════════════════════
+       PLANNER PANEL
+  ══════════════════════════════ -->
+  <div id="planner-panel" class="panel active">
+    <header id="topbar">
+      <div class="topbar-left">
+        <div class="model-pill"><span class="model-dot"></span>gpt-4o</div>
+        <span id="mode-badge">chat</span>
+      </div>
+      <div class="topbar-right">
+        <button id="daily-btn">daily check</button>
+        <a href="/upi/" target="_blank" class="topbar-action" style="text-decoration:none;">ledger</a>
+      </div>
+    </header>
+
+    <div id="chat"></div>
+    <div id="plan-wrapper" class="hidden"></div>
+
+    <div id="input-area">
+      <div class="input-wrapper">
+        <textarea id="input" placeholder="Type a message…" rows="1" autocomplete="off"></textarea>
+      </div>
+      <div class="input-foot">
+        <span class="input-hint">shift+enter for newline</span>
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       OPTIMIZER PANEL
+  ══════════════════════════════ -->
+  <div id="optimizer-panel" class="panel">
+
+    <!-- Left pane -->
+    <div id="opt-left">
+      <div id="opt-left-header">
+        <div class="mode-toggle">
+          <button class="mode-btn active" data-mode="plan">Plan</button>
+          <button class="mode-btn" data-mode="prompt">Prompt</button>
+        </div>
+        <button id="new-doc-btn">+ New doc</button>
+      </div>
+
+      <!-- Section list (shown when a doc is loaded) -->
+      <div id="section-list"></div>
+
+      <!-- Empty / paste state (shown initially) -->
+      <div id="opt-empty">
+        <div class="empty-hint">Paste a markdown plan or prompt<br>and click <strong>New doc</strong> to begin.</div>
+      </div>
+
+      <!-- Inline paste area (shown when New doc is clicked) -->
+      <div id="opt-paste-area">
+        <textarea id="opt-paste-input" placeholder="Paste your plan or prompt here…"></textarea>
+        <div id="opt-paste-footer">
+          <button id="opt-detect-btn" class="opt-action-btn primary">Detect sections</button>
+          <button id="opt-cancel-paste-btn" class="opt-action-btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center pane -->
+    <div id="opt-center">
+      <div id="opt-section-header">
+        <div id="opt-section-title" style="color:var(--dim);font-size:11px;">No section selected</div>
+        <div id="opt-section-rationale"></div>
+      </div>
+
+      <div id="opt-content-area">
+        <textarea id="opt-content-textarea" placeholder="Select a section from the left pane." readonly></textarea>
+      </div>
+
+      <div id="opt-chat-area">
+        <div id="opt-chat-messages"></div>
+        <div id="opt-chat-input-row">
+          <textarea id="opt-chat-input" placeholder="Ask about or change this section…" rows="1"></textarea>
+          <button id="opt-send-btn" class="opt-action-btn primary">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right pane -->
+    <div id="opt-right">
+      <div id="opt-right-tabs">
+        <button class="opt-rtab active" data-rtab="diff">Diff</button>
+        <button class="opt-rtab" data-rtab="conflicts">Conflicts</button>
+        <button class="opt-rtab" data-rtab="history">History</button>
+      </div>
+
+      <div id="opt-diff-pane" class="opt-right-pane active">
+        <div class="no-content">Diff will appear after you send a message.</div>
+      </div>
+
+      <div id="opt-conflicts-pane" class="opt-right-pane">
+        <div class="no-content">No conflicts detected yet.</div>
+      </div>
+
+      <div id="opt-history-pane" class="opt-right-pane">
+        <button id="opt-snap-btn" class="opt-action-btn">Save snapshot</button>
+        <div id="opt-versions-list">
+          <div class="no-content">No snapshots yet.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Canvas background ────────────────────────────────────────────────────────
+(function () {
+  const canvas = document.getElementById('bg');
+  const ctx = canvas.getContext('2d');
+  let t = 0;
+  const blobs = [
+    { hBase: 260, hRange: 20, phase: 0,    r: 500, xOff: 0.3, yOff: 0.2 },
+    { hBase: 30,  hRange: 15, phase: 2.1,  r: 400, xOff: 0.7, yOff: 0.7 },
+    { hBase: 170, hRange: 25, phase: 4.2,  r: 450, xOff: 0.2, yOff: 0.8 },
+    { hBase: 290, hRange: 20, phase: 1.05, r: 380, xOff: 0.8, yOff: 0.3 },
+  ];
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize); resize();
+  function frame() {
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+    blobs.forEach(b => {
+      const h = b.hBase + Math.sin(t * 0.0003 + b.phase) * b.hRange;
+      const x = W * (b.xOff + Math.sin(t * 0.0002  + b.phase) * 0.15);
+      const y = H * (b.yOff + Math.cos(t * 0.00015 + b.phase) * 0.15);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, b.r);
+      g.addColorStop(0, `hsla(${h},70%,55%,0.55)`);
+      g.addColorStop(1, `hsla(${h},70%,55%,0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    });
+    t++; requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+// ── Tab switching ────────────────────────────────────────────────────────────
+document.querySelectorAll('.nav-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab + '-panel').classList.add('active');
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// PLANNER
+// ══════════════════════════════════════════════════════════════════════════════
+const chatEl      = document.getElementById('chat');
+const planWrapper = document.getElementById('plan-wrapper');
+const modeBadge   = document.getElementById('mode-badge');
+const textarea    = document.getElementById('input');
+const sendBtn     = document.getElementById('send-btn');
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function md(text) {
+  let s = String(text || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  s = s.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  s = s.replace(/`(.+?)`/g,'<code>$1</code>');
+  s = s.replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>');
+  s = s.replace(/\n/g,'<br>');
+  return s;
+}
+
+function scrollBottom() { chatEl.scrollTop = chatEl.scrollHeight; }
+function setLoading(on) { sendBtn.disabled = on; textarea.disabled = on; sendBtn.textContent = on ? '…' : 'Send'; }
+
+function appendMessage(role, content) {
+  const isUser = role === 'user';
+  const div = document.createElement('div');
+  div.className = `message ${isUser ? 'user' : 'assistant'}`;
+  div.innerHTML =
+    `<div class="msg-label">${isUser ? 'YOU' : 'ASSISTANT'}</div>` +
+    `<hr class="msg-divider">` +
+    `<div class="msg-body">${isUser ? esc(content) : md(content)}</div>`;
+  chatEl.appendChild(div);
+  scrollBottom();
+}
+
+function appendTyping() {
+  const div = document.createElement('div');
+  div.id = 'typing'; div.className = 'message assistant';
+  div.innerHTML = `<div class="msg-label">ASSISTANT</div><hr class="msg-divider"><div class="typing-dots"><span></span><span></span><span></span></div>`;
+  chatEl.appendChild(div); scrollBottom();
+}
+function removeTyping() { document.getElementById('typing')?.remove(); }
+
+function toolLabel(tool) {
+  return {create_event:'event',create_reminder:'reminder',move_event:'move',update_reminder_date:'reschedule',delete_event:'delete'}[tool] || 'action';
+}
+function toolBadgeClass(tool) {
+  return {create_event:'badge-meeting',create_reminder:'badge-follow_up',move_event:'badge-work_block',update_reminder_date:'badge-work_block',delete_event:'badge-deadline'}[tool] || 'badge-work_block';
+}
+
+function renderActionCard(actions) {
+  if (!actions || !actions.length) { planWrapper.innerHTML = ''; planWrapper.classList.add('hidden'); return; }
+  const items = actions.map(a => {
+    const title = a.title || a.original_title || '?';
+    const date  = a.date || a.new_date || '';
+    const time  = a.time || a.new_start || a.start_time || '';
+    const dur   = a.duration_minutes ? ` · ${a.duration_minutes}m` : '';
+    return `<div class="plan-task">
+      <span class="task-badge ${toolBadgeClass(a.tool)}">${esc(toolLabel(a.tool))}</span>
+      <div class="task-info">
+        <div class="task-title">${esc(title)}</div>
+        <div class="task-meta">${esc(date)}${time ? ' · '+time : ''}${dur}</div>
+      </div></div>`;
+  }).join('');
+  planWrapper.innerHTML = `<div class="plan-card">
+    <div class="plan-head"><div class="plan-goal">${actions.length === 1 ? 'Proposed action' : `Proposed actions (${actions.length})`}</div></div>
+    <div class="plan-tasks">${items}</div>
+    <div class="plan-foot">
+      <button id="confirm-btn" class="plan-btn primary">Confirm</button>
+      <button id="cancel-btn" class="plan-btn dismiss">Cancel</button>
+    </div></div>`;
+  planWrapper.classList.remove('hidden');
+  document.getElementById('confirm-btn').addEventListener('click', () => doAction('/confirm_action'));
+  document.getElementById('cancel-btn').addEventListener('click', () => doAction('/cancel_action'));
+}
+
+function handleResponse(data) {
+  if (data.reply) appendMessage('ai', data.reply);
+  if (data.confirm && data.actions) {
+    renderActionCard(data.actions);
+    modeBadge.textContent = 'confirm'; modeBadge.className = 'planning';
+  } else {
+    renderActionCard(null);
+    modeBadge.textContent = 'chat'; modeBadge.className = '';
+  }
+}
+
+async function doAction(endpoint) {
+  setLoading(true); appendTyping();
+  try {
+    const res  = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json();
+    removeTyping(); handleResponse(data);
+  } catch { removeTyping(); appendMessage('ai', 'Something went wrong — please try again.'); }
+  setLoading(false);
+}
+
+async function init() {
+  try {
+    const res  = await fetch('/state');
+    const data = await res.json();
+    data.messages.forEach(m => appendMessage(m.role === 'user' ? 'user' : 'ai', m.content));
+    if (data.confirm && data.actions) { renderActionCard(data.actions); modeBadge.textContent = 'confirm'; modeBadge.className = 'planning'; }
+  } catch { appendMessage('ai', 'Could not load session state.'); }
+}
+
+textarea.addEventListener('input', () => { textarea.style.height = 'auto'; textarea.style.height = Math.min(textarea.scrollHeight, 160) + 'px'; });
+textarea.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitChat(); } });
+
+async function submitChat() {
+  const msg = textarea.value.trim();
+  if (!msg) return;
+  textarea.value = ''; textarea.style.height = 'auto';
+  appendMessage('user', msg);
+  setLoading(true); appendTyping();
+  try {
+    const res  = await fetch('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg }) });
+    const data = await res.json();
+    removeTyping(); handleResponse(data);
+  } catch { removeTyping(); appendMessage('ai', 'Something went wrong — please try again.'); }
+  setLoading(false); textarea.focus();
+}
+
+sendBtn.addEventListener('click', submitChat);
+
+document.getElementById('daily-btn').addEventListener('click', async () => {
+  setLoading(true); appendTyping();
+  try {
+    const res  = await fetch('/daily', { method: 'POST' });
+    const data = await res.json();
+    removeTyping(); handleResponse(data);
+  } catch { removeTyping(); appendMessage('ai', 'Could not run daily check — please try again.'); }
+  setLoading(false);
+});
+
+async function newSession() {
+  try {
+    await fetch('/new_session', { method: 'POST' });
+    chatEl.innerHTML = '';
+    renderActionCard(null);
+    modeBadge.textContent = 'chat'; modeBadge.className = '';
+    appendMessage('ai', 'Session saved. Starting fresh!');
+  } catch { appendMessage('ai', 'Could not start new session.'); }
+}
+
+init();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// OPTIMIZER
+// ══════════════════════════════════════════════════════════════════════════════
+
+let optMode = 'plan';
+let optDocId = null;
+let optSections = [];
+let optSelectedSectionId = null;
+let optVersions = [];
+
+// ── Mode toggle ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    optMode = btn.dataset.mode;
+  });
+});
+
+// ── Right pane tabs ──────────────────────────────────────────────────────────
+document.querySelectorAll('.opt-rtab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.opt-rtab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.opt-right-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('opt-' + btn.dataset.rtab + '-pane').classList.add('active');
+  });
+});
+
+// ── New doc flow ─────────────────────────────────────────────────────────────
+const optEmpty     = document.getElementById('opt-empty');
+const optPasteArea = document.getElementById('opt-paste-area');
+const optPasteInput = document.getElementById('opt-paste-input');
+
+document.getElementById('new-doc-btn').addEventListener('click', () => {
+  optEmpty.classList.add('hidden');
+  optPasteArea.classList.add('visible');
+  optPasteInput.focus();
+});
+
+document.getElementById('opt-cancel-paste-btn').addEventListener('click', () => {
+  optPasteArea.classList.remove('visible');
+  if (!optDocId) optEmpty.classList.remove('hidden');
+});
+
+document.getElementById('opt-detect-btn').addEventListener('click', detectSections);
+
+async function detectSections() {
+  const raw = optPasteInput.value.trim();
+  if (!raw) return;
+  const btn = document.getElementById('opt-detect-btn');
+  btn.disabled = true; btn.textContent = 'Detecting…';
+  try {
+    const res = await fetch('/optimizer/new_doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw_input: raw, mode: optMode }),
+    });
+    if (!res.ok) { const err = await res.json(); alert(err.detail || 'Failed'); return; }
+    const doc = await res.json();
+    optDocId = doc.id;
+    optSections = doc.sections;
+    optVersions = [];
+    optPasteArea.classList.remove('visible');
+    renderSectionList();
+    clearCenterPane();
+    clearRightPane();
+  } catch (e) { alert('Error: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Detect sections';
+}
+
+// ── Section list ─────────────────────────────────────────────────────────────
+const sectionListEl = document.getElementById('section-list');
+
+function kindBadge(kind) {
+  const cls = `kind-badge kind-${kind}`;
+  return `<span class="${cls}">${esc(kind)}</span>`;
+}
+
+function renderSectionList() {
+  sectionListEl.innerHTML = '';
+  optSections.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'section-item' + (s.id === optSelectedSectionId ? ' selected' : '');
+    item.dataset.id = s.id;
+    item.innerHTML = `<div class="section-item-title">${esc(s.title)}</div>${kindBadge(s.kind)}`;
+    item.addEventListener('click', () => selectSection(s.id));
+    sectionListEl.appendChild(item);
+  });
+}
+
+function selectSection(id) {
+  optSelectedSectionId = id;
+  const s = optSections.find(x => x.id === id);
+  if (!s) return;
+  renderSectionList();
+  document.getElementById('opt-section-title').textContent = s.title;
+  document.getElementById('opt-section-rationale').textContent = s.rationale;
+  const ta = document.getElementById('opt-content-textarea');
+  ta.value = s.content;
+  ta.readOnly = false;
+  document.getElementById('opt-chat-messages').innerHTML = '';
+  clearRightPane();
+}
+
+// ── Center pane helpers ──────────────────────────────────────────────────────
+function clearCenterPane() {
+  document.getElementById('opt-section-title').textContent = 'No section selected';
+  document.getElementById('opt-section-rationale').textContent = '';
+  document.getElementById('opt-content-textarea').value = '';
+  document.getElementById('opt-content-textarea').readOnly = true;
+  document.getElementById('opt-chat-messages').innerHTML = '';
+}
+
+function clearRightPane() {
+  document.getElementById('opt-diff-pane').innerHTML = '<div class="no-content">Diff will appear after you send a message.</div>';
+  document.getElementById('opt-conflicts-pane').innerHTML = '<div class="no-content">No conflicts detected yet.</div>';
+}
+
+// ── Chat send ────────────────────────────────────────────────────────────────
+const optChatInput = document.getElementById('opt-chat-input');
+const optSendBtn   = document.getElementById('opt-send-btn');
+
+optChatInput.addEventListener('input', () => {
+  optChatInput.style.height = 'auto';
+  optChatInput.style.height = Math.min(optChatInput.scrollHeight, 80) + 'px';
+});
+optChatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendOptMessage(); }
+});
+optSendBtn.addEventListener('click', sendOptMessage);
+
+async function sendOptMessage() {
+  if (!optDocId || !optSelectedSectionId) return;
+  const msg = optChatInput.value.trim();
+  if (!msg) return;
+
+  appendOptChat('user', msg);
+  optChatInput.value = ''; optChatInput.style.height = 'auto';
+  optSendBtn.disabled = true; optSendBtn.textContent = '…';
+
+  try {
+    const res = await fetch('/optimizer/iterate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doc_id: optDocId, section_id: optSelectedSectionId, message: msg }),
+    });
+    if (!res.ok) { const err = await res.json(); appendOptChat('assistant', '⚠ ' + (err.detail || 'Error')); return; }
+    const data = await res.json();
+
+    // Update local section
+    const idx = optSections.findIndex(s => s.id === optSelectedSectionId);
+    if (idx >= 0) optSections[idx] = data.section;
+    renderSectionList();
+    document.getElementById('opt-content-textarea').value = data.section.content;
+
+    // Append assistant message
+    let replyText = data.reasoning || '';
+    appendOptChat('assistant', replyText, data.clarifyingQuestion);
+
+    // Render diff
+    renderDiff(data.diff || []);
+
+    // Render conflicts
+    renderConflicts(data.conflicts || []);
+
+    // Switch right pane to diff if there were changes
+    if (data.changed) switchRightTab('diff');
+
+  } catch (e) { appendOptChat('assistant', '⚠ ' + e.message); }
+  optSendBtn.disabled = false; optSendBtn.textContent = 'Send';
+}
+
+function appendOptChat(role, text, question) {
+  const el = document.getElementById('opt-chat-messages');
+  const div = document.createElement('div');
+  div.className = `opt-chat-msg ${role}`;
+  div.innerHTML = esc(text) + (question ? `<div class="q">? ${esc(question)}</div>` : '');
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Diff renderer ─────────────────────────────────────────────────────────────
+function renderDiff(diffLines) {
+  const pane = document.getElementById('opt-diff-pane');
+  if (!diffLines.length) { pane.innerHTML = '<div class="no-content">No changes.</div>'; return; }
+  pane.innerHTML = diffLines.map(l => {
+    const cls = l.type === 'equal' ? 'diff-equal' : l.type === 'add' ? 'diff-add' : 'diff-remove';
+    const prefix = l.type === 'add' ? '+ ' : l.type === 'remove' ? '- ' : '  ';
+    return `<div class="diff-line ${cls}">${prefix}${esc(l.text)}</div>`;
+  }).join('');
+}
+
+// ── Conflicts renderer ────────────────────────────────────────────────────────
+function renderConflicts(conflicts) {
+  const pane = document.getElementById('opt-conflicts-pane');
+  if (!conflicts.length) { pane.innerHTML = '<div class="no-content">No conflicts detected.</div>'; return; }
+  pane.innerHTML = conflicts.map(c => {
+    const targetSec = optSections.find(s => s.id === c.section_id);
+    const jumpLabel = targetSec ? `Jump to §${c.section_id}: ${targetSec.title}` : `§${c.section_id}`;
+    return `<div class="conflict-item">
+      <div class="conflict-type">⚠ ${esc(c.type)}</div>
+      <div class="conflict-desc">${esc(c.description)}</div>
+      ${targetSec ? `<span class="conflict-jump" onclick="selectSection('${c.section_id}')">${esc(jumpLabel)}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Version history ───────────────────────────────────────────────────────────
+document.getElementById('opt-snap-btn').addEventListener('click', async () => {
+  if (!optDocId) return;
+  const btn = document.getElementById('opt-snap-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await fetch(`/optimizer/snapshot/${optDocId}`, { method: 'POST' });
+    const snap = await res.json();
+    optVersions.push(snap);
+    renderVersions();
+    switchRightTab('history');
+  } catch (e) { alert('Error: ' + e.message); }
+  btn.disabled = false; btn.textContent = 'Save snapshot';
+});
+
+function renderVersions() {
+  const el = document.getElementById('opt-versions-list');
+  if (!optVersions.length) { el.innerHTML = '<div class="no-content">No snapshots yet.</div>'; return; }
+  el.innerHTML = optVersions.map((v, i) => {
+    const ts = new Date(v.timestamp).toLocaleString();
+    return `<div class="version-item">
+      <div class="version-ts">v${i + 1} — ${ts}</div>
+      <div class="version-btn-row">
+        <button class="opt-action-btn" onclick="revertToVersion(${i})">Restore</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function revertToVersion(idx) {
+  if (!optDocId) return;
+  if (!confirm(`Restore to snapshot v${idx + 1}? Current unsaved changes will be lost.`)) return;
+  try {
+    const res = await fetch(`/optimizer/revert/${optDocId}/${idx}`, { method: 'POST' });
+    const data = await res.json();
+    optSections = data.sections;
+    renderSectionList();
+    if (optSelectedSectionId) {
+      const s = optSections.find(x => x.id === optSelectedSectionId);
+      if (s) { document.getElementById('opt-content-textarea').value = s.content; }
+    }
+    clearRightPane();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function switchRightTab(name) {
+  document.querySelectorAll('.opt-rtab').forEach(b => b.classList.toggle('active', b.dataset.rtab === name));
+  document.querySelectorAll('.opt-right-pane').forEach(p => p.classList.toggle('active', p.id === `opt-${name}-pane`));
+}
+</script>
+</body>
+</html>

@@ -1,5 +1,8 @@
 # Gateway YAGNI Review: Answers to Your Comments
 
+> Historical review from before the shrink. For current scope and status, see
+> [Gateway status](plans/README.md).
+
 As of 2026-10-18 · Follows `docs/yagni-review.md` · Nothing in the code has been changed
 
 You left 22 comments. This document answers each one in the order it appears in the review. Your answers also change three of the review's recommendations. Those changes come first.
