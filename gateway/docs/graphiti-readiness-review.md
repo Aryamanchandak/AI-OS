@@ -12,7 +12,7 @@ The plan's "Fixes" paragraph is out of date. It says repair calls should go thro
 
 Two changes go beyond the brief. The Anthropic "thinking" 400-fallback was removed (it is in DECISIONS.md but not in the plan). And a request with `json_object` and no schema now returns 502 if the JSON is invalid; before, it was never checked. Three unused helpers were also deleted from `providers/base.py`; I could not fully confirm nothing else uses them, because my grep failed.
 
-The working tree has unrelated changes that should stay out of the commit: `shell/package.json`, `simple_llm/`, `../Old Code/` and the two Graphiti docs under `../Ingestion 2/`.
+The working tree has unrelated changes that should stay out of the commit: `../projects/platform/shell/package.json`, `simple_llm/`, `../archive/` and the two Graphiti docs under `../docs/ingestion/`.
 
 The plan says mypy checked "47 source files" with no issues. `mypy src` checks 46. Including `tests` it checks 47 and finds one error, a missing return type at `tests/conftest.py:18`.
 

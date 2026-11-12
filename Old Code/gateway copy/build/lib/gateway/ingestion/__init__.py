@@ -1,1 +1,0 @@
-"""Gateway owned ingestion domain."""

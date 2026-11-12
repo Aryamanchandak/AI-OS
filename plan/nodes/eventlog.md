@@ -7,7 +7,7 @@ uses: []
 builder: claude
 reviewer: codex
 line_budget: 80
-existing: pull pieces (Original Code/AI Code/Learning System/src/study_system/storage/mvp_store.py — connection setup only)
+existing: pull pieces (projects/learning/learning-system/src/study_system/storage/mvp_store.py — connection setup only)
 status: detailed
 ---
 

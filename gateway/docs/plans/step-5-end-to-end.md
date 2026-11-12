@@ -11,7 +11,7 @@
 2. The golden cases: give me real ones, or approve these: "Reply with exactly OK" → `OK`, one ledger row, cost > $0; `knowledge-extraction-v1` on a real paragraph → valid JSON; `chunker-v1` embedding → 768 numbers; `image-transcription-v1` on a real image → expected words; a `session:*` limit of $0 → refused, no provider call.
 3. A few cents of spend per golden run: OK?
 
-**Embedding prefix check.** nomic expects `search_document:` / `search_query:` labels, but the gateway throws the flag away (`del task_type` in `providers/ollama/__init__.py`). First find out whether your existing vectors were labelled (read-only look at `../Ingestion 2`, with your OK). If they were, the gateway adds labels per profile in config. If not, choose: re-embed everything with labels, or keep no labels. **Change nothing until you choose.** Add a golden case for the result.
+**Embedding prefix check.** nomic expects `search_document:` / `search_query:` labels, but the gateway throws the flag away (`del task_type` in `providers/ollama/__init__.py`). First find out whether your existing vectors were labelled (read-only look at `../projects/capture/ingestion-pipeline`, with your OK). If they were, the gateway adds labels per profile in config. If not, choose: re-embed everything with labels, or keep no labels. **Change nothing until you choose.** Add a golden case for the result.
 
 **Tests first.** A temporary `.env` with `ANTHROPIC_API_KEY=test` makes `anthropic` appear; no `.env` still starts. The key value never appears in logs, `/providers` or startup errors. Response models validate. Golden tests skip without `-m golden`.
 

@@ -1,6 +1,0 @@
-mcp
-google-generativeai
-pyautogui
-Pillow
-pyperclip
-pytest
