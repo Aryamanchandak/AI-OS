@@ -19,9 +19,9 @@ from neo4j import GraphDatabase
 
 def _ai_code_root() -> Path:
     for parent in Path(__file__).resolve().parents:
-        if parent.name == "AI Code":
+        if parent.name in ("AI OS", "AI Code"):
             return parent
-    raise RuntimeError("Cannot locate the enclosing AI Code directory")
+    raise RuntimeError("Cannot locate the enclosing AI OS directory")
 
 
 def _updated_env_text(original: str, values: dict[str, str]) -> str:

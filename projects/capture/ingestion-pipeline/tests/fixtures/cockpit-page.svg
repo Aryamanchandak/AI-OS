@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1500" viewBox="0 0 1000 1500">
+  <rect width="1000" height="1500" fill="#e8dfcd"/>
+  <rect x="55" y="45" width="890" height="1410" rx="8" fill="#f8f1e3" stroke="#c7bda9" stroke-width="3"/>
+  <text x="110" y="150" font-family="Georgia, serif" font-size="32" fill="#675d50">ATOMIC HABITS</text>
+  <g fill="#928777">
+    <rect x="110" y="220" width="760" height="12" rx="6"/><rect x="110" y="260" width="700" height="12" rx="6"/>
+    <rect x="110" y="300" width="745" height="12" rx="6"/><rect x="110" y="340" width="620" height="12" rx="6"/>
+    <rect x="110" y="520" width="760" height="12" rx="6"/><rect x="110" y="560" width="690" height="12" rx="6"/>
+    <rect x="110" y="600" width="730" height="12" rx="6"/><rect x="110" y="640" width="660" height="12" rx="6"/>
+    <rect x="110" y="860" width="750" height="12" rx="6"/><rect x="110" y="900" width="700" height="12" rx="6"/>
+    <rect x="110" y="940" width="740" height="12" rx="6"/><rect x="110" y="980" width="580" height="12" rx="6"/>
+  </g>
+  <rect x="95" y="400" width="785" height="95" rx="9" fill="#f5c767" opacity=".43"/>
+  <text x="120" y="445" font-family="Georgia, serif" font-size="25" fill="#40392f">Every action you take is a vote for the person</text>
+  <text x="120" y="478" font-family="Georgia, serif" font-size="25" fill="#40392f">you wish to become.</text>
+  <rect x="95" y="710" width="785" height="100" rx="9" fill="#f5c767" opacity=".43"/>
+  <text x="120" y="753" font-family="Georgia, serif" font-size="25" fill="#40392f">You do not rise to the level of your goals.</text>
+  <text x="120" y="786" font-family="Georgia, serif" font-size="25" fill="#40392f">You fall to the level of your systems.</text>
+  <text x="500" y="1395" text-anchor="middle" font-family="Georgia, serif" font-size="20" fill="#7f7567">42</text>
+</svg>
