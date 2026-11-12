@@ -115,7 +115,7 @@ def test_project_declares_no_direct_model_provider_dependency() -> None:
 def test_cover_classification_profile_can_never_resolve_to_cloud() -> None:
     """Guard the AI OS gateway's exact profile pin, not just our call site."""
 
-    profiles = (PROJECT_ROOT / "../../gateway/config/profiles.yaml").resolve()
+    profiles = (PROJECT_ROOT / "../gateway/config/profiles.yaml").resolve()
     lines = profiles.read_text(encoding="utf-8").splitlines()
     start = next(
         index

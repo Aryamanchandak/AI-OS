@@ -21,7 +21,7 @@ budgets, ledger, profiles, retries and telemetry remain.
 Live provider and ingestion validation has not been established. The golden
 refusal expectation now requires one row with status `refused`.
 
-The ingestion runner in `../Ingestion 2/merged-ingestion` still loads
+The ingestion runner in `../ingestion` still loads
 `llm_gateway.client.LLM`; its comments describe port 8107. This gateway runs on
 port 8000 with `/api/llm/*` endpoints. Verify the actual client configuration and
 one ingestion request before calling the handoff complete.
