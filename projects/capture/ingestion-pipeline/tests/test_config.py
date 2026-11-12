@@ -112,3 +112,29 @@ def test_contradictory_segmentation_settings_are_rejected(
             database_root=tmp_path / "Database",
             segmentation=policy,
         ).validate()
+
+
+def test_discovers_ai_os_root_and_database(tmp_path: Path) -> None:
+    """The project now lives under ``AI OS``; its Database folder must be found."""
+    root = tmp_path / "AI OS"
+    nested = root / "Ingestion 2" / "merged-ingestion"
+    nested.mkdir(parents=True)
+
+    assert ai_code_root(nested) == root
+    assert central_database_root(nested) == root / "Database"
+
+
+def test_load_root_env_reads_the_ai_os_env_file(tmp_path: Path, monkeypatch) -> None:
+    """``AI_OS_TOKEN`` and the Neo4j login both come from ``AI OS/.env``."""
+    root = tmp_path / "AI OS"
+    nested = root / "Ingestion 2" / "merged-ingestion"
+    nested.mkdir(parents=True)
+    (root / ".env").write_text(
+        "AI_OS_TOKEN=from-file\nNEO4J_PASSWORD=from-file\n", encoding="utf-8"
+    )
+    monkeypatch.delenv("AI_OS_TOKEN", raising=False)
+    monkeypatch.delenv("NEO4J_PASSWORD", raising=False)
+
+    assert load_root_env(nested) == root / ".env"
+    assert os.environ["AI_OS_TOKEN"] == "from-file"
+    assert os.environ["NEO4J_PASSWORD"] == "from-file"

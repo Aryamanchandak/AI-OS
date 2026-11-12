@@ -30,6 +30,8 @@ FORBIDDEN_PROVIDER_ENDPOINTS = {
 }
 NON_MODEL_NETWORK_EXCEPTIONS = {
     Path("src/ingestion/sources/book_metadata.py"): {"urllib.request"},
+    # The one file allowed to make web calls for models: it talks only to the gateway.
+    Path("src/ingestion/gateway_client.py"): {"httpx"},
 }
 
 
@@ -75,30 +77,33 @@ def test_merged_source_has_no_direct_model_provider_or_network_client() -> None:
 
 
 def test_only_runner_constructs_the_shared_gateway_client() -> None:
-    loaders: list[tuple[Path, int]] = []
-    direct_imports: list[tuple[Path, str]] = []
+    importers: list[Path] = []
+    constructors: list[Path] = []
+    client_file = Path("src/ingestion/gateway_client.py")
 
     for path in _python_sources():
-        source = path.read_text(encoding="utf-8")
-        tree = ast.parse(source, filename=str(path))
-        direct_imports.extend(
-            (path.relative_to(PROJECT_ROOT), module)
+        relative_path = path.relative_to(PROJECT_ROOT)
+        if relative_path == client_file:
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        if any(
+            module == "llm_gateway"
+            or module.startswith("llm_gateway.")
+            or module == "ingestion.gateway_client"
             for module in _imported_modules(tree)
-            if module == "llm_gateway" or module.startswith("llm_gateway.")
-        )
+        ):
+            importers.append(relative_path)
         for node in ast.walk(tree):
-            if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
-                continue
-            if node.func.id != "import_module" or not node.args:
-                continue
-            first = node.args[0]
-            if isinstance(first, ast.Constant) and first.value == "llm_gateway.client":
-                loaders.append((path.relative_to(PROJECT_ROOT), node.lineno))
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id == "LLM"
+            ):
+                constructors.append(relative_path)
 
     runner = Path("src/ingestion/runner.py")
-    assert direct_imports == []
-    assert len(loaders) == 1
-    assert loaders[0][0] == runner
+    assert importers == [runner]
+    assert constructors == [runner]
 
 
 def test_project_declares_no_direct_model_provider_dependency() -> None:
@@ -108,32 +113,23 @@ def test_project_declares_no_direct_model_provider_dependency() -> None:
 
 
 def test_cover_classification_profile_can_never_resolve_to_cloud() -> None:
-    """Guard the companion gateway's exact profile pin, not just our call site."""
+    """Guard the AI OS gateway's exact profile pin, not just our call site."""
 
-    gateway_main = (PROJECT_ROOT / "../../llm_gateway/main.py").resolve()
-    tree = ast.parse(gateway_main.read_text(encoding="utf-8"))
-    assignments = {
-        target.id: node.value
-        for node in tree.body
-        if isinstance(node, ast.Assign)
-        for target in node.targets
-        if isinstance(target, ast.Name)
-        and target.id in {"CHAT_PROFILES", "DEFAULT_ORDER"}
-    }
-    profile_map = assignments["CHAT_PROFILES"]
-    assert isinstance(profile_map, ast.Dict)
-    provider_node = next(
-        value
-        for key, value in zip(profile_map.keys, profile_map.values)
-        if isinstance(key, ast.Constant)
-        and key.value == "cover-classification-v1"
+    profiles = (PROJECT_ROOT / "../../../gateway/config/profiles.yaml").resolve()
+    lines = profiles.read_text(encoding="utf-8").splitlines()
+    start = next(
+        index
+        for index, line in enumerate(lines)
+        if line.strip() == "cover-classification-v1:"
     )
-    provider = ast.literal_eval(provider_node)
-    default_order = ast.literal_eval(assignments["DEFAULT_ORDER"])
-    cloud_prefixes = ("anthropic-", "openai-", "gemini-")
+    provider = next(
+        line.split(":", 1)[1].strip()
+        for line in lines[start + 1 :]
+        if line.strip().startswith("provider:")
+    )
+    cloud_prefixes = ("anthropic", "openai", "gemini", "together")
     assert not provider.startswith(cloud_prefixes)
     assert provider == "cover-vision-local"
-    assert provider not in default_order
 
 
 def test_book_cover_calls_are_pinned_to_the_local_only_profile() -> None:

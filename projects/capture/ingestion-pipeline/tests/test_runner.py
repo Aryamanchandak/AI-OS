@@ -251,17 +251,19 @@ def test_default_construction_reaches_real_preflight_and_refuses(
     assert not config.ledger_path.exists()
 
 
-def test_llm_gateway_client_is_a_real_installed_dependency() -> None:
-    """merged-ingestion depends on llm_gateway as a real, non-editable package
-    (see pyproject.toml [tool.uv.sources]), not the old pytest-only
-    pythonpath hack. Construct it exactly the way `_shared_gateway_client`
-    does, so a packaging regression -- e.g. reverting to an editable install,
-    which silently breaks on this machine because uv chflags-hides the
-    resulting .pth file and macOS's site.py skips hidden .pth files -- fails
-    this test instead of only surfacing when someone runs the pipeline for
-    real."""
+def test_shared_gateway_client_is_the_ai_os_gateway_client(monkeypatch) -> None:
+    """The runner builds ingestion's own client for the AI OS gateway, and that
+    client refuses to exist without the gateway login token."""
+    from ingestion.gateway_client import LLM
+
+    monkeypatch.setenv("AI_OS_TOKEN", "test-token")
     client = runner_module._shared_gateway_client()
-    assert client.base_url
+    assert isinstance(client, LLM)
+    client.close()
+
+    monkeypatch.delenv("AI_OS_TOKEN")
+    with pytest.raises(RuntimeError, match="AI_OS_TOKEN"):
+        runner_module._shared_gateway_client()
 
 
 @pytest.mark.parametrize("protocol", [runner_module.GatewayClient, ChatClient])

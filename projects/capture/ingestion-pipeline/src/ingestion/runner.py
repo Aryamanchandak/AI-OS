@@ -21,7 +21,6 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from importlib import import_module
 from pathlib import Path
 from typing import Any, Callable, Protocol, cast
 
@@ -33,6 +32,7 @@ from ingestion.content_store import ContentStore
 from ingestion.dispatch import EnvelopeConsumer
 from ingestion.extraction.base import SemanticExtractor
 from ingestion.extraction.gateway import GatewayExtractor
+from ingestion.gateway_client import LLM
 from ingestion.kg.kg_store import KGStore
 from ingestion.models import CaptureOutcome, CaptureRequest, ProcessOutcome
 from ingestion.parsing import GatewayTopicSegmenter, HeadingTopicSegmenter, TopicSegmenter
@@ -74,20 +74,13 @@ CaptureBatch = Callable[
 
 
 def _shared_gateway_client() -> GatewayClient:
-    """Create one client for the existing system-wide LLM Gateway.
+    """Create one client for the AI OS gateway.
 
-    This does not start or implement a gateway. It loads
-    ``llm_gateway.client.LLM``, whose methods call the single service at
-    ``localhost:8107``.
+    This does not start or implement a gateway. ``ingestion.gateway_client.LLM``
+    calls the single service at ``127.0.0.1:8000`` (override with
+    ``AI_OS_GATEWAY_URL``) and logs in with ``AI_OS_TOKEN``.
     """
-    try:
-        client_module = import_module("llm_gateway.client")
-        client_class = client_module.LLM
-    except (ImportError, AttributeError) as exc:
-        raise RuntimeError(
-            "The shared llm_gateway.client.LLM package is not importable"
-        ) from exc
-    return cast(GatewayClient, client_class())
+    return LLM()
 
 
 @dataclass
@@ -225,9 +218,9 @@ def run_ingestion(
     """Run one full sequential pass: preflight -> capture -> parse -> extract -> project.
 
     Stores, extractor, and gateway client may be injected for tests. Production
-    construction creates exactly one ``llm_gateway.client.LLM`` object and
+    construction creates exactly one ``ingestion.gateway_client.LLM`` object and
     shares it across extraction, vector writes, and vector search. This is a
-    client for the system-wide gateway at localhost:8107, not a gateway owned
+    client for the AI OS gateway at 127.0.0.1:8000, not a gateway owned
     by ingestion. Injected stores are the caller's responsibility to close.
 
     The default capture source is `capture_obsidian_vault`. A caller may inject

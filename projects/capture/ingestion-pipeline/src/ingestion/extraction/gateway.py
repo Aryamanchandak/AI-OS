@@ -1,6 +1,6 @@
 """SemanticExtractor backed by the LLM gateway's structured-output chat API.
 
-All model traffic goes through `llm_gateway.client.LLM.chat()` (ground rule
+All model traffic goes through `ingestion.gateway_client.LLM.chat()` (ground rule
 R1 — no direct provider calls). Evidence is never trusted from the model's
 own offsets: each returned quote is located in `normalized_content` by exact
 string search after the fact, and dropped (not guessed at) if it doesn't
