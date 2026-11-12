@@ -1,23 +1,23 @@
 # Excluded for now — not ready to push
 /Persistent Memory Chats Storage/
 
-# Original Code: code only — no documents, archives or secrets
-/Original Code/**/*.md
-/Original Code/**/*.pdf
-/Original Code/**/*.doc
-/Original Code/**/*.docx
-/Original Code/**/*.xls
-/Original Code/**/*.xlsx
-/Original Code/**/*.ppt
-/Original Code/**/*.pptx
-/Original Code/**/*.zip
-/Original Code/**/.uv-cache/
-/Original Code/**/*.mp3
-/Original Code/**/*.m4a
-/Original Code/**/*.wav
-/Original Code/**/*.db
-/Original Code/**/*.bin
-/Original Code/**/*.task
+# workshop/Original Code: code only — no documents, archives or secrets
+/workshop/Original Code/**/*.md
+/workshop/Original Code/**/*.pdf
+/workshop/Original Code/**/*.doc
+/workshop/Original Code/**/*.docx
+/workshop/Original Code/**/*.xls
+/workshop/Original Code/**/*.xlsx
+/workshop/Original Code/**/*.ppt
+/workshop/Original Code/**/*.pptx
+/workshop/Original Code/**/*.zip
+/workshop/Original Code/**/.uv-cache/
+/workshop/Original Code/**/*.mp3
+/workshop/Original Code/**/*.m4a
+/workshop/Original Code/**/*.wav
+/workshop/Original Code/**/*.db
+/workshop/Original Code/**/*.bin
+/workshop/Original Code/**/*.task
 
 # Secrets (keep .env.example so variable names stay documented)
 .env
@@ -51,5 +51,5 @@ dist/
 
 # Build output and IDE settings
 gateway/build/
-Ingestion 2/merged-ingestion/build/
+ingestion/build/
 .idea/
