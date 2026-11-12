@@ -51,4 +51,5 @@ dist/
 
 # Build output and IDE settings
 gateway/build/
+Ingestion 2/merged-ingestion/build/
 .idea/

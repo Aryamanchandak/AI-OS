@@ -9,16 +9,16 @@ from dotenv import load_dotenv
 
 
 def ai_code_root(start: Path | None = None) -> Path | None:
-    """Return the enclosing ``AI Code`` directory when one is discoverable."""
+    """Return the enclosing project root (``AI OS``, formerly ``AI Code``) if found."""
     cursor = (start or Path.cwd()).resolve()
     for parent in (cursor, *cursor.parents):
-        if parent.name == "AI Code":
+        if parent.name in ("AI OS", "AI Code"):
             return parent
     return None
 
 
 def load_root_env(start: Path | None = None) -> Path | None:
-    """Load the shared ``AI Code/.env`` without overriding process env vars.
+    """Load the project root ``.env`` without overriding process env vars.
 
     Production ingestion is allowed to read this one shared secrets file. A
     deployment outside the monorepo may supply variables through the process
