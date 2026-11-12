@@ -16,6 +16,12 @@ The plan is [`AI OS plan.html`](AI%20OS%20plan.html), a view of `plan/stages.md`
 
 New AI OS code (`core/`, the stage nodes) goes at the root next to `gateway/`, as `plan/` describes. It never goes in `projects/`.
 
+## Where new code goes
+
+`core/` is the trunk: the shared code every agent uses, one file per job (`llm.py` for model calls, `store.py` for the database, `registry.py` for the tool list). `leaves/<name>/` holds one agent each, with its prompts and eval cases beside its code; any leaf can be deleted without breaking `core/`. `tests/contracts/` holds one test per interface in `plan/interfaces.md`, and `tests/fakes/` holds stand-ins for modules not built yet.
+
+`tests/test_structure.py` enforces the rules: `core/` never imports a leaf, a leaf never imports another leaf (it calls that leaf's tool through the registry), only `core/llm.py` reaches a model, and every file starts with a one-line description. Run it with `uv run pytest` at the root; rebuild the environment with `uv sync --python 3.11.15`.
+
 ## projects/
 
 | Group | Projects |
