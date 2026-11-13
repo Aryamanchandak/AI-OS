@@ -15,3 +15,7 @@ node_modules/
 *.zip
 *.db
 *.mp3
+.watchlist*/
+*.db-journal
+*.db-wal
+*.db-shm

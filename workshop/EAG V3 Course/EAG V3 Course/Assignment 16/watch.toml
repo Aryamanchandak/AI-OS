@@ -1,0 +1,12 @@
+# Assumed starting watch; edit before creating your own state database.
+name = "python-releases"
+question = "Which newly announced stable Python releases deserve a compatibility review?"
+urls = [
+  "https://www.python.org/downloads/",
+  "https://www.python.org/downloads/release/python-3140/",
+]
+interval_hours = 24
+max_checks_per_day = 4
+max_bytes = 2000000
+spending_ceiling_usd = 0
+rules_file = "rules.csv"

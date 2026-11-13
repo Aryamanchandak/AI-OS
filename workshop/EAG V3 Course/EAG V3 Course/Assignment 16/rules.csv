@@ -1,0 +1,3 @@
+name,pattern,importance,interpretation,suggestion,question
+stable,\bPython[ \t]+\d+\.\d+\.\d+(?![\w.]),3,A newly observed stable release may need compatibility review.,Review its release notes and decide whether to test an upgrade.,
+preview,\bPython[ \t]+\d+\.\d+\.\d+(?:a|b|rc)\d+\b,1,A preview release may be outside your watch.,,Include this preview release in your review?

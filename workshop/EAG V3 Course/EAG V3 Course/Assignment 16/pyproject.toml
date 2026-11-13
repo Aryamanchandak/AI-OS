@@ -1,0 +1,9 @@
+[project]
+name = "personal-watchlist"
+version = "0.1.0"
+description = "Zero-spend local public-page watchlist assistant"
+requires-python = ">=3.11,<3.12"
+dependencies = []
+
+[tool.uv]
+package = false
