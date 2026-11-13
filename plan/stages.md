@@ -1,5 +1,7 @@
 # Stages
 
+**Proposed 13 Nov 2026, awaiting your approval:** `capstone-mvp.md` cuts this plan down to what can be submitted by Sunday 22 Nov. Until you approve it, everything below stands as written.
+
 **How a stage is built.** A node joins a stage only if the stage's done-when can't be shown without it. Anything else is delayed, with its reason written down. Stages run in dependency order. Only the next stage is detailed; the later ones are outlines.
 
 Node IDs match the plan page (`AI OS plan.html`), which splits three of them: `store` and `events` are parts of `eventlog`; `registry`, `scheduler` and `assistant` are parts of `orch`; `evalgrade` and `evalsci` are parts of `evals`. Interfaces (I1–I20) are defined in `interfaces.md`. Each node's plan is in `nodes/<id>.md`.
