@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research desk · Evidence into understanding</title>
+  <link rel="stylesheet" href="/research/style.css">
+  <script defer src="/research/app.js"></script>
+</head>
+<body>
+<header><a href="/research" class="wordmark">FIELDNOTES <span>/ Research desk</span></a><span class="local">LOCAL WORKSPACE</span></header>
+<div class="layout">
+  <aside>
+    <p class="eyebrow">01 / THE MATERIAL</p><h2>Your sources.</h2>
+    <p class="muted">Start with the course example, or bring your own Markdown and text files.</p>
+    <button id="example" class="secondary">Load course example ↗</button>
+    <label class="upload" for="files">＋ Add .md or .txt files<input id="files" type="file" accept=".md,.txt,text/plain,text/markdown" multiple></label>
+    <ul id="documents" class="source-list" aria-label="Selected sources"></ul>
+    <details><summary>Paste a source instead</summary><label for="source-name">Source name</label><input id="source-name" maxlength="200" placeholder="Reading notes">
+      <label for="source-text">Source text</label><textarea id="source-text" rows="6" maxlength="100000"></textarea><button id="add-text" class="secondary">Add source</button></details>
+    <p class="small muted">Up to 12 sources · 200,000 characters total. Selected passages are sent to your configured model gateway.</p>
+    <div class="aside-note"><span class="eyebrow">A BETTER QUESTION</span><p>What does the evidence support—and what does it leave open?</p></div>
+  </aside>
+  <main>
+    <section class="intro"><p class="eyebrow">EVIDENCE → DECISION → UNDERSTANDING</p><h1>Read deeply.<br><em>Decide clearly.</em></h1><p class="muted">A cited brief you can inspect. Study cards you can recall.</p></section>
+    <form id="research-form">
+      <label for="question">02 / YOUR RESEARCH QUESTION</label><textarea id="question" required minlength="3" maxlength="2000" rows="3" placeholder="What would you like to understand?"></textarea>
+      <div class="form-footer"><div><label for="budget">Budget per request · USD</label><input id="budget" type="number" min="0.0000000001" max="10" step="any" value="0.05" required></div>
+        <div><label for="strategy">Model selection</label><select id="strategy"><option value="routed">Cost-aware routing</option><option value="frontier">Request top tier</option></select></div>
+        <button type="submit" id="research">Build decision brief ↗</button></div>
+    </form>
+    <p id="status" role="status" aria-live="polite">Add sources and a question to begin.</p>
+    <nav class="view-nav" aria-label="Workspace views"><button type="button" data-view="brief" aria-pressed="true">Decision brief</button><button type="button" data-view="study" aria-pressed="false">Study & recall</button><button type="button" data-view="audit" aria-pressed="false">Run record</button></nav>
+    <section id="brief" class="view"><div class="empty"><span>↗</span><h2>Let the sources lead.</h2><p>Your conclusions, competing explanations, and open questions will appear here.</p></div></section>
+    <section id="study" class="view" hidden><div class="section-heading"><h2>Make it stick.</h2><button id="make-cards" disabled>Create study cards ↗</button></div><p class="muted">Complete a brief first. Recall from memory, then check your understanding against the sources.</p><div id="cards"></div></section>
+    <section id="audit" class="view" hidden><h2>Follow the evidence.</h2><p class="muted">Model choices, recorded costs, ordered events and trace IDs for this session.</p><div id="records"></div></section>
+    <footer>FIELDNOTES / RESEARCH & LEARNING <span>Grounded in your material.</span></footer>
+  </main>
+</div>
+</body></html>

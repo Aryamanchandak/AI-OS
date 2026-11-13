@@ -25,6 +25,7 @@ from s15code.core.a2a.server import A2ADemoServer  # noqa: E402
 from s15code.core.a2a.trust import sign_card  # noqa: E402
 from s15code.core.memory import MemoryScope  # noqa: E402
 from s15code.gateway import GatewayClient  # noqa: E402
+from s15code.research.routes import router as research_router  # noqa: E402
 from s15code.runtime import AgentRuntime  # noqa: E402
 from s15code.ui.routes import router as ui_router  # noqa: E402
 
@@ -109,6 +110,7 @@ app = FastAPI(title="S15Code — Live Graph, Memory, Semantic Chunking and A2A",
 app.include_router(routes.router)
 app.include_router(a2a_routes.router)
 app.include_router(ui_router)
+app.include_router(research_router)
 
 
 @app.get("/healthz")

@@ -210,3 +210,41 @@ The generated protobuf modules under `s15code/core/a2a/` keep their original
 filenames. They are reproduced verbatim because the serialized descriptor is
 keyed on the `.proto` file name, and hand-editing generated gencode is worse than
 a stale name.
+
+## Research desk and assignment evidence
+
+From this directory, run `uv sync --python 3.11.15`, then `uv run python -m s15code.cli serve`. Open `http://127.0.0.1:8113/research`. Start the separate gateway as described in `../glc_v4/README.md`; its credentials stay in its own `.env`. Set `GLC_BASE_URL` in this runtime's `.env` if the gateway uses another address. The UI accepts Markdown/text files or pasted text, and includes a course-material example about cheaper-model routing. Each request has its own dollar ceiling; study and grading requests have separate ceilings.
+
+Research returns supported conclusions, competing explanations and uncertainty. Expand citations to inspect verbatim quotes and original line ranges. Study cards reuse the selected research passages; recall is graded correct, partial or incorrect. The run record shows selected tiers/models, charges, ordered events and trace IDs, including failures. Runs persist in the existing graph database. The desk is for a local, single-user runtime; it does not add multi-user authentication.
+
+The additive policy in `config/tiers.yaml` requests the standard tier for briefs/cards and economy for recall grading; existing budget controls may downgrade or refuse. The top-tier comparison requests frontier and is marked invalid for quality comparisons if the budget controller downgrades it. Models, output limits and prices come from the course configuration. Costs use reported token counts and configured prices, not independently verified provider invoices. No dependencies or gateway implementation changed.
+
+Verified on 14 November 2026: runtime suite **287 passed, 1 warning**; unchanged gateway baseline **455 passed, 1 skipped, 1 warning**. Runtime tests needing localhost bindings passed outside the sandbox. The new research/learning/economics checks contributed **10 passed**. Ruff and JavaScript syntax checks passed. Browser preview was unavailable, so visual rendering and browser interactions have not been verified.
+
+Reproduce the checks from this directory:
+
+```bash
+uv run python -m pytest -q
+uv run ruff check .
+node --check s15code/research/client/app.js
+uv run python proofs/offline_floor.py
+uv run python proofs/research_workload.py --offline
+```
+
+Run `uv run python -m pytest -q` inside `../glc_v4` for the gateway suite. The offline floor runner executes all six supplied scripts (p1, p2, p3, p4, p6, p7); all passed. It sets only `judge.pace_seconds=0` in a temporary configuration to avoid waiting for simulated judges. Assertions, models, pricing, budgets and rubric scores remain unchanged. Full commands/output are retained in ignored `proofs/out/offline-floor.json` and the individual proof JSON files.
+
+The research workload contains 15 source-based course questions with explicit success criteria in `proofs/tasks/research.yaml`. The offline run exercised 30 research requests across both strategies and saved four captures, with exact model requests, final outputs, charges, events and in-memory trace IDs, in ignored `proofs/out/research/research-report.json`. These are contract checks with deterministic fixtures, **not live answers or evidence of savings**. Offline quality, cost per resolved task and break-even resolution rate deliberately remain null.
+
+The offline adversarial proof p3 admitted two simulated calls costing $0.00193160 under a $0.002 ceiling, followed by 198 visible refused nodes. Its uncontrolled bill is an extrapolation (about $9.658 over 10,000 rounds), not measured before-control spend. This verifies refusal/accounting mechanics, not a live attack result.
+
+For live evaluation, configure the ladder and independent judge providers in `config/tiers.yaml` and `config/evals.yaml`, then run:
+
+```bash
+uv run python proofs/research_workload.py --base-url http://127.0.0.1:8111 --budget 0.10
+```
+
+This calls real models for both strategies, uses the existing independent rubric judge, and reports quality, answer cost per call/task/resolved task, judge cost separately, and actual bad routing cases. Judge failures or self-judging invalidate quality comparisons. Break-even uses `frontier_resolution_rate × routed_cost_per_task ÷ frontier_cost_per_task`, including failed answer attempts. No observed bad routing case is reported honestly rather than invented. Judge calls incur additional spend outside each answer's ceiling. Existing reports should be copied elsewhere before rerunning the same output path.
+
+Live evidence remains incomplete: the gateway at port 8111 was unavailable and `glc_v4/.env` was absent. Live answer quality, measured savings, a bad routing decision with real cost, and Jaeger backend receipt have not been established. Configure `S15_OTEL_EXPORTER_ENDPOINT` to export desk traces; use the existing p4 proof with `--otel-endpoint` to verify collector receipt. An SDK trace ID alone does not prove that Jaeger received it.
+
+One material limitation: exact quote validation proves that quoted text exists, **not that it supports the associated claim**. Retrieval uses lexical overlap and can omit relevant passages; citations therefore still need human review. A failed provider call that reports no tokens cannot be priced by the inherited meter. Supplied passages and model replies are retained locally in the graph; OTel prompt capture remains off by default. Keep generated captures and private sources out of commits.

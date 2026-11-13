@@ -1,0 +1,45 @@
+- id: research01
+  task: When does cheaper-model routing save money per resolved task?
+  expectation: Explain that call savings alone are insufficient; compare resolution rates and total spend including retries. Do not assert measured savings for an unmeasured workload.
+- id: research02
+  task: Should the budget live in a prompt or at the provider call boundary?
+  expectation: Recommend deterministic admission before calls, explain token elasticity and why prompt instructions alone cannot enforce a ceiling.
+- id: research03
+  task: What evidence would make a cheaper-model routing policy defensible for this assignment?
+  expectation: Include at least 15 domain tasks, always-frontier comparison, a defensible judge, both cost metrics, break-even rate and a bad decision with its cost.
+- id: research04
+  task: Does lowering the token ceiling on one model demonstrate cross-model routing?
+  expectation: Distinguish token-budget tuning from routing between distinct models, using the README discussion of the original same-model ladder.
+- id: research05
+  task: How should an unaffordable request behave, and what evidence should record it?
+  expectation: Refuse before the provider call, preserve a visible failure and refusal in the event journal and budget record; no paid call should be made.
+- id: research06
+  task: What limits the claim that no run can exceed its budget?
+  expectation: Explain projected input estimation and provider output bounds; a provider ignoring max_tokens can overshoot during an in-flight call. Distinguish admission from subsequent stopping.
+- id: research07
+  task: How should the research workload be compared with always using the top model?
+  expectation: Use the same tasks and success criteria, disclose resolution rates and measured spend, and report costs per call and per resolved task rather than savings alone.
+- id: research08
+  task: What should four captured assignment runs contain?
+  expectation: Include prompts, selected tiers and models, ordered events, Jaeger trace IDs, ledger rows and final answers; distinguish an in-memory trace from a trace verified in Jaeger.
+- id: research09
+  task: Is an offline proof enough to claim real model answer quality or measured economic savings?
+  expectation: State no; offline mode replaces the network deterministically, exercises controller and trace code, but does not measure live answer quality or real provider costs.
+- id: research10
+  task: Why can retrying the cheapest model cost more per resolved task?
+  expectation: Explain accumulated failed-attempt costs and lower resolution rates; distinguish a measured finding from a universal claim that cheap models always cost more.
+- id: research11
+  task: Should a zero-price model be governed only by a dollar budget?
+  expectation: Explain that zero-priced calls cannot exhaust a dollar ceiling and require a call-count bound; mention latency tradeoffs without inventing current prices.
+- id: research12
+  task: How does the assignment runtime avoid maintaining separate journals for execution, UI and tracing?
+  expectation: Identify one durable event journal consumed for replay, AG-UI and OpenTelemetry, with per-node metered model calls retained in results.
+- id: research13
+  task: What is held back during frontier budget allocation, and why?
+  expectation: Describe reserve_fraction for terminal answer work, remaining spend split across the current frontier and reallocation as graph shape changes.
+- id: research14
+  task: What would count as a meaningful adversarial budget test for this assignment?
+  expectation: Describe runaway loops or unaffordable tiers, spend before control, visible refusal after control and accounting/telemetry demonstrating the bound.
+- id: research15
+  task: Which costs and privacy limitations must be disclosed when interpreting the traces?
+  expectation: Explain model-call ledger coverage, local unmetered embeddings, prompts/completions capture off by default, and that in-memory export does not establish Jaeger backend receipt.

@@ -97,6 +97,9 @@ tiers:
 # (never task content), so a node "declares the tier it needs" by declaring its
 # role. `default` covers every role not listed.
 role_tiers:
+  research_brief: standard
+  study_cards: standard
+  recall_grader: economy
   default: standard
   memory_recall: economy
   remember_explicit_fact: economy
