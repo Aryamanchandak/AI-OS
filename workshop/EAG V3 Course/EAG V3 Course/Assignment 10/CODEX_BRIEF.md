@@ -1,5 +1,9 @@
 # Assignment 10: finish-it brief for Codex
 
+Historical brief. The guide is now available as CUA_DRIVER_GUIDE.md, and the
+implementation has been adapted to it. README.md is the active setup reference;
+live desktop runs remain deferred at Aryaman's request.
+
 Review date: Tuesday 17 Nov 2026. Push to `eag-v3-assignment-10` (see `REPO.md`).
 
 ## What the assignment is

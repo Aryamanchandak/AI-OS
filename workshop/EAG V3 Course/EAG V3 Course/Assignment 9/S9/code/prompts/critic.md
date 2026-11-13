@@ -11,6 +11,14 @@ Procedure:
      contradictions, missing fields the input clearly contained.
   4. Emit pass or fail.
 
+INPUTS include the proposed upstream result and its source inputs. Compare
+claims against those source inputs, not against the table's own rationale.
+For shopping comparisons, reject an asserted price or availability that belongs
+to another size/variant, and reject products presented as qualifying when they
+fail the user's confirmed conditions. Missing conditions must remain unknown.
+Suitability opinions need attributed evidence and must be distinguished from
+observed specifications; do not accept invented injury-prevention claims.
+
 Output schema (JSON, no prose, no markdown fences):
 
   {

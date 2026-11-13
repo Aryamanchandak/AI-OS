@@ -15,14 +15,19 @@ re-exports the V9 `LLM` client and a module-level `embed()` helper.
 
 from __future__ import annotations
 
+import os
 import subprocess
 import time
 from pathlib import Path
 
 import httpx
+from dotenv import load_dotenv
 
-GATEWAY_V9_DIR = Path(__file__).resolve().parents[2] / "llm_gatewayV9"
-GATEWAY_URL = "http://localhost:8109"
+ASSIGNMENT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(ASSIGNMENT_ROOT / ".env")
+
+GATEWAY_V9_DIR = ASSIGNMENT_ROOT / "llm_gatewayV9"
+GATEWAY_URL = os.getenv("LLM_GATEWAY_V9_URL", "http://localhost:8109")
 
 
 def _is_up() -> bool:

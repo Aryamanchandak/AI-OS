@@ -1,7 +1,0 @@
-# `deduplicate/test_deduplicate.py`
-
-One test, `test_dedup_only_groups_same_development`, exercising `deduplicate` end to end (not `infer_factual_status` directly).
-
-Three `DiscoveryExtract`s: two headlines/texts both about "India" cutting a "solar import tariff" (worded differently — "India cuts solar import tariff" vs "Solar import tariff cut announced by India" — but with an *identical* `text` field: `"India announced a solar import tariff cut"`), and a third, unrelated one about monsoon rainfall. Called with an explicitly lowered `threshold=.35` (below the module default of 0.62). Asserts the resulting group sizes, sorted, are `[1, 2]` — i.e. exactly two groups, one with both tariff items and one singleton for the rainfall item.
-
-This checks that near-duplicate coverage of the same event clusters together even when headlines are reworded, while a topically unrelated item stays separate — the core promise of the module. Because the two "duplicate" extracts share an identical `text` body, this test doesn't actually prove the headline-rewording tolerance does much work (the shared body alone likely clears even the default 0.62 threshold); it mainly confirms the clustering wiring and the lowered threshold behave as expected, and it doesn't check `factual_status`, `agreement`/`disagreement` content, or `authoritative_item_id` selection at all — those code paths are untested here.

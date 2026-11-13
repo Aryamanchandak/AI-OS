@@ -1,172 +1,69 @@
-"""Synthetic input — clicks, typing, hotkeys, app activation.
-
-Two mechanisms, chosen per job rather than by preference:
-
-  * Quartz CGEvent for pointer work and single keystrokes. Precise, fast,
-    and takes global screen coordinates that line up with ax.py's geometry.
-  * AppleScript (`osascript`) for app activation and for `keystroke`/`key
-    code` chords. AppleScript owns the reliable "activate this app and wait
-    until it is actually frontmost" behaviour, which is fiddly via Quartz.
-
-Layer 2a (deterministic) uses these directly with no model in the loop.
-Layers 2b and 3 use the same primitives, differing only in who chooses the
-arguments.
-"""
+"""Existing input interface backed by cua-driver; AppleScript only activates apps."""
 from __future__ import annotations
-
 import subprocess
 import time
+from pathlib import Path
+import yaml
+from .backend import get_driver
 
-import Quartz
+KEY_ALIASES = yaml.safe_load(Path(__file__).with_name("keys.yaml").read_text())
 
+def key_arguments(key, modifiers=None):
+    alias = KEY_ALIASES.get(key, {"key": key, "modifiers": []})
+    return {"key": alias["key"], "modifiers": list(dict.fromkeys([*alias["modifiers"], *(modifiers or [])]))}
 
-# ── AppleScript ─────────────────────────────────────────────────────────────
-def osascript(script: str, *, timeout: float = 20.0) -> tuple[bool, str]:
-    """Run AppleScript, returning (ok, stdout-or-stderr)."""
+def osascript(script, *, timeout=20):
     try:
-        p = subprocess.run(["/usr/bin/osascript", "-e", script],
-                           capture_output=True, text=True, timeout=timeout)
-    except subprocess.TimeoutExpired:
-        return False, "osascript timed out"
-    if p.returncode != 0:
-        return False, (p.stderr or "").strip()
-    return True, (p.stdout or "").strip()
+        result = subprocess.run(["/usr/bin/osascript", "-e", script],
+                                capture_output=True, text=True, timeout=timeout)
+        return result.returncode == 0, (result.stdout if not result.returncode else result.stderr).strip()
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, str(exc)
 
-
-def activate_app(name: str, *, settle: float = 0.8) -> tuple[bool, str]:
-    """Bring an app to the front and wait for it to settle.
-
-    The settle pause is not superstition: AX geometry read immediately after
-    activation can still describe the previous window position, which
-    produces clicks landing in the wrong place."""
-    ok, out = osascript(f'tell application "{name}" to activate')
+def activate_app(name, *, settle=0.8, pid=None):
+    escaped = name.replace("\\", "\\\\").replace('"', '\\"')
+    script = (f'tell application "System Events" to set frontmost of '
+              f'(first application process whose unix id is {int(pid)}) to true'
+              if pid else f'tell application "{escaped}" to activate')
+    ok, detail = osascript(script)
     if ok:
         time.sleep(settle)
-    return ok, out
+    return ok, detail
 
+def launch_app(name, **kwargs):
+    return get_driver().call("launch_app", {"name": name, **kwargs})
 
-def launch_app(name: str, *, settle: float = 2.0) -> tuple[bool, str]:
-    ok, out = osascript(f'tell application "{name}" to activate')
-    if ok:
-        time.sleep(settle)
-    return ok, out
+def press_key(key, *, modifiers=None):
+    driver = get_driver()
+    driver.call("press_key", {**driver.window_args(), **key_arguments(key, modifiers)})
+    return "ok"
 
-
-# ── keyboard ────────────────────────────────────────────────────────────────
-# `key code` numbers for keys AppleScript cannot express as characters.
-KEY_CODES = {
-    "return": 36, "enter": 36, "tab": 48, "space": 49, "delete": 51,
-    "escape": 53, "left": 123, "right": 124, "down": 125, "up": 126,
-    "equals": 24, "clear": 71,
-}
-
-MODIFIERS = {
-    "cmd": "command down", "command": "command down",
-    "shift": "shift down", "opt": "option down", "option": "option down",
-    "ctrl": "control down", "control": "control down",
-}
-
-
-def press_key(key: str, *, modifiers: list[str] | None = None) -> str:
-    """Press one key, optionally with modifiers. `key` is either a name from
-    KEY_CODES or a literal character."""
-    mods = modifiers or []
-    using = ""
-    if mods:
-        parts = [MODIFIERS[m.lower()] for m in mods if m.lower() in MODIFIERS]
-        if parts:
-            using = f" using {{{', '.join(parts)}}}"
-    k = key.lower()
-    if k in KEY_CODES:
-        script = f'tell application "System Events" to key code {KEY_CODES[k]}{using}'
-    else:
-        esc = key.replace("\\", "\\\\").replace('"', '\\"')
-        script = f'tell application "System Events" to keystroke "{esc}"{using}'
-    ok, err = osascript(script)
-    return "ok" if ok else f"error: {err}"
-
-
-def type_text(text: str) -> str:
-    """Type a literal string via System Events."""
-    esc = text.replace("\\", "\\\\").replace('"', '\\"')
-    ok, err = osascript(
-        f'tell application "System Events" to keystroke "{esc}"'
-    )
-    return "ok" if ok else f"error: {err}"
-
-
-def press_sequence(keys: list[str], *, gap: float = 0.12) -> str:
-    """Press a list of keys in order. This is the Layer-2a workhorse: an
-    arithmetic expression is just a key sequence, and nothing about it needs
-    a model. The inter-key gap exists because apps that animate their
-    buttons (Calculator does) can drop keystrokes delivered faster than
-    their event loop drains."""
-    for k in keys:
-        out = press_key(k)
-        if out.startswith("error"):
-            return f"error: at key {k!r}: {out}"
+def press_sequence(keys, *, gap=0.12):
+    for key in keys:
+        press_key(str(key))
         time.sleep(gap)
     return "ok"
 
+def type_text(text, *, element_index=None):
+    driver = get_driver()
+    args = {**driver.window_args(), "text": text}
+    if element_index is not None:
+        args["element_index"] = element_index
+    driver.call("type_text", args)
+    return "ok"
 
-# ── pointer ─────────────────────────────────────────────────────────────────
-def click(x: int, y: int, *, settle: float = 0.35) -> str:
-    """Left-click at a global screen point."""
-    try:
-        pt = Quartz.CGPointMake(float(x), float(y))
-        # Move first: some apps only update hover state on a real move, and
-        # a click without one can land on a control that never highlighted.
-        for ev_type in (Quartz.kCGEventMouseMoved,):
-            ev = Quartz.CGEventCreateMouseEvent(
-                None, ev_type, pt, Quartz.kCGMouseButtonLeft)
-            Quartz.CGEventPost(Quartz.kCGHIDEventTap, ev)
-        time.sleep(0.05)
-        for ev_type in (Quartz.kCGEventLeftMouseDown, Quartz.kCGEventLeftMouseUp):
-            ev = Quartz.CGEventCreateMouseEvent(
-                None, ev_type, pt, Quartz.kCGMouseButtonLeft)
-            Quartz.CGEventPost(Quartz.kCGHIDEventTap, ev)
-            time.sleep(0.04)
-        time.sleep(settle)
-        return "ok"
-    except Exception as e:                               # noqa: BLE001
-        return f"error: {type(e).__name__}: {e}"
+def click(x, y):
+    driver = get_driver()
+    driver.call("click", {**driver.window_args(), "x": x, "y": y})
+    return "ok"
 
+def drag(from_x, from_y, to_x, to_y):
+    driver = get_driver()
+    driver.call("drag", {**driver.window_args(), "from_x": from_x, "from_y": from_y,
+                         "to_x": to_x, "to_y": to_y})
+    return "ok"
 
-def drag(from_x: int, from_y: int, to_x: int, to_y: int, *,
-         steps: int = 25) -> str:
-    """Press, move in increments, release. Interpolation is required — a
-    single jump from source to target reads as a teleport and most canvas
-    apps will not register it as a stroke."""
-    try:
-        def post(ev_type, x, y):
-            ev = Quartz.CGEventCreateMouseEvent(
-                None, ev_type, Quartz.CGPointMake(float(x), float(y)),
-                Quartz.kCGMouseButtonLeft)
-            Quartz.CGEventPost(Quartz.kCGHIDEventTap, ev)
-
-        post(Quartz.kCGEventMouseMoved, from_x, from_y)
-        time.sleep(0.05)
-        post(Quartz.kCGEventLeftMouseDown, from_x, from_y)
-        for i in range(1, steps + 1):
-            post(Quartz.kCGEventLeftMouseDragged,
-                 from_x + (to_x - from_x) * i / steps,
-                 from_y + (to_y - from_y) * i / steps)
-            time.sleep(0.012)
-        post(Quartz.kCGEventLeftMouseUp, to_x, to_y)
-        time.sleep(0.2)
-        return "ok"
-    except Exception as e:                               # noqa: BLE001
-        return f"error: {type(e).__name__}: {e}"
-
-
-def scroll(direction: str = "down", amount: int = 5) -> str:
-    try:
-        dy = {"down": -amount, "up": amount}.get(direction, 0)
-        dx = {"right": -amount, "left": amount}.get(direction, 0)
-        ev = Quartz.CGEventCreateScrollWheelEvent(None, Quartz.kCGScrollEventUnitLine,
-                                                  2, dy, dx)
-        Quartz.CGEventPost(Quartz.kCGHIDEventTap, ev)
-        time.sleep(0.25)
-        return "ok"
-    except Exception as e:                               # noqa: BLE001
-        return f"error: {type(e).__name__}: {e}"
+def scroll(direction="down", amount=5):
+    driver = get_driver()
+    driver.call("scroll", {**driver.window_args(), "direction": direction, "amount": amount})
+    return "ok"

@@ -19,9 +19,10 @@ the later layers. The orchestrator's recovery path picks this up via
 the failure_report (it contains the literal token "gateway_blocked")
 and re-invokes the Planner.
 
-This file is the ONLY new code in the integration. The four files
-already on disk (client.py, dom.py, highlight.py, driver.py) are
-ported verbatim from S9SharedCode/code/browser/ and untouched.
+The course integration was ported from S9SharedCode. For multi-product
+comparisons, driver.py now retains the text observed on visited pages;
+this wrapper preserves that evidence instead of replacing it with only
+the last page's extract.
 """
 from __future__ import annotations
 
@@ -68,16 +69,16 @@ _GATEWAY_BLOCK_MARKERS = (
 )
 
 
-def detect_gateway_block(html: str) -> str | None:
+def detect_gateway_block(html: str, *, status_code: int | None = None) -> str | None:
     """Return the block type when `html` looks like a gateway-access page
-    (CAPTCHA / Cloudflare / login wall), else None. Conservative — false
+    (CAPTCHA / Cloudflare / login wall / HTTP access denial), else None. Conservative — false
     positives would mis-route real content to recovery."""
-    if not html:
-        return None
-    h = html.lower()
+    h = (html or "").lower()
     for kind, needle in _GATEWAY_BLOCK_MARKERS:
         if needle.lower() in h:
             return kind
+    if status_code in (401, 403, 429):
+        return f"http_{status_code}"
     return None
 
 
@@ -270,10 +271,11 @@ class BrowserSkill:
             )
             page = await ctx.new_page()
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                response = await page.goto(url, wait_until="domcontentloaded", timeout=45000)
                 # Last-chance gateway-block check on the rendered page (some
                 # walls only show up after JS executes).
-                kind = detect_gateway_block(await page.content())
+                kind = detect_gateway_block(
+                    await page.content(), status_code=response.status if response else None)
                 if kind:
                     await browser.close()
                     out = DriverResult(
@@ -293,11 +295,11 @@ class BrowserSkill:
                 # _pack_driver can fill BrowserOutput uniformly.
                 result = await drv.run()
                 result.final_url = page.url
-                result.extracted = ""
-                try:
-                    result.extracted = _extract(await page.content())
-                except Exception:                          # noqa: BLE001
-                    pass
+                if not result.extracted:
+                    try:
+                        result.extracted = _extract(await page.content())
+                    except Exception:                          # noqa: BLE001
+                        pass
                 result.turns = len(drv.steps)
                 result.actions = [
                     {"turn": s.turn, "actions": s.actions, "outcome": s.outcome}

@@ -1,5 +1,9 @@
 # Assignment 10 — Computer-Use Skill: Implementation Ideas
 
+Historical brainstorming, superseded by lecture.md, CUA_DRIVER_GUIDE.md, and the
+implemented skill. Statements below about a missing specification describe the
+earlier state; use README.md for current setup and submission requirements.
+
 ## Open dependency (blocks implementation, not design)
 
 The brief names three APIs — `start_recording`, the `page` tool, and

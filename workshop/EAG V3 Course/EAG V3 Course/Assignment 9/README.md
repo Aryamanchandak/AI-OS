@@ -15,7 +15,7 @@ llm_gatewayV9/        LLM gateway service (FastAPI, :8109) — routing, failover
                       /v1/chat, /v1/vision, and the SQLite cost ledger
 S9/code/              the agent
   flow.py             growing-graph orchestrator          [UNMODIFIED]
-  skills.py           skill dispatch                      [UNMODIFIED]
+  skills.py           skill dispatch                      [MODIFIED — see below]
   browser/            the four-layer cascade + drivers
   prompts/*.md        one prompt per skill                [MODIFIED — see below]
   agent_config.yaml   the skill catalogue
@@ -34,7 +34,7 @@ the gateway with `parents[2] / "llm_gatewayV9"`.
 # 1. the gateway
 cd llm_gatewayV9
 uv sync
-cp .env.example .env        # then add a provider key (see below)
+cp ../.env.example ../.env  # then add a provider key (see below)
 uv run main.py              # serves on :8109
 
 # 2. the agent, in a second shell
@@ -51,7 +51,8 @@ clean checkout: the gateway starts fine, but `/v1/providers` returns
 [n:1] planner  failed  err=exception: HTTPStatusError: Server error '503 Service Unavailable'
 ```
 
-Create `llm_gatewayV9/.env` with at least one provider key. The runs documented
+Create `Assignment 9/.env` (beside this README) with at least one provider key.
+The gateway loads that parent file, not `llm_gatewayV9/.env`. The runs documented
 in `VALIDATION.md` used free-tier Gemini, which is why every cost row reads
 `$0.000000`:
 
@@ -71,6 +72,29 @@ curl -s http://localhost:8109/v1/providers | python3 -m json.tool | head
 ```
 
 ## Running a comparison
+
+The current example is a beginner moving from treadmill to road running:
+men's UK 11, USD 200 per pair, delivery to Mumbai. The confirmed profile is
+`S9/code/examples/beginner_runner.yaml`; its request is `beginner_runner.md`
+in the same directory. Live INR prices need a dated exchange-rate source.
+No real retailer comparison has been completed yet. The Hugging Face command
+below is the supplied baseline example.
+
+For a key-free integration check, run `uv run python dry_run_shoes.py` inside
+`S9/code`. It runs real Chromium against local fictional shops through the
+unchanged course executor, with scripted model responses and memory disabled.
+It writes a session, comparison output, summary and `shoes_report.html` under
+`state/sessions/s9-shoes-dry-<id>/`. All prices and stock are fictional; this
+checks browser/runtime/report wiring, not live retailer access or model quality.
+
+After keys are configured, supply both the request and its profile to the live
+agent from `S9/code` (the planner cannot read a YAML file merely named in a prompt):
+
+```bash
+uv run python flow.py "$(cat examples/beginner_runner.md examples/beginner_runner.yaml)"
+```
+
+This reads both files and passes their combined text as the agent's request.
 
 ```bash
 cd S9/code
@@ -128,9 +152,12 @@ matching when two browser nodes run concurrently.
 
 ## What was changed from the shared baseline
 
-The orchestrator is untouched. `flow.py`, `skills.py`, `persistence.py`,
-`recovery.py`, `schemas.py` and everything under `browser/` are byte-identical
-to the shared code.
+The orchestrator (`flow.py`), `persistence.py`, `recovery.py` and `schemas.py`
+are untouched. Browser drivers now retain visited page text and pass it to
+the model; `skills.py` includes original source inputs in critic prompts and
+preserves complete input records rather than silently clipping later sources.
+These changes prepare the multi-retailer shoe example without editing the
+orchestrator. They are covered by `tests/test_comparison_evidence.py`.
 
 | File | Change |
 |---|---|
@@ -148,9 +175,12 @@ to the shared code.
 - `report.py`, all eight sections. Verified two ways: against a synthetic
   fixture, and against a real session persisted by an actual `flow.py` run
   (a failed one — see below) with the live gateway ledger attached.
-- 17 viewer tests, weighted toward failure paths. Full suite: 46 passed.
-- Repo layout, `.gitignore`, architecture note. Diff-verified that the
-  orchestrator and the gateway are byte-identical to the shared baseline.
+- Full local suite: 67 passed, including the real-Chromium key-free shoe run,
+  profile/eligibility cases, source-evidence regressions, and HTTP access blocks.
+  The dry run selected 3 fictional shoes, excluded 3, and recorded 24 actions.
+  Its generated report is review evidence, not a live assignment submission.
+- Repo layout, `.gitignore`, architecture note. The orchestrator remains
+  byte-identical to the supplied course ZIP.
 
 **Done but NOT yet validated against a live model**
 
@@ -160,10 +190,20 @@ to the shared code.
   of the resulting JSON, not the model's ability to produce it. Expect one or
   two rounds of prompt tuning after the first real run.
 
-**Not done — blocked on a provider key**
+## Submission to-do
 
-- The live end-to-end comparison run. A `flow.py "hello"` smoke was attempted
-  and failed at the planner with a gateway 503 because no provider is
-  registered. Once a key is set, run the HF comparison, regenerate the report
-  from that real session id, and walk *that* report through in the demo video.
-- YouTube demo and the final comparison output both depend on that run.
+- [ ] Configure a provider key in `Assignment 9/.env`; never commit the key.
+- [ ] Run the real shoe comparison using the confirmed beginner-runner profile.
+- [ ] Manually verify the exact men's UK 11 variants, stock, Mumbai delivery,
+      prices, dated USD–INR conversion, and evidence behind suitability judgments.
+- [ ] Confirm at least three successful browser interactions and all eight
+      required replay sections, including actual turn counts and usage/cost.
+- [ ] Package the real final table, trace/log, screenshots and replay report;
+      generated outputs are currently excluded from Git. Label dry-run data
+      separately and use the real run as submission evidence.
+- [ ] Update this README and the architecture note with the verified outcome
+      and reproduction instructions. Fix code only where the real run exposes gaps.
+- [ ] Record and upload the YouTube demo showing the request, browser actions,
+      final comparison and replay report.
+- [ ] Review the final changes, commit and push after approval, and confirm
+      the instructor can access the GitHub repository, evidence and video.

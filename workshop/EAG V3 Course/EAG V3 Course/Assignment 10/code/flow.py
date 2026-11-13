@@ -286,6 +286,7 @@ class Executor:
                         failed_skill=failed_skill,
                         error_text=result.error or "",
                         failed_node_id=nid,
+                        error_code=result.error_code,
                     )
                     if decision.action == "skip":
                         print(f"  ↪ {nid} failed ({decision.reason}, "

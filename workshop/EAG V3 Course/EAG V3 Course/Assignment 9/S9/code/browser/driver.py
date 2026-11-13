@@ -86,7 +86,7 @@ SYSTEM_PROMPT_VISION = (
 )
 
 SYSTEM_PROMPT_A11Y = (
-    "You are a browser-driving agent. Each turn you receive ONLY a text "
+    "You are a browser-driving agent. Each turn you receive page text and a "
     "legend of the page's visible interactive elements, formatted as "
     "[id]<tag role=\"role\">name</tag>. There is no screenshot. Make progress "
     "toward the user's goal by emitting a short list of actions. Available "
@@ -151,11 +151,16 @@ class DriverConfig:
     model: Optional[str] = None
 
 
+# Per browser node. Each page observation is at most ~6,000 characters.
+MAX_EVIDENCE_CHARS = 60_000
+
+
 @dataclass
 class DriverResult:
     success: bool
     note: str
     steps: list[StepRecord] = field(default_factory=list)
+    extracted: str = ""
 
 
 # ─── action dispatcher (shared) ──────────────────────────────────────────────
@@ -220,6 +225,38 @@ class BaseDriver:
         self.client = client
         self.config = config
         self.steps: list[StepRecord] = []
+        self.observations: list[str] = []
+        self.page_state = ""
+
+    async def _observe(self, turn: int) -> None:
+        # Capture BEFORE deciding: after navigation the old page is gone.
+        url = self.page.url
+        text = await self.page.locator("body").inner_text(timeout=10000)
+        self.page_state = f"PAGE URL: {url}\nPAGE TEXT:\n{text[:6000]}"
+        if self.page_state not in self.observations:
+            self.observations.append(self.page_state)
+        if self.config.artifacts_dir:
+            from pathlib import Path
+            dest = Path(self.config.artifacts_dir)
+            dest.mkdir(parents=True, exist_ok=True)
+            (dest / f"turn_{turn:02d}_state.txt").write_text(
+                self.page_state, encoding="utf-8")
+
+    def _result(self, success: bool, note: str) -> DriverResult:
+        # Keep the most recent pages whole; say so when earlier ones are left out.
+        kept, size = [], 0
+        for observation in reversed(self.observations):
+            if kept and size + len(observation) > MAX_EVIDENCE_CHARS:
+                break
+            kept.append(observation)
+            size += len(observation)
+        omitted = len(self.observations) - len(kept)
+        parts = kept[::-1]
+        if omitted:
+            parts.insert(0, f"[{omitted} earlier page observations omitted to bound prompt size; "
+                            "they remain in the turn_*_state.txt files]")
+        return DriverResult(success, note, steps=self.steps,
+                            extracted="\n\n--- OBSERVATION ---\n\n".join(parts))
 
     def _history_text(self) -> str:
         if not self.steps:
@@ -239,6 +276,7 @@ class BaseDriver:
         raise NotImplementedError
 
     async def step(self, turn: int) -> tuple[bool, bool, str]:
+        await self._observe(turn)
         snap = await enumerate_interactives(self.page)
         parsed, result = await self._decide(snap, turn)
 
@@ -288,14 +326,12 @@ class BaseDriver:
             if "error" in last.outcome:
                 failures += 1
                 if failures >= self.config.max_failures:
-                    return DriverResult(False, f"giveup after {failures} consecutive failures",
-                                        steps=self.steps)
+                    return self._result(False, f"giveup after {failures} consecutive failures")
             else:
                 failures = 0
             if done:
-                return DriverResult(success, note, steps=self.steps)
-        return DriverResult(False, f"step cap reached ({self.config.max_steps})",
-                            steps=self.steps)
+                return self._result(success, note)
+        return self._result(False, f"step cap reached ({self.config.max_steps})")
 
 
 # ─── Layer 3 — set-of-marks vision ───────────────────────────────────────────
@@ -320,6 +356,7 @@ class SetOfMarksDriver(BaseDriver):
 
         prompt = (
             f"GOAL: {self.config.goal}\n\n"
+            f"{self.page_state}\n\n"
             f"VIEWPORT: {snap.viewport_w}x{snap.viewport_h} (CSS px, dpr={snap.dpr})\n"
             f"INTERACTIVE ELEMENTS ({len(snap.elements)}):\n{snap.legend()}\n\n"
             f"RECENT ACTIONS:\n{self._history_text()}\n\n"
@@ -352,7 +389,7 @@ class A11yDriver(BaseDriver):
 
         prompt = (
             f"GOAL: {self.config.goal}\n\n"
-            f"PAGE URL: {self.page.url}\n"
+            f"{self.page_state}\n\n"
             f"VIEWPORT: {snap.viewport_w}x{snap.viewport_h}\n"
             f"INTERACTIVE ELEMENTS ({len(snap.elements)}):\n{snap.legend()}\n\n"
             f"RECENT ACTIONS:\n{self._history_text()}\n\n"

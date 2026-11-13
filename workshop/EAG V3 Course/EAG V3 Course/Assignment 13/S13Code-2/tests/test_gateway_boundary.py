@@ -37,3 +37,25 @@ async def test_s13code_calls_gateway_without_owning_provider_keys(monkeypatch):
 def test_s13code_does_not_reimplement_gateway_routes(app_client):
     assert app_client.post("/v1/chat", json={}).status_code == 404
     assert app_client.get("/v1/providers").status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_comparison_can_select_provider_and_retain_only_reported_usage(monkeypatch):
+    payloads = []
+
+    async def handler(request):
+        payloads.append(json.loads(request.content))
+        return httpx.Response(200, json={"text": "done", "provider": "advisor-slot", "model": "review-model",
+            "input_tokens": 120, "output_tokens": 40, "latency_ms": 25, "stop_reason": "end_turn",
+            "internal_secret": "never-forward"})
+
+    monkeypatch.setenv("S13_GATEWAY_PROVIDER", "default-worker")
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        gateway = GatewayClient("http://gateway.test", client=http)
+        result = await gateway.complete("question", "system", provider="advisor-slot")
+        await gateway.complete("question", "system")
+    assert [payload["provider"] for payload in payloads] == ["advisor-slot", "default-worker"]
+    assert result["input_tokens"] == 120 and result["output_tokens"] == 40
+    assert result["latency_ms"] == 25
+    assert "internal_secret" not in result
+    assert "cost" not in result  # Missing usage/cost is not invented or treated as free.

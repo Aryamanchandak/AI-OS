@@ -425,7 +425,7 @@ class S13Runtime:
         if os.getenv("S13_PLANNER_LLM", "0").lower() in {"1", "true", "yes"}:
             planner = ConstrainedGraphPatchPlanner(llm, deterministic, goal=prompt)
         role_workers = {role: run_role for role in ("distiller", "summariser", "formatter", "coder_validator")}
-        report = await LiveGraphExecutor(self.graph, planner, {
+        await LiveGraphExecutor(self.graph, planner, {
             "memory_recall": recall, "remember_explicit_fact": remember_explicit,
             "web_search": run_search, "fetch_url": run_fetch, "index_file": run_index,
             "list_directory": list_directory, "read_file": run_read_file, "create_reminder": create_reminder,
@@ -447,7 +447,7 @@ class S13Runtime:
         latest = self.graph.latest_event(run_id)
         approvals = [{"node_id": node_id, "action": snapshot.nodes[node_id]["input"].get("action"),
                       "reason": snapshot.nodes[node_id]["input"].get("reason"),
-                      "expected_sequence": latest.sequence if latest else None} for node_id in waiting
+                      "expected_sequence": latest.sequence if latest else None} for node_id in waiting]
         return {"run_id": run_id, "status": status,
                 "answer": answer.get("answer", ""), "provider": answer.get("provider"),
                 "model": answer.get("model"), "approvals": approvals,

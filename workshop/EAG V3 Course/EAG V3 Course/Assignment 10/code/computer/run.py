@@ -1,249 +1,179 @@
-"""Run the three assignment tasks and record their trajectories.
-
-    python -m computer.run              # all three
-    python -m computer.run calculator   # one
-    python -m computer.run --preflight  # check permissions only
-
-Each task gets whatever environment setup it needs (launching VS Code with
-the debugging flag, opening the canvas page) before the skill runs, then the
-skill's cascade takes over. Setup lives here rather than in the skill
-because "make the world ready" is the harness's job — the skill's job is to
-drive whatever it finds.
-"""
+"""Run or plan the assignment tasks; imports and --dry-run never touch the desktop."""
 from __future__ import annotations
-
 import asyncio
 import json
-import httpx
-import subprocess
+import socket
 import sys
+import tempfile
 import time
 from pathlib import Path
 
 from schemas import NodeSpec
-
-from . import input as osinput
-from .ax import ax_available
-from .cdp import CDPError, list_targets
+from .backend import CuaDriver, CuaError, driver_scope, get_driver
 from .skill import ComputerSkill
-from .tasks import TASKS, VSCODE_DEBUG_PORT, canvas_url
-
+from .tasks import TASKS, canvas_url
 
 ROOT = Path(__file__).resolve().parent.parent
-TRAJ_ROOT = ROOT / "state" / "trajectories"
+TRAJ_ROOT = ROOT.parent / "evidence" / "trajectories"
 
 
-# ── preflight ───────────────────────────────────────────────────────────────
-def preflight() -> dict:
-    """Report the OS grants the cascade needs. Checked up front because both
-    failures are silent at the API level: an ungranted AX read returns an
-    empty tree, and an ungranted screen capture returns a desktop-wallpaper
-    image — each looks like a bad model rather than a missing permission."""
-    checks = {}
-    checks["accessibility"] = ax_available()
-
+def preflight():
+    driver = CuaDriver()
     try:
-        from .screen import capture
-        png, scale = capture()
-        checks["screen_recording"] = len(png) > 10_000
-        checks["display_scale"] = scale
-    except Exception as e:                               # noqa: BLE001
-        checks["screen_recording"] = False
-        checks["screen_error"] = f"{type(e).__name__}: {e}"
-
-    return checks
+        driver.require_daemon()
+        checks = driver.call("check_permissions", {"prompt": False})
+        return {"driver": True, **checks}
+    except (CuaError, PermissionError) as exc:
+        return {"driver": False, "error": str(exc)}
 
 
-def print_preflight(checks: dict) -> bool:
-    print("Preflight")
-    print(f"  Accessibility permission : {'OK' if checks.get('accessibility') else 'MISSING'}")
-    print(f"  Screen Recording         : {'OK' if checks.get('screen_recording') else 'MISSING'}")
-    if checks.get("display_scale"):
-        print(f"  Display scale            : {checks['display_scale']}x")
-    ok = checks.get("accessibility") and checks.get("screen_recording")
-    if not ok:
-        print(
-            "\n  Grant these to the app running this script (Terminal / "
-            "iTerm / VS Code):\n"
-            "    System Settings > Privacy & Security > Accessibility\n"
-            "    System Settings > Privacy & Security > Screen Recording\n"
-            "  Then restart that app — macOS only re-reads the grant on "
-            "process start."
-        )
-    return bool(ok)
+def print_preflight(checks):
+    print("Preflight (no permission dialogs)")
+    for key in ("driver", "accessibility", "screen_recording"):
+        print(f"  {key}: {'OK' if checks.get(key) is True else 'MISSING'}")
+    if checks.get("error"):
+        print(f"  {checks['error']}")
+    return (all(checks.get(k) is True for k in ("driver", "accessibility", "screen_recording"))
+            and checks.get("screen_recording_capturable", True) is True)
 
 
-# ── per-task environment setup ──────────────────────────────────────────────
-def setup_calculator() -> tuple[bool, str]:
-    ok, err = osinput.launch_app("Calculator")
-    if not ok:
-        return False, f"could not launch Calculator: {err}"
-    # Clear any state left by a previous run, so 611 on the display can only
-    # have come from this run's key sequence.
-    osinput.press_key("escape")
-    time.sleep(0.3)
-    return True, "Calculator launched and cleared"
+def _remember_launch(meta, launched):
+    if not isinstance(launched, dict) or not launched.get("pid"):
+        raise CuaError("launch_app returned no process ID")
+    meta["pid"] = int(launched["pid"])
+    windows = launched.get("windows", [])
+    if windows:
+        meta["window_id"] = int(windows[0]["window_id"])
 
 
-def setup_vscode() -> tuple[bool, str]:
-    """Launch the Electron editor with the remote debugging port open.
+def setup_calculator(meta):
+    _remember_launch(meta, get_driver().call("launch_app", {"bundle_id": "com.apple.calculator"}))
+    return True, "Calculator launched; clear is part of the recorded key sequence"
 
-    Two Electron facts drive the shape of this function:
 
-    1. CDP only exists if the process was started with
-       `--remote-debugging-port`. You cannot enable it on a running instance.
-    2. Launching the binary again while an instance is running normally just
-       signals that instance to open a window — the new flags are discarded.
-
-    Passing a distinct `--user-data-dir` defeats (2): Electron treats it as a
-    separate instance and genuinely starts a new process with our flags. That
-    matters because the alternative is quitting the editor the user is
-    working in, which is not an acceptable side effect of running a test."""
-    marker = ROOT / "state" / "s10_marker.txt"
-    marker.parent.mkdir(parents=True, exist_ok=True)
-    marker.write_text(
-        "Session 10 Computer-Use skill — Electron page-path marker file.\n"
-        "The vscode task reads this file's name out of the live workbench "
-        "DOM over CDP.\n"
-    )
-
-    # Synchronous on purpose: setup runs inside the runner's event loop, so
-    # asyncio.run() here would raise. A blocking GET is also the honest shape
-    # for "wait until the port answers".
-    def port_live() -> bool:
+def _port_free(port):
+    with socket.socket() as probe:
         try:
-            r = httpx.get(f"http://127.0.0.1:{VSCODE_DEBUG_PORT}/json/list",
-                          timeout=2.0)
-            return r.status_code == 200
-        except Exception:                                # noqa: BLE001
+            probe.bind(("127.0.0.1", port))
+            return True
+        except OSError:
             return False
 
-    if port_live():
-        return True, f"CDP already live on {VSCODE_DEBUG_PORT}"
 
-    # Prefer VS Code proper; fall back to Cursor, which is the same
-    # workbench and so the same DOM selectors.
-    candidates = [
-        ("/Applications/Visual Studio Code.app/Contents/MacOS/Electron", "VS Code"),
-        ("/Applications/Cursor.app/Contents/MacOS/Cursor", "Cursor"),
-    ]
-    app, label = next(((p, n) for p, n in candidates if Path(p).exists()),
-                      (None, None))
-    if not app:
-        return False, ("no Electron editor found (looked for VS Code and "
-                       "Cursor in /Applications)")
-
-    profile = ROOT / "state" / "s10_electron_profile"
-    profile.mkdir(parents=True, exist_ok=True)
-    subprocess.Popen(
-        [app, f"--remote-debugging-port={VSCODE_DEBUG_PORT}",
-         f"--user-data-dir={profile}", "-n", str(marker)],
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        # Detach into its own session. Without this the editor inherits our
-        # process group and dies with the shell that started the run — which
-        # kills the CDP endpoint the task depends on, intermittently and
-        # only after setup has already reported success.
-        start_new_session=True,
-    )
-    # The renderer registers its CDP target a beat after the process starts,
-    # and a cold profile is slower still — poll instead of guessing a sleep.
-    for _ in range(40):
-        time.sleep(1.0)
-        if port_live():
-            return True, f"{label} launched with CDP on {VSCODE_DEBUG_PORT}"
-    return False, f"{label} started but CDP never came up on {VSCODE_DEBUG_PORT}"
+def setup_vscode(meta):
+    marker = ROOT / "state" / "s10_marker.txt"
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("Session 10 Computer-Use skill — Electron page-path marker.\n")
+    # An earlier run's editor window may still hold the usual port. Never
+    # attach to a port something else owns; move to the next unused one.
+    preferred = int(meta["electron_debugging_port"])
+    port = next((p for p in range(preferred, preferred + 10) if _port_free(p)), None)
+    if port is None:
+        return False, f"Debugging ports {preferred}-{preferred + 9} are all occupied; quit earlier editor runs"
+    meta["electron_debugging_port"] = port
+    candidates = [("Visual Studio Code", "com.microsoft.VSCode"), ("Cursor", "com.todesktop.230313mzl4w4u92")]
+    editor = next(((name, bundle) for name, bundle in candidates
+                   if Path(f"/Applications/{name}.app").exists()), None)
+    if editor is None:
+        return False, "Neither VS Code nor Cursor is installed"
+    name, bundle = editor
+    profile = Path(tempfile.mkdtemp(prefix="s10_electron_", dir=marker.parent))
+    launched = get_driver().call("launch_app", {
+        "bundle_id": bundle, "electron_debugging_port": port,
+        "creates_new_application_instance": True,
+        "additional_arguments": [f"--user-data-dir={profile}", "-n", str(marker)],
+    })
+    meta["app"] = name
+    meta["activate"] = False
+    _remember_launch(meta, launched)
+    time.sleep(3)
+    return True, f"Separate {name} profile launched with debugging port {port}"
 
 
-def setup_canvas() -> tuple[bool, str]:
-    url = canvas_url()
-    subprocess.run(["open", "-a", "Google Chrome", url], capture_output=True)
-    time.sleep(2.5)
-    osinput.activate_app("Google Chrome")
-    time.sleep(1.0)
-    return True, f"canvas game opened: {url}"
+def setup_canvas(meta):
+    state = ROOT / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    profile = Path(tempfile.mkdtemp(prefix="s10_chrome_", dir=state))
+    launched = get_driver().call("launch_app", {
+        "bundle_id": "com.google.Chrome", "creates_new_application_instance": True,
+        "additional_arguments": [f"--user-data-dir={profile}", "--no-first-run",
+                                 "--no-default-browser-check", "--new-window", canvas_url()],
+    })
+    _remember_launch(meta, launched)
+    time.sleep(2)
+    return True, "Fresh canvas target opened in a separate Chrome profile"
 
 
-SETUP = {
-    "calculator": setup_calculator,
-    "vscode": setup_vscode,
-    "canvas": setup_canvas,
-}
+SETUP = {"calculator": setup_calculator, "vscode": setup_vscode, "canvas": setup_canvas}
 
 
-# ── runner ──────────────────────────────────────────────────────────────────
-async def run_task(name: str) -> dict:
+async def run_task(name):
     meta = dict(TASKS[name])
-    print(f"\n{'=' * 68}\nTASK: {name}\n  goal: {meta['goal'][:90]}\n{'=' * 68}")
-
-    setup = SETUP.get(name)
-    if setup:
-        ok, note = setup()
-        print(f"  setup: {note}")
-        if not ok:
-            return {"task": name, "success": False, "error": f"setup failed: {note}"}
-
     skill = ComputerSkill(trajectories_root=str(TRAJ_ROOT))
-    result = await skill.run(NodeSpec(skill="computer", metadata=meta))
-
-    out = result.output or {}
-    print(f"  -> success={result.success} layer={out.get('path')} "
-          f"turns={out.get('turns')} vision_calls={out.get('vision_calls', 0)}")
+    result = await skill.run(NodeSpec(skill="computer", metadata=meta), setup=SETUP[name])
+    out = result.output
+    record = {"task": name, "success": result.success, "layer": out.get("path"),
+              "turns": out.get("turns", 0), "vision_calls": out.get("vision_calls", 0),
+              "trajectory_dir": out.get("trajectory_dir"), "error": result.error}
+    print(f"  [{'PASS' if result.success else 'FAIL'}] {name}: "
+          f"layer={record['layer']} turns={record['turns']} vision_calls={record['vision_calls']}")
     if result.error:
-        print(f"  -> error: {result.error}")
-    if out.get("trajectory_dir"):
-        print(f"  -> trajectory: {out['trajectory_dir']}")
-
-    return {
-        "task": name,
-        "success": result.success,
-        "layer": out.get("path"),
-        "turns": out.get("turns"),
-        "vision_calls": out.get("vision_calls", 0),
-        "trajectory_dir": out.get("trajectory_dir"),
-        "error": result.error,
-    }
+        print(f"    {result.error}")
+    return record
 
 
-async def main(argv: list[str]) -> int:
+def constraints_pass(results):
+    successful = [r for r in results if r.get("success")]
+    return (len({r["task"] for r in successful}) >= 3
+            and any(r.get("vision_calls") == 0 for r in successful)
+            and any((r.get("vision_calls") or 0) > 0 for r in successful)
+            and any(r.get("layer") == "page" for r in successful))
+
+
+async def main(argv):
+    flags = {"--preflight", "--dry-run"}
+    unknown = [arg for arg in argv if arg not in TASKS and arg not in flags]
+    if unknown:
+        print(f"Unknown arguments: {', '.join(unknown)}")
+        return 2
+    if "--preflight" in argv and len(argv) != 1:
+        print("--preflight must be used on its own")
+        return 2
+    names = list(dict.fromkeys(arg for arg in argv if arg in TASKS)) or list(TASKS)
+    if "--dry-run" in argv:
+        print("PLAN ONLY — no daemon, apps, screenshots, permission checks, or model calls")
+        for name in names:
+            task = TASKS[name]
+            print(f"  {name}: {task['goal']}")
+        print(f"  Evidence destination: {TRAJ_ROOT}")
+        return 0
     if "--preflight" in argv:
         return 0 if print_preflight(preflight()) else 1
-
-    names = [a for a in argv if a in TASKS] or list(TASKS)
-    checks = preflight()
-    print_preflight(checks)
-
+    if not print_preflight(preflight()):
+        return 1
     results = []
-    for n in names:
+    for name in names:
         try:
-            results.append(await run_task(n))
-        except Exception as e:                           # noqa: BLE001
-            print(f"  !! {type(e).__name__}: {e}")
-            results.append({"task": n, "success": False,
-                            "error": f"{type(e).__name__}: {e}"})
-
-    print(f"\n{'=' * 68}\nSUMMARY")
-    for r in results:
-        flag = "PASS" if r["success"] else "FAIL"
-        print(f"  [{flag}] {r['task']:<11} layer={r.get('layer')} "
-              f"vision_calls={r.get('vision_calls')}")
-
-    # The assignment's three constraints, checked against what actually ran
-    # rather than against what was intended.
-    zero_vision = [r for r in results if r.get("success") and r.get("vision_calls") == 0]
-    used_vision = [r for r in results if r.get("success") and (r.get("vision_calls") or 0) > 0]
-    used_page = [r for r in results if r.get("success") and r.get("layer") == "page"]
-    print("\nCONSTRAINTS")
-    print(f"  >=1 task with zero vision calls : "
-          f"{'YES — ' + zero_vision[0]['task'] if zero_vision else 'NO'}")
-    print(f"  >=1 task using vision           : "
-          f"{'YES — ' + used_vision[0]['task'] if used_vision else 'NO'}")
-    print(f"  >=1 task on the Electron page   : "
-          f"{'YES — ' + used_page[0]['task'] if used_page else 'NO'}")
-
+            results.append(await run_task(name))
+        except Exception as exc:
+            results.append({"task": name, "success": False, "error": f"{type(exc).__name__}: {exc}"})
+    full_run = set(names) == set(TASKS)
+    passed = constraints_pass(results)
+    print(f"CONSTRAINTS: {'PASS' if passed else 'INCOMPLETE'}")
     TRAJ_ROOT.mkdir(parents=True, exist_ok=True)
-    (TRAJ_ROOT / "summary.json").write_text(json.dumps(results, indent=2))
-    print(f"\n  trajectories: {TRAJ_ROOT}")
-    return 0 if all(r["success"] for r in results) else 1
+    portable = [{**r, "trajectory_dir": Path(r["trajectory_dir"]).name if r.get("trajectory_dir") else None}
+                for r in results]
+    # A single-task rerun replaces only its own row; the other tasks' latest
+    # results stay, so the evidence check still sees all three.
+    summary_path = TRAJ_ROOT / "summary.json"
+    try:
+        previous = json.loads(summary_path.read_text())
+    except (OSError, ValueError):
+        previous = []
+    kept = [row for row in previous if isinstance(row, dict) and row.get("task") not in names] \
+        if isinstance(previous, list) else []
+    summary_path.write_text(json.dumps(kept + portable, indent=2))
+    return 0 if all(r["success"] for r in results) and (passed or not full_run) else 1
 
 
 if __name__ == "__main__":

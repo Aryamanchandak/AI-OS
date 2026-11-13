@@ -13,7 +13,8 @@ class GatewayClient:
         self._client = client or httpx.AsyncClient(timeout=120)
         self._owns_client = client is None
 
-    async def complete(self, prompt: str, system: str, *, session: str | None = None) -> dict[str, Any]:
+    async def complete(self, prompt: str, system: str, *, session: str | None = None,
+                       provider: str | None = None) -> dict[str, Any]:
         payload: dict[str, Any] = {
             "messages": [{"role": "user", "content": prompt}],
             "system": system,
@@ -25,13 +26,19 @@ class GatewayClient:
         }
         # "gemini" is a logical gateway provider. GLC expands it to the
         # independently metered gemini_1..N key pool; S13Code never sees keys.
-        if provider := os.getenv("S13_GATEWAY_PROVIDER"):
-            payload["provider"] = provider
+        selected = provider or os.getenv("S13_GATEWAY_PROVIDER")
+        if selected:
+            payload["provider"] = selected
         response = await self._client.post(f"{self.base_url}/v1/chat", json=payload)
         if response.status_code >= 400:
             raise RuntimeError(f"GLC /v1/chat returned {response.status_code}: {response.text[:500]}")
         body = response.json()
-        return {"text": body.get("text", ""), "provider": body.get("provider"), "model": body.get("model")}
+        result = {"text": body.get("text", ""), "provider": body.get("provider"), "model": body.get("model")}
+        for field in ("input_tokens", "output_tokens", "cache_creation_input_tokens",
+                      "cache_read_input_tokens", "latency_ms", "stop_reason"):
+            if field in body:
+                result[field] = body[field]
+        return result
 
     async def health(self) -> dict[str, Any]:
         response = await self._client.get(f"{self.base_url}/healthz", timeout=3)

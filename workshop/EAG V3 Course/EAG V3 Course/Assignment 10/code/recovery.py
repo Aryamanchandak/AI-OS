@@ -56,6 +56,7 @@ def plan_recovery(
     failed_skill: str,
     error_text: str,
     failed_node_id: str,
+    error_code: str | None = None,
 ) -> RecoveryDecision:
     """Decide what to do with a node failure that is NOT a critic-verdict
     failure. The critic-fail path is handled separately in the Executor
@@ -70,6 +71,9 @@ def plan_recovery(
       reason=upstream_failure, failed=other     → replan
     """
     reason = classify_failure(error_text)
+    if error_code in {"permission_denied", "app_unavailable"}:
+        return RecoveryDecision(action="skip", reason=reason,
+                                note=f"human setup required ({error_code}); planner cannot fix it")
     if reason == "transient":
         return RecoveryDecision(
             action="skip", reason=reason,

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from s13code.core.live_graph.store import GraphMutationError
 from s13code.core.memory import MemoryKind, MemoryScope, Principal
+from s13code.advisor import Consultation, ResearchAdvisor
 
 router = APIRouter(prefix="/v1/agent", tags=["S13 live agent"])
 
@@ -29,6 +30,22 @@ class ScopeBody(BaseModel):
 
 class RunBody(ScopeBody):
     prompt: str = Field(min_length=1, max_length=40_000)
+
+
+class AdvisorBody(ScopeBody, Consultation):
+    pass
+
+
+@router.post("/advisor")
+async def consult_advisor(body: AdvisorBody, request: Request):
+    runtime = request.app.state.s13_runtime
+    try:
+        return await ResearchAdvisor(runtime.memory, runtime.graph).consult(
+            question=body.question, draft=body.draft, claims=body.claims, scope=body.scope(),
+            llm=lambda prompt, system: gateway_text_llm(request.app, prompt, system),
+        )
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
 
 
 class ResumeBody(BaseModel):

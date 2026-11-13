@@ -1,29 +1,24 @@
-"""Computer-use drivers — Layer 2b (AX tree, text LLM) and Layer 3 (vision).
+"""Shared AX/vision execution: one grounded action, re-scan, then judgment.
 
-Structurally identical to browser/driver.py, and for the same reason: the
-two layers differ only in `_decide()`. Layer 2b sends the AX legend alone to
-/v1/chat; Layer 3 sends an annotated screenshot to /v1/vision. Everything
-else — the action vocabulary, the dispatcher, the per-turn loop, the
-failure and done logic — is shared. Keeping them one class with one
-override is what makes "Layer 3 is Layer 2b plus a screenshot" true in the
-code rather than just in the comments.
-
-Every LLM call passes through `Recorder.note_llm_call`, which is how the
-zero-vision constraint stays auditable.
+The existing loop and contracts are retained; cua-driver owns OS interactions.
+Prompts live in prompts/computer_ax.md and prompts/computer_vision.md.
 """
 from __future__ import annotations
 
 import asyncio
 import time
+import math
+from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
 from browser.client import V9Client
 
 from . import input as osinput
+from .backend import get_driver
 from .ax import UISnapshot, enumerate_ui
 from .recorder import Recorder
-from .screen import annotate, capture, to_data_url
+from .screen import annotate, image_bytes, to_data_url
 
 
 # ── action vocabulary (shared) ──────────────────────────────────────────────
@@ -36,7 +31,7 @@ ACTION_SCHEMA: dict = {
         "actions": {
             "type": "array",
             "minItems": 1,
-            "maxItems": 2,
+            "maxItems": 1,
             "items": {
                 "type": "object",
                 "additionalProperties": False,
@@ -45,9 +40,11 @@ ACTION_SCHEMA: dict = {
                     "type": {
                         "type": "string",
                         "enum": ["click", "type", "key", "hotkey", "scroll",
-                                 "drag", "wait", "done"],
+                                 "drag", "wait", "done", "escalate"],
                     },
                     "mark":    {"type": "integer"},
+                    "x":       {"type": "number"},
+                    "y":       {"type": "number"},
                     "value":   {"type": "string"},
                     "modifiers": {"type": "array", "items": {"type": "string"}},
                     "clear":   {"type": "boolean"},
@@ -67,58 +64,9 @@ ACTION_SCHEMA: dict = {
 }
 
 
-_ACTIONS_DOC = (
-    "  click(mark)                — click the centre of the element\n"
-    "  type(mark, value, clear?)  — focus the element then type `value`\n"
-    "  key(value, modifiers?)     — press a key, e.g. key('s', ['cmd'])\n"
-    "  hotkey(value, modifiers?)  — alias of key, for chords\n"
-    "  scroll(direction, amount?) — direction in ['up','down','left','right']\n"
-    "  drag(from_x,from_y,to_x,to_y) — pointer drag in SCREEN POINTS\n"
-    "  wait(seconds)              — pause to let the UI settle\n"
-    "  done(success, note)        — finish; success=true if the goal is met\n"
-)
-
-SYSTEM_PROMPT_AX = (
-    "You are a desktop-driving agent on macOS. Each turn you receive ONLY a "
-    "text legend of the frontmost window's accessibility elements, formatted "
-    "as [id]<tag role=\"AXRole\" value=\"...\">name</tag>. There is no "
-    "screenshot. Make progress toward the goal by emitting a short list of "
-    "actions. Available actions:\n" + _ACTIONS_DOC +
-    "\nCHOOSING ELEMENTS:\n"
-    "  - You CANNOT see the screen. Rely on role, name and value.\n"
-    "  - `value` is the live state of a control. For a text field or a "
-    "    display, the value — not the name — tells you what is currently "
-    "    there. Read it before deciding you are done.\n"
-    "  - AXStaticText elements are usually labels or readouts, not buttons. "
-    "    Prefer AXButton / AXTextField / AXMenuItem as click targets.\n"
-    "\nCRITICAL RULES:\n"
-    "  - Never bundle `done` with other actions in the same turn. After an "
-    "    action, observe the next turn's legend to confirm the state changed "
-    "    the way you expected, then declare done.\n"
-    "  - Menus are stateful: clicking a menu bar item reveals its items only "
-    "    on the NEXT turn. Never chain a click after a menu-opening click.\n"
-    "  - At most 2 actions per turn. Most turns should be ONE action.\n"
-    "Be terse in `thinking` — one or two sentences."
-)
-
-SYSTEM_PROMPT_VISION = (
-    "You are a desktop-driving agent on macOS. Each turn you receive a "
-    "screenshot of the screen with numbered coloured boxes over candidate "
-    "elements, plus a text legend mapping each number to its role and name. "
-    "Some targets — canvas, game boards, drawings — have NO box, because "
-    "they expose no accessibility information. For those, use drag() and "
-    "click() with explicit coordinates read off the screenshot.\n"
-    "Available actions:\n" + _ACTIONS_DOC +
-    "\nCOORDINATES: the screenshot may be downscaled for transport, but you "
-    "must emit coordinates in SCREEN POINTS as shown in the legend's "
-    "geometry hints. When in doubt, prefer clicking a numbered mark over "
-    "guessing a coordinate.\n"
-    "\nCRITICAL RULES:\n"
-    "  - Never bundle `done` with other actions. Confirm the change in the "
-    "    next screenshot first.\n"
-    "  - At most 2 actions per turn.\n"
-    "Be terse in `thinking` — one or two sentences."
-)
+PROMPTS = Path(__file__).resolve().parents[1] / "prompts"
+SYSTEM_PROMPT_AX = (PROMPTS / "computer_ax.md").read_text()
+SYSTEM_PROMPT_VISION = (PROMPTS / "computer_vision.md").read_text()
 
 
 # ── shared records ──────────────────────────────────────────────────────────
@@ -164,16 +112,31 @@ def dispatch(action: dict, snap: UISnapshot) -> str:
     t = action.get("type", "")
 
     if t in ("click", "type"):
+        driver = get_driver()
+        target = {"pid": snap.pid, "window_id": snap.window_id}
+        if t == "click" and "mark" not in action:
+            x, y = action.get("x"), action.get("y")
+            if (type(x) not in (int, float) or type(y) not in (int, float)
+                    or not math.isfinite(x) or not math.isfinite(y) or x < 0 or y < 0):
+                return "error: click requires a valid mark or nonnegative x,y"
+            width = snap.screenshot.get("screenshot_width")
+            height = snap.screenshot.get("screenshot_height")
+            if (width and x >= width) or (height and y >= height):
+                return "error: click is outside the window screenshot"
+            driver.call("click", {**target, "x": x, "y": y})
+            return "ok"
         el = snap.by_id(int(action.get("mark", -1)))
         if not el:
             return f"error: no element with mark {action.get('mark')!r}"
-        out = osinput.click(el.cx, el.cy)
-        if out.startswith("error") or t == "click":
-            return out
-        if action.get("clear", True):
-            osinput.press_key("a", modifiers=["cmd"])
-            osinput.press_key("delete")
-        return osinput.type_text(str(action.get("value", "")))
+        if t == "click":
+            driver.call("click", {**target, "element_index": el.id})
+        elif action.get("clear", True):
+            driver.call("set_value", {**target, "element_index": el.id,
+                                      "value": str(action.get("value", ""))})
+        else:
+            driver.call("type_text", {**target, "element_index": el.id,
+                                      "text": str(action.get("value", ""))})
+        return "ok"
 
     if t in ("key", "hotkey"):
         return osinput.press_key(str(action.get("value", "return")),
@@ -185,7 +148,7 @@ def dispatch(action: dict, snap: UISnapshot) -> str:
         return osinput.drag(int(action["from_x"]), int(action["from_y"]),
                             int(action["to_x"]), int(action["to_y"]))
     if t == "wait":
-        time.sleep(float(action.get("seconds", 0.5)))
+        time.sleep(max(0, min(float(action.get("seconds", 0.5)), 2)))
         return "ok"
     if t == "done":
         return "ok"
@@ -219,13 +182,16 @@ class BaseDriver:
         return "\n".join(lines)
 
     def _snapshot(self) -> UISnapshot:
-        return enumerate_ui(self.config.app)
+        return enumerate_ui(self.config.app, mode="som" if self.LAYER_NAME == "vision" else "ax")
 
     async def _decide(self, snap: UISnapshot, turn: int):
         raise NotImplementedError
 
     async def step(self, turn: int) -> tuple[bool, bool, str]:
         snap = self._snapshot()
+        if self.LAYER_NAME == "ax" and not snap.elements:
+            self.steps.append(StepRecord(turn, "", [], "AX tree has no actionable target"))
+            return True, False, "AX tree has no actionable target; escalate to vision"
         parsed, result = await self._decide(snap, turn)
 
         if not parsed:
@@ -238,10 +204,22 @@ class BaseDriver:
 
         thinking = parsed.get("thinking", "")
         actions = parsed.get("actions") or []
+        if len(actions) != 1:
+            self.steps.append(StepRecord(turn, thinking, [], "error: exactly one action is required"))
+            return False, False, "rejected action batch"
+        if self.LAYER_NAME == "ax" and (actions[0].get("type") == "drag" or
+                                       "x" in actions[0] or "y" in actions[0]):
+            self.steps.append(StepRecord(turn, thinking, [], "text layer cannot infer coordinates"))
+            return True, False, "text layer cannot infer coordinates; escalate to vision"
         outcomes: list[str] = []
         done_seen, success_seen, done_note = False, False, ""
 
         for a in actions:
+            if a.get("type") == "escalate":
+                done_seen, success_seen = True, False
+                done_note = a.get("note", "target absent; escalate")
+                outcomes.append("escalate")
+                break
             if a.get("type") == "done":
                 done_seen = True
                 success_seen = bool(a.get("success", False))
@@ -250,12 +228,16 @@ class BaseDriver:
                 break
             try:
                 outcome = dispatch(a, snap)
+            except PermissionError:
+                raise
             except Exception as e:                       # noqa: BLE001
                 outcome = f"error: {type(e).__name__}: {e}"
             outcomes.append(outcome)
             if outcome.startswith("error"):
                 break
             time.sleep(self.config.pause_between_steps)
+            verified = enumerate_ui(self.config.app)
+            self.rec.artifact(self.LAYER_NAME, f"turn_{turn:02d}_verify.txt", verified.text_dump())
 
         rec = StepRecord(
             turn=turn, thinking=thinking, actions=actions,
@@ -266,7 +248,7 @@ class BaseDriver:
         )
         self.steps.append(rec)
         self.rec.log("step", layer=self.LAYER_NAME, turn=turn,
-                     thinking=thinking, actions=actions, outcome=rec.outcome)
+                     actions=actions, outcome=rec.outcome)
         return done_seen, success_seen, done_note
 
     async def run(self) -> DriverResult:
@@ -310,16 +292,13 @@ class AXDriver(BaseDriver):
             f"HISTORY:\n{self._history_text()}\n\n"
             f"Turn {turn} of {self.config.max_steps}. Emit your actions."
         )
-        self.rec.artifact("ax", f"turn_{turn:02d}_legend.txt", prompt)
+        self.rec.artifact("ax", f"turn_{turn:02d}_legend.txt", snap.legend())
+        self.rec.note_llm_call("ax")
         result = await self.client.chat(
             prompt, schema=ACTION_SCHEMA, schema_name="actions",
             system=self.SYSTEM_PROMPT, provider=self.config.provider,
             model=self.config.model,
         )
-        self.rec.note_llm_call("ax", provider=result.provider, model=result.model,
-                               tokens_in=result.input_tokens,
-                               tokens_out=result.output_tokens,
-                               latency_ms=result.latency_ms)
         return result.parsed, result
 
 
@@ -334,12 +313,12 @@ class VisionDriver(BaseDriver):
     LAYER_NAME = "vision"
 
     async def _decide(self, snap: UISnapshot, turn: int):
-        png, scale = capture()
-        shot = annotate(png, snap.elements, scale)
+        png = image_bytes(snap)
+        shot = annotate(png)
         self.rec.artifact("vision", f"turn_{turn:02d}_screen.png", shot)
 
         legend = "\n".join(
-            f"{e.legend_line()}  @ ({e.cx},{e.cy}) size {e.w}x{e.h}"
+            e.legend_line()
             for e in snap.elements
         ) or "(no accessible elements — this target is canvas-rendered; " \
              "use coordinates read off the screenshot)"
@@ -347,19 +326,16 @@ class VisionDriver(BaseDriver):
         prompt = (
             f"GOAL: {self.config.goal}\n"
             f"APP: {snap.app}\nWINDOW: {snap.window_title}\n\n"
-            f"MARK LEGEND (screen points):\n{legend}\n\n"
+            f"WINDOW SCREENSHOT: {snap.screenshot.get('screenshot_width')} x "
+            f"{snap.screenshot.get('screenshot_height')} pixels\n"
+            f"MARK LEGEND:\n{legend}\n\n"
             f"HISTORY:\n{self._history_text()}\n\n"
             f"Turn {turn} of {self.config.max_steps}. Emit your actions."
         )
-        self.rec.artifact("vision", f"turn_{turn:02d}_prompt.txt", prompt)
+        self.rec.note_llm_call("vision")
         result = await self.client.vision(
             to_data_url(shot), prompt, schema=ACTION_SCHEMA,
             schema_name="actions", system=self.SYSTEM_PROMPT,
             provider=self.config.provider, model=self.config.model,
         )
-        self.rec.note_llm_call("vision", provider=result.provider,
-                               model=result.model,
-                               tokens_in=result.input_tokens,
-                               tokens_out=result.output_tokens,
-                               latency_ms=result.latency_ms)
         return result.parsed, result

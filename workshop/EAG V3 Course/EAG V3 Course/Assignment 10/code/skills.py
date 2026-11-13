@@ -332,7 +332,7 @@ async def run_skill(skill: Skill, node_id: str, graph_nodes,
         from computer.skill import ComputerSkill
         sk = ComputerSkill(
             trajectories_root=str(
-                ROOT / "state" / "sessions" / session_id / "computer"),
+                ROOT.parent / "evidence" / "trajectories" / session_id),
             session=session_id,
         )
         result = await sk.run(node_spec)

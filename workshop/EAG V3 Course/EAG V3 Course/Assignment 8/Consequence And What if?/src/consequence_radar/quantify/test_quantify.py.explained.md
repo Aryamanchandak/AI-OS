@@ -1,7 +1,0 @@
-# `quantify/test_quantify.py`
-
-One test, `test_decimal_formula_currency_record_and_sensitivity`, covering all three functions in `quantify/__init__.py` in sequence.
-
-Builds a volume `Estimate` (`low=10.0, central=12.0, high=14.0` tonnes) and a price `Estimate` (`low=2.5, central=3.0, high=3.5` USD/tonne). `multiply_range` on these gives `low=25.00` (`10.0*2.5`) and `high=49.00` (`14.0*3.5`) — confirming the four-corner min/max logic picks the expected extremes for this monotonic (all-positive) case — and checks `formula == "Q1 * Q2"`, confirming lineage-string formatting. It then runs the multiplication's result through `convert_currency` with an FX `Estimate` (`low=82, central=83, high=84` INR/USD) and checks the output's `currency == "INR"` and `input_estimate_ids == ["Q3", "FX"]` — verifying `convert_currency` correctly chains into `multiply_range` and that its output correctly names the *converted* result (`Q3`) and the FX estimate as its two lineage inputs, not the original pre-conversion estimate. Finally it checks `sensitivity(base, price)["central"] == Decimal("36.00")` (`12.0 * 3.0`).
-
-This test exercises only the successful, well-formed path for all three functions — none of the `EstimateError` branches (missing low/high, missing currency, missing central) are tested here, and the sensitivity `"lower_input"`/`"higher_input"` keys aren't asserted, only `"central"`. It does confirm the module produces exact `Decimal` arithmetic (no float rounding drift) end to end across two chained derivations.

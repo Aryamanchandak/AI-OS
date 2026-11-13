@@ -175,7 +175,9 @@ def render_prompt(skill: Skill, query: str, resolved: list[dict],
     hits_block = _format_memory_hits(memory_hits or [])
     if hits_block:
         parts += ["", f"MEMORY HITS ({len(memory_hits)} from FAISS):", hits_block]
-    parts += ["", "INPUTS:", json.dumps(resolved, indent=2, default=str)[:20_000]]
+    # Browser observations are bounded at capture. Slicing this JSON erased
+    # later retailers and could cut it mid-record without telling the model.
+    parts += ["", "INPUTS:", json.dumps(resolved, indent=2, default=str)]
     return "\n".join(parts)
 
 
@@ -264,6 +266,17 @@ async def run_skill(skill: Skill, node_id: str, graph_nodes,
     skills are LLM-backed and route through the V8 gateway with
     agent=<skill_name> so agent_routing.yaml + cost-by-agent kick in."""
     resolved = resolve_inputs(graph_nodes[node_id]["inputs"], graph_nodes, query)
+    if skill.name == "critic":
+        # The graph wires the proposed output; its source inputs are needed
+        # as evidence too. Enrich only this skill's prompt, not the graph.
+        evidence_ids = []
+        for item in resolved:
+            if item.get("kind") == "upstream":
+                target = graph_nodes[item["id"]]
+                evidence_ids.extend(target.get("inputs") or [])
+        existing = {item["id"] for item in resolved}
+        evidence_ids = list(dict.fromkeys(i for i in evidence_ids if i not in existing))
+        resolved.extend(resolve_inputs(evidence_ids, graph_nodes, query))
     # Per-node sub-question from the Planner's `metadata.question`. Travels
     # into the rendered prompt as a QUESTION: block so a fan-out worker
     # (e.g. one of three researchers spawned to cover three cities) can

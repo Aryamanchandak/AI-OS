@@ -1,6 +1,6 @@
 # S13Proof
 
-`S13Proof` is the verification harness for the separate `S13Code` service. It does not contain another agent runtime. Its editable dependency points to `../S13Code`, so keep both directories side-by-side.
+`S13Proof` is the verification harness for the separate `S13Code` service. It does not contain another agent runtime. Its local dependency points to `../S13Code-2`, so keep both directories side-by-side.
 
 ## Install and run deterministic proofs
 

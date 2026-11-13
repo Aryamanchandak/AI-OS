@@ -89,6 +89,14 @@ def test_birthday_creates_two_real_calendar_artifacts(app_client, monkeypatch):
     _fake_answer(monkeypatch)
     body = app_client.post("/v1/agent/runs", json={"tenant_id": "t", "project_id": "birthday",
         "prompt": "My mom's birthday is 15 May 2026. Remember that and give me a calendar reminder for two weeks before and on the day."}).json()
+    assert body["status"] == "waiting_for_approval"
+    assert "reminder" not in body["graph"]["nodes"]
+    body = app_client.post(f"/v1/agent/runs/{body['run_id']}/approvals/approval", json={
+        "tenant_id": "t", "project_id": "birthday", "decision": "approved",
+        "reviewer_id": "synthetic-reviewer", "idempotency_key": "birthday-regression-01",
+        "expected_sequence": body["approvals"][0]["expected_sequence"],
+    }).json()
+    assert body["status"] == "completed"
     artifacts = body["graph"]["nodes"]["reminder"]["result"]["artifacts"]
     assert len(artifacts) == 2
     assert all(Path(uri.removeprefix("file://")).read_text().startswith("BEGIN:VCALENDAR") for uri in artifacts)

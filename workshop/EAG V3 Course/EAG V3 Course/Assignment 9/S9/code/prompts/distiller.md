@@ -42,6 +42,17 @@ that matters for comparison queries.
   }
 
 Rules for Shape B — these are load-bearing, the Critic checks them:
+  - In shoe comparisons, match the exact model, retailer, size system, size,
+    and colour/variant. A listing's starting price is not evidence of the
+    selected variant's price. Record stock and price only when observed.
+  - Separate confirmed constraints from suitability judgments. For a beginner
+    moving from gym running to road running, cite evidence for the intended
+    use; do not infer gait, pronation, injury protection, or a need for a
+    medical/support shoe. Label suitability conclusions as judgments.
+  - A product failing a confirmed hard constraint must not be presented as
+    qualifying. Unknown stock/size/delivery stays "not stated", not "available".
+    Explain exclusions and shortfalls rather than filling the table with
+    unverified products. Keep review claims attributed to their own sources.
   - EVERY row has EVERY key in `columns`. No ragged rows. When a value
     is genuinely absent from the inputs, write the literal string
     "not stated" — do NOT drop the key and do NOT guess a value.
