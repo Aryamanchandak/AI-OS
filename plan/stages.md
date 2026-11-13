@@ -4,6 +4,20 @@
 
 Node IDs match the plan page (`AI OS plan.html`), which splits three of them: `store` and `events` are parts of `eventlog`; `registry`, `scheduler` and `assistant` are parts of `orch`; `evalgrade` and `evalsci` are parts of `evals`. Interfaces (I1–I20) are defined in `interfaces.md`. Each node's plan is in `nodes/<id>.md`.
 
+## Code baseline — checked 13 Nov 2026
+
+Existing source is not proof of a working AI OS connection. No live runs were performed for this plan update. The root `core/`, `leaves/`, `tests/contracts/` and `tests/fakes/` currently contain only package markers; the planned integration is not implemented.
+
+**Gateway:** `gateway/src/gateway/` contains the API, service, providers and ledger, with tests under `gateway/tests/`. Keep it. The grading profile and `core/llm.py` are missing; real-call acceptance remains unverified. The gateway-only path is settled.
+
+**Learning:** `projects/learning/learning-system/src/study_system/core/study_core.py` already implements generation, due-card retrieval, ratings and practice. Storage and scheduling code exist beside it. The node plan explicitly retains only selected designs and replaces the scheduler with py-fsrs; this is a deliberate adaptation, not an empty starting point. Before implementation, compare existing tests and table layouts against I4/I5 and preserve the useful behaviour covered by those tests. The Telegram connection and new mistake/grading flow remain to be built.
+
+**Judgment:** `projects/reasoning/decision-tracker/src/decision_tracker/` contains service, store and scoring code; `projects/reasoning/steelman-generator/src/steelman/` contains a pipeline and evaluation code. Both have tests. They are implementation candidates, not merely specifications, but neither is connected through the new root leaves. Review their tests and dependencies when Stage 4 enters; do not assume a rewrite or claim they work end to end.
+
+**Other existing projects:** capture, ingestion, the platform shell and life tools live under `projects/`. They remain reference or side-project implementations under the current scope; their existence does not establish capstone integration. Local untracked `ingestion/` and `workshop/` folders are not treated as approved architecture.
+
+**Next task:** establish the existing gateway baseline using its offline tests, then exercise an existing real-call golden case and verify its ledger row. Record actual results before adding the grading profile/case. Implement I1 only after that baseline is understood. Approval for this plan update does not authorize trunk code changes or paid calls. Stage 0 is incomplete until all its done-when checks pass; later stages remain outlines.
+
 ## Capstone scope (frozen until submission, end Dec / Jan)
 
 The submission is the learning-centred system, deployed at a public URL, answering all five asks through one hand-written orchestrator. Nothing outside this map gets built before submission.
@@ -30,7 +44,7 @@ The submission is the learning-centred system, deployed at a public URL, answeri
 
 **Connections:**
 - `core/llm.py` calls the gateway.
-- Every model call is logged: in the gateway ledger, or as a store row if you pick `simple_llm`.
+- Every model call is logged: in the gateway ledger.
 - Every later tool registers through I3.
 - Every later table is migrated through I2.
 
@@ -44,7 +58,7 @@ The submission is the learning-centred system, deployed at a public URL, answeri
 
 **Order:** five bites, one plan file each in `stage-0/`.
 1. `stage-0/1-gateway-end-to-end.md`
-2. `stage-0/2-store.md`, then `3-registry.md`, alongside bite 1
+2. `stage-0/2-store.md`, then `3-registry.md`; sequential unless a measured bottleneck justifies parallel work
 3. `stage-0/4-llm-client.md` (needs 1 and 2)
 4. `stage-0/5-deploy-health.md` (needs 1 and Open #7)
 

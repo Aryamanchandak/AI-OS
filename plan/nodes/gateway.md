@@ -23,12 +23,12 @@ status: detailed
 3. That request is golden-set case #1 in `gateway/tests/golden/cases.yaml`, and `pytest -m golden` passes it.
 
 **Build (about an hour):**
-- You decide what happens to the 19 uncommitted `gateway/` files (review then commit, branch, or stash) before the hour starts.
+**Working-tree baseline:** gateway was clean on 13 Nov 2026. Recheck before implementation; do not use historical changed-file counts as blockers.
 - You put the Anthropic key and `AI_OS_TOKEN` in `gateway/.env`.
 - Add the `answer-grading-v1` profile: Anthropic, `claude-haiku-4-5`. That's the cheap model already in your profiles. Assumed.
 - Run the server and make the call.
 - Check the ledger row.
-- Run the golden test, then the offline tests (182 should still pass).
+- Run the golden test, then the offline tests (record the actual result).
 
 The client side (I1) is `core/llm.py`. It is written in Stage 0 with the other trunk pieces, so the gateway itself gains no code.
 
