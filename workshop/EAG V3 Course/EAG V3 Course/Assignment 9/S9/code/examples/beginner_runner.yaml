@@ -1,0 +1,14 @@
+experience: beginner
+current_surface: treadmill
+intended_surface: road
+budget:
+  amount: 200
+  currency: USD
+size:
+  value: 11
+  system: UK
+category: men
+delivery:
+  city: Mumbai
+  postcode: "400054"
+requested_count: 3

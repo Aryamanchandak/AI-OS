@@ -1,0 +1,322 @@
+release: 0.5.2
+reported_version: 0.5.1
+tools:
+  get_window_state:
+    additionalProperties: false
+    properties:
+      capture_mode:
+        enum:
+        - som
+        - vision
+        - ax
+        type: string
+      pid:
+        type: integer
+      query:
+        type: string
+      screenshot_out_file:
+        type: string
+      session:
+        type: string
+      window_id:
+        type: integer
+    required:
+    - pid
+    - window_id
+    type: object
+  click:
+    additionalProperties: false
+    properties:
+      action:
+        type: string
+      count:
+        type: integer
+      debug_image_out:
+        type: string
+      element_index:
+        type: integer
+      from_zoom:
+        type: boolean
+      modifier:
+        items:
+          type: string
+        type: array
+      pid:
+        type: integer
+      session:
+        type: string
+      window_id:
+        type: integer
+      x:
+        type: number
+      y:
+        type: number
+    required:
+    - pid
+    type: object
+  type_text:
+    additionalProperties: false
+    properties:
+      delay_ms:
+        maximum: 200
+        minimum: 0
+        type: integer
+      element_index:
+        type: integer
+      pid:
+        type: integer
+      session:
+        type: string
+      text:
+        type: string
+      window_id:
+        type: integer
+    required:
+    - pid
+    - text
+    type: object
+  set_value:
+    additionalProperties: false
+    properties:
+      element_index:
+        type: integer
+      pid:
+        type: integer
+      session:
+        type: string
+      value:
+        type: string
+      window_id:
+        type: integer
+    required:
+    - pid
+    - window_id
+    - element_index
+    - value
+    type: object
+  press_key:
+    additionalProperties: false
+    properties:
+      element_index:
+        type: integer
+      key:
+        type: string
+      modifiers:
+        items:
+          type: string
+        type: array
+      pid:
+        type: integer
+      session:
+        type: string
+      window_id:
+        type: integer
+    required:
+    - pid
+    - key
+    type: object
+  hotkey:
+    additionalProperties: false
+    properties:
+      keys:
+        items:
+          type: string
+        minItems: 2
+        type: array
+      pid:
+        type: integer
+      session:
+        type: string
+      window_id:
+        type: integer
+    required:
+    - pid
+    - keys
+    type: object
+  scroll:
+    additionalProperties: false
+    properties:
+      amount:
+        maximum: 50
+        minimum: 1
+        type: integer
+      by:
+        enum:
+        - line
+        - page
+        type: string
+      direction:
+        enum:
+        - up
+        - down
+        - left
+        - right
+        type: string
+      element_index:
+        type: integer
+      pid:
+        type: integer
+      session:
+        type: string
+      window_id:
+        type: integer
+    required:
+    - pid
+    - direction
+    type: object
+  drag:
+    additionalProperties: false
+    properties:
+      button:
+        enum:
+        - left
+        - right
+        - middle
+        type: string
+      duration_ms:
+        maximum: 10000
+        minimum: 0
+        type: integer
+      from_x:
+        type: number
+      from_y:
+        type: number
+      from_zoom:
+        type: boolean
+      modifier:
+        items:
+          type: string
+        type: array
+      pid:
+        type: integer
+      session:
+        type: string
+      steps:
+        maximum: 200
+        minimum: 1
+        type: integer
+      to_x:
+        type: number
+      to_y:
+        type: number
+      window_id:
+        type: integer
+    required:
+    - pid
+    - from_x
+    - from_y
+    - to_x
+    - to_y
+    type: object
+  page:
+    additionalProperties: false
+    properties:
+      action:
+        enum:
+        - execute_javascript
+        - get_text
+        - query_dom
+        - click_element
+        - enable_javascript_apple_events
+        type: string
+      attributes:
+        items:
+          type: string
+        type: array
+      bundle_id:
+        type: string
+      css_selector:
+        type: string
+      javascript:
+        type: string
+      pid:
+        type: integer
+      selector:
+        type: string
+      user_has_confirmed_enabling:
+        type: boolean
+      window_id:
+        type: integer
+    required:
+    - action
+    type: object
+  launch_app:
+    additionalProperties: false
+    properties:
+      additional_arguments:
+        items:
+          type: string
+        type: array
+      bundle_id:
+        type: string
+      creates_new_application_instance:
+        type: boolean
+      electron_debugging_port:
+        type: integer
+      name:
+        type: string
+      urls:
+        items:
+          type: string
+        type: array
+      webkit_inspector_port:
+        type: integer
+    type: object
+  list_windows:
+    additionalProperties: false
+    properties:
+      on_screen_only:
+        type: boolean
+      pid:
+        type: integer
+    type: object
+  check_permissions:
+    additionalProperties: false
+    properties:
+      prompt:
+        type: boolean
+    type: object
+  start_session:
+    additionalProperties: true
+    properties:
+      session:
+        type: string
+    required:
+    - session
+    type: object
+  end_session:
+    additionalProperties: true
+    properties:
+      session:
+        type: string
+    required:
+    - session
+    type: object
+  set_agent_cursor_enabled:
+    additionalProperties: false
+    properties:
+      cursor_id:
+        type: string
+      enabled:
+        type: boolean
+    required:
+    - enabled
+    type: object
+  get_recording_state:
+    additionalProperties: false
+    properties: {}
+    type: object
+  start_recording:
+    additionalProperties: false
+    properties:
+      output_dir:
+        type: string
+      record_video:
+        type: boolean
+    required:
+    - output_dir
+    type: object
+  stop_recording:
+    additionalProperties: false
+    properties: {}
+    type: object

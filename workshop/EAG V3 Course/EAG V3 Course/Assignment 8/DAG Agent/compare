@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+COMPARISON_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$COMPARISON_ROOT"
+# Load the local .env before Python imports or client construction. Use shell
+# assignments (KEY=value); do not put commands in this trusted configuration.
+if [ -f .env ]; then
+    set -a
+    . ./.env
+    set +a
+fi
+export UV_CACHE_DIR="${UV_CACHE_DIR:-$COMPARISON_ROOT/.uv-cache}"
+export MPLCONFIGDIR="${MPLCONFIGDIR:-$COMPARISON_ROOT/.cache/matplotlib}"
+case "${1:-}" in
+    test)
+        shift
+        exec env -u VIRTUAL_ENV uv run --frozen --python 3.11.15 python -m pytest "$@"
+        ;;
+    --portfolio|--agent)
+        shift
+        exec env -u VIRTUAL_ENV uv run --frozen --python 3.11.15 python main.py "$@"
+        ;;
+esac
+exec env -u VIRTUAL_ENV uv run --frozen --python 3.11.15 python cli.py "$@"

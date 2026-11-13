@@ -1,0 +1,54 @@
+question: Compare these supplied architecture notes on storage and deployment.
+criteria:
+- id: storage
+  label: Storage
+  kind: text
+- id: deployment
+  label: Deployment
+  kind: text
+options:
+- id: a
+  name: Design A
+  sources:
+  - id: note_a
+    text: 'Storage: SQLite. Deployment: Single process.'
+    disclosure: Illustrative supplied design note.
+  evidence:
+    storage:
+      value: SQLite
+      source: note_a
+      quote: 'Storage: SQLite.'
+    deployment:
+      value: Single process
+      source: note_a
+      quote: 'Deployment: Single process.'
+- id: b
+  name: Design B
+  sources:
+  - id: note_b
+    text: 'Storage: PostgreSQL. Deployment: Multiple workers.'
+    disclosure: Illustrative supplied design note.
+  evidence:
+    storage:
+      value: PostgreSQL
+      source: note_b
+      quote: 'Storage: PostgreSQL.'
+    deployment:
+      value: Multiple workers
+      source: note_b
+      quote: 'Deployment: Multiple workers.'
+- id: c
+  name: Design C
+  sources:
+  - id: note_c
+    text: 'Storage: In memory. Deployment: Single process.'
+    disclosure: Illustrative supplied design note.
+  evidence:
+    storage:
+      value: In memory
+      source: note_c
+      quote: 'Storage: In memory.'
+    deployment:
+      value: Single process
+      source: note_c
+      quote: 'Deployment: Single process.'

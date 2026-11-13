@@ -1,0 +1,4 @@
+# US keyboard aliases absent from cua-driver 0.5.2's key-name table.
+"*":
+  key: "8"
+  modifiers: [shift]

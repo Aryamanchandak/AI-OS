@@ -1,0 +1,35 @@
+calculator:
+  task: calculator
+  app: Calculator
+  goal: compute 47 * 13 and leave the result on the display
+  keys: [escape, "4", "7", "*", "1", "3", "="]
+  expect: "611"
+  settle: 0.8
+
+vscode:
+  task: vscode
+  app: Cursor
+  goal: read the editor workbench DOM and report the active editor tab
+  electron_debugging_port: 9222
+  page_script: |
+    (() => {
+      const tab = document.querySelector('.tab.active .label-name')
+               || document.querySelector('.tab.active');
+      return JSON.stringify({
+        active_tab: tab ? tab.textContent.trim() : null,
+        title: document.title || '',
+      });
+    })()
+  expect: s10_marker.txt
+  expect_active_tab: s10_marker.txt
+  activate: false
+
+canvas:
+  task: canvas
+  app: Google Chrome
+  goal: >-
+    Click the orange square on the canvas. The grey squares are distractors.
+    Click its centre, then verify the canvas reads HIT before declaring done.
+  max_steps_ax: 3
+  expect_window_title: "CANVAS-GAME: HIT"
+  settle: 1.0

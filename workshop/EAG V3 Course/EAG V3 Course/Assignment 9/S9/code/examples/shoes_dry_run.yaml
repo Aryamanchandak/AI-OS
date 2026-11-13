@@ -1,0 +1,8 @@
+# Fictional products and prices: never use these as shopping recommendations.
+products:
+  - {model: Sample Everyday, retailer: Sample Shop A, price: 120, currency: USD, size: 11, size_system: UK, category: men, in_stock: true, delivery: true, surface: road}
+  - {model: Sample Racer, retailer: Sample Shop A, price: 220, currency: USD, size: 11, size_system: UK, category: men, in_stock: true, delivery: true, surface: road}
+  - {model: Sample Road, retailer: Sample Shop B, price: 150, currency: USD, size: 11, size_system: UK, category: men, in_stock: true, delivery: true, surface: road}
+  - {model: Sample Small, retailer: Sample Shop B, price: 100, currency: USD, size: 10, size_system: UK, category: men, in_stock: true, delivery: true, surface: road}
+  - {model: Sample Easy, retailer: Sample Shop C, price: 180, currency: USD, size: 11, size_system: UK, category: men, in_stock: true, delivery: true, surface: road}
+  - {model: Sample Sold Out, retailer: Sample Shop C, price: 140, currency: USD, size: 11, size_system: UK, category: men, in_stock: false, delivery: true, surface: road}

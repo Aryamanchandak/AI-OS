@@ -1,0 +1,106 @@
+# Skill catalogue.
+#
+# ARCHITECTURAL CONTRACT
+#   A skill is a YAML entry here plus a prompt file in prompts/.
+#   Adding a skill must NOT require touching agent/executor.py.
+#
+#   `runtime` selects one of the Executor's GENERIC mechanisms:
+#     llm     - render prompt, send to Claude, take the text back
+#     sandbox - render prompt, send to Claude, extract a ```python block,
+#               run it in SandboxExecutor, take stdout (+ artifacts) back
+#     tool    - no LLM; dispatch straight to a registered tool in agent/tools.py
+#
+#   A new skill that fits an existing runtime is yaml + prompt only.
+
+model: claude-sonnet-4-6
+
+skills:
+
+  planner:
+    runtime: llm
+    prompt: prompts/planner.md
+    description: Decomposes a query into a DAG of skill invocations.
+
+  retriever:
+    runtime: tool
+    prompt: prompts/retriever.md
+    tool: fetch_prices
+    description: Fetches a daily price history for one ticker.
+
+  coder:
+    runtime: sandbox
+    prompt: prompts/coder.md
+    description: >
+      Writes Python for the SandboxExecutor when the answer requires real
+      computation (CAGR, volatility, Sharpe, weightings) that a text model
+      cannot produce reliably.
+
+  critic:
+    runtime: llm
+    prompt: prompts/critic.md
+    description: >
+      Verifies a flagged producer's output against a checkable property
+      before its successors are allowed to run.
+
+  formatter:
+    runtime: llm
+    prompt: prompts/formatter.md
+    description: Turns upstream node outputs into the final prose answer.
+
+  # --- Part 5: new skill. Not covered by the existing catalogue. ---
+  # Reuses the `sandbox` runtime, so the Executor is untouched.
+  charter:
+    runtime: sandbox
+    prompt: prompts/charter.md
+    description: >
+      Renders a matplotlib chart from upstream numeric data and saves it as a
+      PNG artifact. Neither Formatter (text only) nor Coder (stdout only,
+      prompted for scalar metrics) produces a visual artifact.
+
+  evidence_reader:
+    runtime: tool
+    prompt: prompts/evidence_reader.md
+    tool: collect_option
+    description: Reads supplied evidence for any option, retaining exact sources.
+
+  evidence_extractor:
+    runtime: llm
+    prompt: prompts/evidence_extractor.md
+    description: Extracts source-linked observations for shared comparison criteria.
+
+  comparison_aligner:
+    runtime: tool
+    prompt: prompts/comparison_aligner.md
+    tool: align_comparison
+    context: true
+    description: Validates passages, aligns units and calculates comparable differences.
+
+  comparison_reporter:
+    runtime: tool
+    prompt: prompts/comparison_reporter.md
+    tool: report_comparison
+    context: true
+    description: Renders a sourced comparison without inventing facts or rankings.
+
+  comparison_chart:
+    runtime: tool
+    prompt: prompts/comparison_chart.md
+    tool: chart_comparison
+    context: true
+    description: Plots a comparable numerical criterion from a verified comparison.
+
+  comparison_interpreter:
+    runtime: llm
+    prompt: prompts/comparison_interpreter.md
+    description: Explains conditional trade-offs with exact evidence references, labelled as inference.
+
+  researcher:
+    runtime: tool
+    prompt: prompts/researcher.md
+    tool: research_sources
+    description: Reads supplied public URLs or searches for fresh web evidence on any subject.
+
+  distiller:
+    runtime: llm
+    prompt: prompts/distiller.md
+    description: Extracts requested fields with exact passages, source URLs and measurement definitions.

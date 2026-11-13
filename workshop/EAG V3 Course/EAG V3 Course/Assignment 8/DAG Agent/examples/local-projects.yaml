@@ -1,0 +1,39 @@
+question: Compare the three local projects on how they retain analysis state.
+criteria:
+- id: storage
+  label: Recorded storage approach
+  kind: text
+options:
+- id: whatif
+  name: What If Analyser
+  sources:
+  - id: project_whatif
+    path: ../../Previous Implementations/What If Analyser ?/README.md
+    as_of: '2026-11-13'
+  evidence:
+    storage:
+      value: in memory
+      source: project_whatif
+      quote: Everything runs in memory.
+- id: radar
+  name: Consequence Radar
+  sources:
+  - id: project_radar
+    path: ../../Previous Implementations/Consequence And What if?/README.md
+    as_of: '2026-11-13'
+  evidence:
+    storage:
+      value: SQLite
+      source: project_radar
+      quote: SQLite stores the input batch,
+- id: dag
+  name: DAG Agent
+  sources:
+  - id: project_dag
+    path: ../agent/state.py
+    as_of: '2026-11-13'
+  evidence:
+    storage:
+      value: state.json
+      source: project_dag
+      quote: self.path = directory / "state.json"

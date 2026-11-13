@@ -1,0 +1,5 @@
+# Compatibility installation; uv.lock is the authoritative environment.
+matplotlib==3.9.4
+PyYAML==6.0.3
+pytest==8.4.2
+anthropic==0.125.0

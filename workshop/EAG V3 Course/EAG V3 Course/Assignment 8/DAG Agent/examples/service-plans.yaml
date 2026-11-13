@@ -1,0 +1,58 @@
+question: Compare three illustrative service plans on annual cost and support.
+criteria:
+- id: cost
+  label: Annual cost
+  kind: number
+  unit: INR/year
+  direction: lower
+- id: support
+  label: Support
+  kind: text
+options:
+- id: a
+  name: Plan A
+  sources:
+  - id: sa
+    text: Costs INR 100 per month. Email support.
+    as_of: '2026-01-01'
+    disclosure: Illustrative fixture; not a real product or price.
+  evidence:
+    cost:
+      value: 100
+      unit: INR/month
+      source: sa
+      quote: Costs INR 100 per month.
+    support:
+      value: Email
+      source: sa
+      quote: Email support.
+- id: b
+  name: Plan B
+  sources:
+  - id: sb
+    text: Costs INR 1500 per year. Phone support.
+    as_of: '2026-01-01'
+    disclosure: Illustrative fixture; not a real product or price.
+  evidence:
+    cost:
+      value: 1500
+      unit: INR/year
+      source: sb
+      quote: Costs INR 1500 per year.
+    support:
+      value: Phone
+      source: sb
+      quote: Phone support.
+- id: c
+  name: Plan C
+  sources:
+  - id: sc
+    text: Costs INR 900 per year.
+    as_of: '2026-01-01'
+    disclosure: Illustrative fixture; not a real product or price.
+  evidence:
+    cost:
+      value: 900
+      unit: INR/year
+      source: sc
+      quote: Costs INR 900 per year.

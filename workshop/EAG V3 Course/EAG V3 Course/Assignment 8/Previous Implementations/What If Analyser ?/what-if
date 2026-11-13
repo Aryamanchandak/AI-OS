@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Launches the Causal Scenario Engine web app.
+# Usage: ./what-if [uvicorn args...]
+set -euo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")"
+
+VENV_PY=".venv/bin/python"
+
+if [ ! -x "$VENV_PY" ]; then
+    echo "No virtualenv found at .venv — creating one and installing dependencies..."
+    python3.11 -m venv .venv
+    "$VENV_PY" -m pip install -q -r requirements.txt
+fi
+
+if [ -f .env ]; then
+    set -a
+    # shellcheck disable=SC1091
+    source .env
+    set +a
+fi
+
+if [ -z "${GEMINI_API_KEY:-}" ]; then
+    echo "Warning: GEMINI_API_KEY is not set (checked .env and environment)." >&2
+    echo "Extraction and synthesis calls will fail without it." >&2
+fi
+
+WHATIF_PORT="${WHATIF_PORT:-8731}"
+
+echo "Starting Causal Scenario Engine at http://127.0.0.1:${WHATIF_PORT} ..."
+exec "$VENV_PY" -m uvicorn web.app:app --reload --port "$WHATIF_PORT" "$@"

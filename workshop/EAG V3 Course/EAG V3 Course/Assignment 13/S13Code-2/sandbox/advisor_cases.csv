@@ -1,0 +1,11 @@
+id,query,source,quote
+attention_architecture,What does the Transformer use instead of recurrence and convolutions?,attention.txt,"We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely."
+attention_translation,What English-to-German BLEU result does Attention Is All You Need report?,attention.txt,"Our model achieves 28.4 BLEU on the WMT 2014 English-to-German translation task"
+cot_steps,What are the intermediate reasoning steps in chain of thought?,cot.txt,"a series of intermediate reasoning steps"
+cot_tasks,Which reasoning task types benefit from chain of thought prompting?,cot.txt,"arithmetic, commonsense, and symbolic reasoning tasks"
+cot_examples,What model size and number of exemplars achieved the chain of thought GSM8K result?,cot.txt,"prompting a 540B-parameter language model with just eight chain of thought exemplars achieves state of the art accuracy on the GSM8K benchmark"
+dpo_loss,How does DPO simplify the standard RLHF optimization problem?,dpo.txt,"solve the standard RLHF problem with only a simple classification loss"
+dpo_sampling,What sampling and hyperparameter tuning does DPO eliminate?,dpo.txt,"eliminating the need for sampling from the LM during fine-tuning or performing significant hyperparameter tuning"
+lora_weights,How does LoRA change the trainable weights during adaptation?,lora.txt,"freezes the pre-trained model weights and injects trainable rank decomposition matrices into each layer of the Transformer architecture"
+lora_efficiency,What trainable parameter and GPU memory reductions does LoRA report against Adam fine-tuning?,lora.txt,"LoRA can reduce the number of trainable parameters by 10,000 times and the GPU memory requirement by 3 times"
+react_actions,How does ReAct combine reasoning and acting to gather information?,react.txt,"actions allow it to interface with external sources, such as knowledge bases or environments, to gather additional information"

@@ -1,0 +1,41 @@
+{
+  "query": "compare NVDA, AMD and INTC over the last year with a chart",
+  "layers": [
+    [
+      "fetch_AMD",
+      "fetch_INTC",
+      "fetch_NVDA"
+    ],
+    [
+      "chart",
+      "metrics"
+    ],
+    [
+      "answer"
+    ]
+  ],
+  "layer_seconds": [
+    0.012031291999999999,
+    0.33904325,
+    7.28340000000216e-05
+  ],
+  "node_seconds": {
+    "fetch_AMD": 0.011,
+    "fetch_INTC": 0.012,
+    "fetch_NVDA": 0.011,
+    "chart": 0.339,
+    "metrics": 0.019,
+    "answer": 0.0
+  },
+  "critic_verdicts": [
+    {
+      "node": "metrics",
+      "verdict": "pass",
+      "reason": ""
+    }
+  ],
+  "recoveries": [],
+  "answer": "[mock formatter] Computed comparison\n\n| Ticker | Points | CAGR % | Volatility % | Sharpe | Max drawdown % |\n|---|---:|---:|---:|---:|---:|\n| AMD | 252 | -21.7 | 17.72 | -1.22 | -28.64 |\n| INTC | 252 | 19.66 | 12.84 | 1.53 | -14.08 |\n| NVDA | 252 | 25.39 | 20.88 | 1.22 | -22.19 |\n\nSources: AMD: synthetic-fallback (URLError), INTC: synthetic-fallback (URLError), NVDA: synthetic-fallback (URLError)\n\nChart artifact: /Users/aryamanchandak/Documents/EAG V3 Course/Assignment 8/Assignment 8 existing/artifacts/comparison.png",
+  "total_seconds": 0.351,
+  "iterations": 1
+}

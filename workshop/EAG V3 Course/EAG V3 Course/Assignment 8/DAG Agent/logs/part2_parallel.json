@@ -1,0 +1,39 @@
+{
+  "query": "compare NVDA, AMD and INTC over the last year",
+  "layers": [
+    [
+      "fetch_AMD",
+      "fetch_INTC",
+      "fetch_NVDA"
+    ],
+    [
+      "metrics"
+    ],
+    [
+      "answer"
+    ]
+  ],
+  "layer_seconds": [
+    0.013580416000000012,
+    0.020456084,
+    5.379199999999695e-05
+  ],
+  "node_seconds": {
+    "fetch_AMD": 0.012,
+    "fetch_INTC": 0.013,
+    "fetch_NVDA": 0.013,
+    "metrics": 0.02,
+    "answer": 0.0
+  },
+  "critic_verdicts": [
+    {
+      "node": "metrics",
+      "verdict": "pass",
+      "reason": ""
+    }
+  ],
+  "recoveries": [],
+  "answer": "[mock formatter] Computed comparison\n\n| Ticker | Points | CAGR % | Volatility % | Sharpe | Max drawdown % |\n|---|---:|---:|---:|---:|---:|\n| AMD | 252 | -21.7 | 17.72 | -1.22 | -28.64 |\n| INTC | 252 | 19.66 | 12.84 | 1.53 | -14.08 |\n| NVDA | 252 | 25.39 | 20.88 | 1.22 | -22.19 |\n\nSources: AMD: synthetic-fallback (URLError), INTC: synthetic-fallback (URLError), NVDA: synthetic-fallback (URLError)",
+  "total_seconds": 0.034,
+  "iterations": 1
+}

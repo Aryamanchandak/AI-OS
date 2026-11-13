@@ -1,0 +1,16 @@
+# `conftest.py` — explained
+
+This is the project-wide pytest fixture file, loaded automatically by pytest for every test in `tests/` and every `test_*.py` file colocated inside `src/consequence_radar/`. It defines two shared fixtures so individual test modules don't each hand-build a `Settings` object or a sample causal graph.
+
+## Fixtures
+
+**`settings(tmp_path)` (L9-11)** returns a `consequence_radar.config.Settings` instance pointed at a throwaway SQLite database inside pytest's per-test `tmp_path` directory (`sqlite:///{tmp_path}/radar.db`), with `report_min_words=100` and `report_max_words=1200`. Using `tmp_path` guarantees every test gets an isolated, empty database file — no test can see another test's writes, and nothing touches the real `data/` directory used by the running app. The word-count bounds are set low/tight compared to whatever the production defaults in `Settings` might be, presumably to keep test fixtures short and assertions fast without tripping report-length validation.
+
+**`graph()` (L14-19)** builds a minimal but structurally complete `CausalGraph` by hand: three nodes (`N0` a `news_seed`, `N1` an `intermediate`, `N2` a `sector_metric`), two edges (`E1: N0->N1` supported by claim `C1` and assumption `A1`; `E2: N1->N2`, `status="assumption_only"`, backed only by estimate `Q1`), one `Assumption` (`A1`, marked `material=True`, `likelihood="likely"`), and one `Estimate` (`Q1`, `estimate_type="directional_only"`). This single fixture is the canonical "small realistic graph" used across the test suite (graph tests, challenge tests, quantify tests, report tests, etc.) to exercise code that expects a fully-populated `CausalGraph` without every test file reconstructing one from scratch. Because it deliberately includes both a `supported` edge and an `assumption_only` edge, and both a quantified estimate and a directional-only one, it's built to hit multiple code paths (e.g. edges with vs. without direct evidence, estimates with vs. without hard numbers) in a single reusable object.
+
+## Non-obvious details
+
+- The fixture graph is a *fixed* snapshot — any test that mutates `graph.nodes`/`graph.edges` in place could leak state to other tests within the same test function only (fixtures are function-scoped by default, so this is safe), but a developer adding `scope="module"` or `scope="session"` later would introduce cross-test mutation bugs.
+- `Decimal` is imported (L1) but not used directly in this file's visible fixtures — it's likely imported for type-hint compatibility with fields on `Estimate`/`CausalEdge` that may accept `Decimal` values elsewhere in tests that extend this fixture, or it's a leftover import.
+- This file has no test functions itself; it exists purely to be discovered by pytest via its special `conftest.py` filename and its fixtures injected by name into any test function that declares `settings` or `graph` as a parameter.
+- Both fixtures import directly from `consequence_radar.config` and `consequence_radar.models`, meaning any breaking change to `Settings`' constructor signature or to `CausalGraph`/`CausalNode`/`CausalEdge`/`Assumption`/`Estimate`'s required fields will break this file first and, transitively, most of the test suite.

@@ -1,0 +1,64 @@
+{
+  "query": "compare NVDA, AMD and INTC over the last year",
+  "layers": [
+    [
+      "fetch_AMD",
+      "fetch_INTC",
+      "fetch_NVDA"
+    ],
+    [
+      "metrics"
+    ],
+    [
+      "r1_refetch_AMD"
+    ],
+    [
+      "r1_recompute"
+    ],
+    [
+      "answer"
+    ]
+  ],
+  "layer_seconds": [
+    0.010477583000000006,
+    0.018067416000000003,
+    0.0027948750000000022,
+    0.018279667,
+    7.791700000001067e-05
+  ],
+  "node_seconds": {
+    "fetch_AMD": 0.0,
+    "fetch_INTC": 0.01,
+    "fetch_NVDA": 0.01,
+    "metrics": 0.018,
+    "r1_refetch_AMD": 0.003,
+    "r1_recompute": 0.018,
+    "answer": 0.0
+  },
+  "critic_verdicts": [
+    {
+      "node": "metrics",
+      "verdict": "fail",
+      "reason": "AMD has fewer than 200 close prices (5)"
+    }
+  ],
+  "recoveries": [
+    {
+      "node": "metrics",
+      "strategy": "refetch_upstream",
+      "reason": "AMD has fewer than 200 close prices (5)",
+      "spliced": [
+        "r1_refetch_AMD",
+        "r1_recompute"
+      ],
+      "rewired": {
+        "answer": [
+          "r1_recompute"
+        ]
+      }
+    }
+  ],
+  "answer": "[mock formatter] Computed comparison\n\n| Ticker | Points | CAGR % | Volatility % | Sharpe | Max drawdown % |\n|---|---:|---:|---:|---:|---:|\n| AMD | 252 | -21.7 | 17.72 | -1.22 | -28.64 |\n| INTC | 252 | 19.66 | 12.84 | 1.53 | -14.08 |\n| NVDA | 252 | 25.39 | 20.88 | 1.22 | -22.19 |\n\nSources: AMD: synthetic-fallback (URLError), INTC: synthetic-fallback (URLError), NVDA: synthetic-fallback (URLError)",
+  "total_seconds": 0.05,
+  "iterations": 2
+}

@@ -1,0 +1,15 @@
+# Explicit conversions only; exchange rates require separately sourced inputs.
+INR/month: {dimension: INR/time, scale: 12}
+INR/year: {dimension: INR/time, scale: 1}
+USD/month: {dimension: USD/time, scale: 12}
+USD/year: {dimension: USD/time, scale: 1}
+minute: {dimension: duration, scale: 1}
+hour: {dimension: duration, scale: 60}
+day: {dimension: duration, scale: 1440}
+g: {dimension: mass, scale: 1}
+kg: {dimension: mass, scale: 1000}
+MB: {dimension: storage, scale: 1}
+GB: {dimension: storage, scale: 1000}
+_period_words:
+  month: [month, months, monthly, mo]
+  year: [year, years, yearly, annual, annually, annum, yr]
