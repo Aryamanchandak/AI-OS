@@ -7,6 +7,10 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+_DETAIL = '''SELECT d.*, v.url, old.text AS before_text, v.text AS after_text
+    FROM decisions d JOIN versions v ON d.version_id=v.id
+    JOIN versions old ON d.previous_id=old.id'''
+
 
 def timestamp(now):
     if now.tzinfo is None:
@@ -143,9 +147,19 @@ class Store:
                 raise ValueError('No pending question with that ID; answered items are not overwritten')
 
     def decisions(self):
-        return [dict(row) for row in self.db.execute('''SELECT d.*, v.url, old.text AS before_text,
-            v.text AS after_text FROM decisions d JOIN versions v ON d.version_id=v.id
-            JOIN versions old ON d.previous_id=old.id ORDER BY d.importance DESC, d.id''')]
+        return [dict(row) for row in self.db.execute(_DETAIL + ' ORDER BY d.importance DESC, d.id')]
+
+    def decision(self, item_id):
+        row = self.db.execute(_DETAIL + ' WHERE d.id=?', (item_id,)).fetchone()
+        return dict(row) if row else None
+
+    def summaries(self):
+        rows = self.db.execute('''SELECT d.*, v.url FROM decisions d
+            JOIN versions v ON d.version_id=v.id ORDER BY d.after_at DESC, d.id DESC LIMIT 100''')
+        return [dict(row) for row in rows]
+
+    def decision_counts(self):
+        return dict(self.db.execute('SELECT status, COUNT(*) FROM decisions GROUP BY status').fetchall())
 
     def attempts(self):
         return [dict(row) for row in self.db.execute('SELECT * FROM attempts ORDER BY id')]

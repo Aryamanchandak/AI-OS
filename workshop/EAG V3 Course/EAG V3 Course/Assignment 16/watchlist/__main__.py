@@ -8,17 +8,12 @@ from pathlib import Path
 from .config import load_watch
 from .demo import run_demo
 from .monitor import Monitor
+from .report import save_brief
 from .store import Store
 
 
 def write_brief(state, monitor):
-    text = monitor.report()
-    if (state / '.simulated').exists():
-        text = '> SIMULATED DEMO — synthetic page changes; not live monitoring evidence.\n\n' + text
-    path = state / 'brief.md'
-    temporary = state / 'brief.md.tmp'
-    temporary.write_text(text, encoding='utf-8')
-    temporary.replace(path)
+    path = save_brief(state, monitor)
     print(f'Brief: {path.resolve()}')
 
 
@@ -30,6 +25,8 @@ def main(argv=None):
     commands.add_parser('check', help='Fetch only due selected pages; preserve limits across restarts')
     commands.add_parser('report', help='Regenerate the local Markdown brief without network access')
     commands.add_parser('demo', help='Show the whole journey with synthetic content and no network calls')
+    serve = commands.add_parser('serve', help='Open the local dashboard at http://127.0.0.1:8765')
+    serve.add_argument('--port', type=int, default=8765)
     answer = commands.add_parser('answer', help='Complete an existing pending item locally')
     answer.add_argument('item', type=int)
     answer.add_argument('--decision', choices=('finding', 'ignored'), required=True)
@@ -40,7 +37,17 @@ def main(argv=None):
         watch = load_watch(args.config)
         store = Store(args.state / 'watch.db', watch)
         monitor = Monitor(watch, store)
-        if args.command == 'demo':
+        if args.command == 'serve':
+            from .web import create_server
+            with create_server(watch, args.state, args.port) as server:
+                print(f'Local dashboard: http://127.0.0.1:{server.server_port}', flush=True)
+                print('Manual checks only. Press Ctrl+C to stop.', flush=True)
+                try:
+                    server.serve_forever()
+                except KeyboardInterrupt:
+                    pass
+            return 0
+        elif args.command == 'demo':
             print('SIMULATED DEMO: synthetic changes on the configured URLs; no network or model calls.')
             run_demo(watch, store, args.state)
         elif args.command == 'check':

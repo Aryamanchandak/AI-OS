@@ -8,9 +8,12 @@ From this folder:
 
 ```sh
 uv run --python 3.11.15 python -m unittest discover -s tests -v
+uv run --python 3.11.15 python -m watchlist serve
 uv run --python 3.11.15 python -m watchlist check
 uv run --python 3.11.15 python -m watchlist report
 ```
+
+`serve` starts the local dashboard at `http://127.0.0.1:8765/`; open that address in your browser. It shows findings, saved questions, ignored changes, failures, source health and watch settings. You can run due checks, inspect full before/after evidence, answer an existing question and download the brief. It listens only on your computer. Stop it with Ctrl+C. Use `serve --port 8766` if the default port is occupied.
 
 `check` fetches due pages and writes `.watchlist/brief.md`. `report` refreshes that brief without fetching. The SQLite database `.watchlist/watch.db` stores full source versions, decisions, observation times and questions. The brief shows changed evidence, ranked findings, ignore reasons, failures and each source's last successful capture. Return codes: 0 for a completed command (including not-due or capped checks), 1 for capture/assessment failure, 2 for invalid settings or commands.
 
@@ -22,6 +25,8 @@ uv run --python 3.11.15 python -m watchlist --state .watchlist-demo answer 4 --d
 ```
 
 These are separate processes: the answer completes item 4 from the first process. The demo includes a baseline, relevant release, repeated announcement, unrelated edit, pending preview, unchanged capture and fetch failure. Its report is labelled SIMULATED, and real checks refuse to reuse demo state.
+
+View existing demo data with `uv run --python 3.11.15 python -m watchlist --state .watchlist-demo serve`. Creating a demo requires an unused state directory; it never overwrites previous evidence. Dashboard settings display the current subscription; creating or changing watches still uses the configuration files below.
 
 Edit `watch.toml` for your URLs, question and limits, and `rules.csv` for the statements to recognise. A rule uses a regular expression (a text-matching pattern), importance 1–3, an interpretation, a suggested local task and an optional clarification question. Changing a subscription requires a new `--state` directory so old evidence keeps its original meaning. Reports include the question; the actual relevance test is the explicit rule, not free-form language understanding.
 

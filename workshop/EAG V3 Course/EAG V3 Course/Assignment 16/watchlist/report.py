@@ -15,6 +15,21 @@ def literal(text):
     return f'{fence}text\n{text}\n{fence}'
 
 
+def brief_text(state, monitor):
+    text = monitor.report()
+    if (state / '.simulated').exists():
+        text = '> SIMULATED DEMO — synthetic page changes; not live monitoring evidence.\n\n' + text
+    return text
+
+
+def save_brief(state, monitor):
+    path = state / 'brief.md'
+    temporary = state / 'brief.md.tmp'
+    temporary.write_text(brief_text(state, monitor), encoding='utf-8')
+    temporary.replace(path)
+    return path
+
+
 def render_report(watch, store, now):
     attempts = store.attempts()
     decisions = store.decisions()

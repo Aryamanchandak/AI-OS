@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Your local watchlist. Meaningful changes, clear evidence, and a quieter attention queue.">
+  <title>Personal Watchlist</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Personal Watchlist home"><span class="brand-mark" aria-hidden="true">w<span>·</span></span><span>watchlist<span class="brand-sub">A little less noise.</span></span></a>
+    <p class="nav-label">YOUR WORKSPACE</p>
+    <nav aria-label="Dashboard views">
+      <button class="nav-button active" data-view="all" aria-current="page"><span aria-hidden="true">◉</span> Overview</button>
+      <button class="nav-button" data-view="finding"><span aria-hidden="true">↗</span> Findings <span class="nav-count" id="nav-findings">0</span></button>
+      <button class="nav-button" data-view="pending"><span aria-hidden="true">?</span> Needs your input <span class="nav-count" id="nav-pending">0</span></button>
+      <button class="nav-button" data-view="ignored"><span aria-hidden="true">−</span> Set aside</button>
+      <button class="nav-button" data-view="failed"><span aria-hidden="true">!</span> Failures <span class="nav-count" id="nav-failed">0</span></button>
+      <button class="nav-button" data-view="settings"><span aria-hidden="true">≡</span> Watch settings</button>
+    </nav>
+    <div class="sidebar-bottom"><span class="local-dot" aria-hidden="true"></span> Local to your computer<p>Suggestions stay here.<br>You decide what happens next.</p></div>
+  </aside>
+  <main id="main">
+    <header class="topbar"><span class="breadcrumb">Workspace <span>/</span> <strong id="watch-name">Your watch</strong></span><a href="/brief.md" class="text-link">Download brief <span aria-hidden="true">↗</span></a></header>
+    <div id="demo-banner" class="banner demo" hidden>SIMULATED DEMO · These changes are examples, not live monitoring evidence.</div>
+    <div id="feedback" class="banner" role="status" aria-live="polite" hidden></div>
+    <section class="hero">
+      <div><p class="eyebrow">YOUR ATTENTION, WELL SPENT</p><h1>A quieter way<br>to keep up.</h1><p class="hero-description">The changes that matter. The context to judge them.<br class="desktop-break"> A clear record of everything set aside.</p></div>
+      <div class="hero-action"><button id="check-button" class="primary"><span aria-hidden="true">↻</span> Run due check</button><p id="check-help">Checks run when you start them.</p></div>
+    </section>
+    <section class="question-box" aria-labelledby="question-label"><span class="question-icon" aria-hidden="true">↗</span><div><p id="question-label" class="eyebrow">THE QUESTION YOU’RE WATCHING</p><p id="watch-question" class="watch-question">Loading your watch…</p></div><span class="mode-pill">MANUAL · $0 SPEND</span></section>
+    <section class="metrics" aria-label="Activity totals">
+      <button class="metric" data-view="finding"><span class="metric-label">Worth your attention <span class="dot olive"></span></span><strong id="count-finding">—</strong><span>Findings to review <span aria-hidden="true">↗</span></span></button>
+      <button class="metric" data-view="pending"><span class="metric-label">Waiting on you <span class="dot amber"></span></span><strong id="count-pending">—</strong><span>Questions saved for later <span aria-hidden="true">↗</span></span></button>
+      <button class="metric" data-view="ignored"><span class="metric-label">Quietly set aside <span class="dot stone"></span></span><strong id="count-ignored">—</strong><span>Changes with a recorded reason <span aria-hidden="true">↗</span></span></button>
+      <button class="metric" data-view="failed"><span class="metric-label">Needs a closer look <span class="dot rust"></span></span><strong id="count-failed">—</strong><span>Failed or interrupted checks <span aria-hidden="true">↗</span></span></button>
+    </section>
+    <div class="content-grid">
+      <section class="feed-panel" aria-labelledby="feed-title"><div class="section-heading"><div><p class="eyebrow" id="feed-eyebrow">A CLEARER PICTURE</p><h2 id="feed-title">Your attention queue</h2></div><button id="refresh-button" class="icon-button" aria-label="Refresh dashboard">↻</button></div>
+        <div class="tabs" aria-label="Filter activity"><button class="active" data-view="all" aria-pressed="true">All activity</button><button data-view="finding" aria-pressed="false">Findings</button><button data-view="pending" aria-pressed="false">Questions</button><button data-view="ignored" aria-pressed="false">Set aside</button></div>
+        <div id="feed" aria-live="polite"><div class="empty"><p>Loading your local watch…</p></div></div>
+      </section>
+      <aside class="sources-panel" id="source-health" aria-labelledby="sources-title"><div class="section-heading"><h2 id="sources-title">Source health</h2><span id="source-total" class="small-pill">—</span></div><p class="panel-note">Quiet is useful only when the last check worked.</p><div id="sources"></div><div class="check-limits"><span class="eyebrow">TODAY’S CHECKS</span><strong id="attempt-total">—</strong><p id="limit-note">Limits apply across restarts.</p></div></aside>
+    </div>
+    <section id="settings" class="settings-panel" hidden aria-labelledby="settings-title"><p class="eyebrow">YOUR WATCH, IN PLAIN SIGHT</p><h2 id="settings-title">Watch settings</h2><p class="panel-note">These are the selected sources, matching rules and limits for this watch.</p><div id="settings-content"></div></section>
+    <footer><span>Less noise. More considered decisions.</span><span id="updated-at">Connecting to local state…</span></footer>
+  </main>
+  <dialog id="item-dialog" aria-labelledby="item-title"><div class="dialog-top"><span class="eyebrow">THE EVIDENCE BEHIND THE DECISION</span><button id="close-dialog" class="icon-button" aria-label="Close item">×</button></div><div id="item-content"></div></dialog>
+  <noscript><p class="banner">Enable JavaScript to view and use the dashboard. The command-line tools and Markdown reports also work.</p></noscript>
+</body>
+</html>
