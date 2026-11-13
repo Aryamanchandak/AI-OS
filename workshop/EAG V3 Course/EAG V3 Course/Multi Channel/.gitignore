@@ -1,0 +1,27 @@
+# Secrets — must never be committed
+.env
+.env.*
+!.env.example
+token*.json
+credentials*.json
+client_secret*.json
+*.pem
+
+# Data
+*.db
+*.db-wal
+*.db-shm
+data/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

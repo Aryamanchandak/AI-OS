@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+benchmark.json
+benchmark.md
+a2a-proof.json
+.a2a-proof-state/
+.DS_Store

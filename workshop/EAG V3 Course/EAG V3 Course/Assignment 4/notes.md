@@ -1,0 +1,1 @@
+we ofcourse need an mcp server for the cpastone, lkets make it here, then use it for the capstone, the main thing being that for this assignment we write all the code ourselves then the code can be later replaced with open source when and where required

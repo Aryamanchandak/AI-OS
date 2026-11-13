@@ -1,0 +1,3 @@
+might be overkill to include in the cpastone, but am sure we will have things in the capstone which will require code editing software can be used there. 
+
+this is not forever, for the assignments we will have to use hand written code, for the cpastone every part of the handwritten code will be and should be replaced with libraries and open source code when and where possible all exccept the agnet loop trunk which will remain ours for now

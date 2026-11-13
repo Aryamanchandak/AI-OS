@@ -1,0 +1,28 @@
+15. Your assignment, step by step
+This is the guide you follow across the week, and the discipline of doing the steps in order is the skill the assignment teaches.
+
+1. Migrate. Deploy glc_v2 to your own Modal account exactly as Section 6 walks it, and confirm it is live with curl <url>/healthz and the /docs page. You now own a real, deliberately flawed gateway on a public URL.
+
+2. Watch it break. Reproduce every finding from Sections 6 and 7 against your own deployment. Copy the gateway curl from the exploit console and run it in a terminal, and run the in-process snippets in the two-file harness from Section 2. Do not fix anything yet. For each finding, say in one sentence which invariant from Section 4 it breaks and which attacker role reaches it.
+
+3. Fix (Part 1). Close every finding from Sections 6 and 7. For each, make a commit that names the invariant it broke and shows the fix, then re-run the same curl and confirm the attack now fails. This is the required floor.
+
+4. Hunt (Part 2). Now look for what the session did not catalogue. Recon your own build first: read docs/ARCHITECTURE.md, list the endpoints from /openapi.json and the WebSocket routes, grep for os.environ and Secret.from_name to see which component holds which secret, and read each Containerfile. Then walk STRIDE component by component and the OWASP lists across the model and agent surfaces, rank your hypotheses by impact, and chase the top few. First attempts rarely land, so read the code path, try variants, and when two hours pass on one idea, move to the next.
+
+5. Submit. Part 1 is your hardened repository with a short note for each finding. Each Part 2 bug is a pull request against glc_v2 that names the bug, reproduces it from a fresh checkout, and fixes it. Watch the open pull requests, because on a duplicate the first one filed wins.
+
+A one-week plan for one person: day one to migrate and reproduce, days two and three to fix Part 1, days four to six to hunt and open pull requests, and day seven to polish and check for duplicates.
+
+16. The assignment
+The assignment has two parts. The first is required of everyone and is the floor. The second is where points are won. From here on this section addresses you, the student, directly.
+
+Part 1, migrate and harden (required)
+Migrate glc_v2 to Modal exactly as Section 6 walks it: your own Modal account, your own modal_app.py, mock keys, and a public URL you can reach. Then fix every issue this session has already handed you, the findings in Section 6 and the ten leaks in Section 7. The fixes are the real work, and they cluster into a handful of moves the findings keep pointing at: give each adapter its own container and its own Secret, issue a scoped credential for each tool call, put an egress allowlist on each adapter, add authentication in front of the data plane, and close the endpoint and logic bugs one at a time. You submit your migrated and hardened repository together with a short note that, for each finding, names the invariant from Section 4 that it broke and shows the fix. Part 1 is the floor, and a submission that does not clear it does not score. glc_v2 code is glc_v1 code with all good PRs accepted. glc_v2 code is shared to see how it is moved to modal. When you use glc_v1/v2 code, you'll need to add all the necessary api keys required for it to run (with your agent), but for this test, you can add anything random, because you're testing can "any key" be hacked (so it can be a fake one too). You need to fix these issues in your clone and share the link to your clone, submitting PR for these issues is not a requirement
+
+Part 2, find something new (100 points each)
+Everything in Sections 6 and 7 is already on the board, so re-reporting it earns nothing. Points come from bugs the session did not catalogue. Each genuinely new bug is worth one hundred points when your pull request both proves it and fixes it. You claim it with a pull request against glc_v2, the reference repository we upload once the migration is done, and the pull request carries three things: a short description of the bug, a script or numbered steps that reproduce it from a fresh checkout, and the fix that closes it. A claim that does not reproduce, or that reports a bug without fixing it, does not score, and when two students find the same bug the points go to the pull request opened first. You need to submit a PR for issues found here to glc_v2. Issue or the bug MUST be related to the 8 invaraints..
+
+You're using glc_v2 for all purposes. No PR against v1 will be evaluated
+
+What counts as a new bug
+A bug is any way to break one of the eight invariants from Section 4 that Sections 6 and 7 do not already name. The method is the mindset from Section 6: pick a component, follow its data flows, and ask which invariant it fails to hold and which attacker role reaches it. The richest hunting ground is the place where two weaknesses combine into something neither reaches alone.

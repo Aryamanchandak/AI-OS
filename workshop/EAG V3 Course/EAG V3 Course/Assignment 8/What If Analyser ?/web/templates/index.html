@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Causal scenario analysis with source-linked evidence and deterministic propagation.">
+    <title>What If — Scenario Analyser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+    <script src="{{ url_for('static', path='/viz-standalone.js') }}" defer></script>
+    <script src="{{ url_for('static', path='/app.js') }}" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#results">Skip to results</a>
+    <div class="app-shell">
+      <aside class="control-panel">
+        <div class="brand-row">
+          <span class="brand-name">What If</span>
+          <span class="brand-version">Scenario analyser</span>
+        </div>
+
+        <form id="analysis-form" class="analysis-form">
+          <div class="field-group">
+            <label for="brief">Situation to analyse</label>
+            <p class="field-help" id="brief-help">Describe one intervention, decision, or external change.</p>
+            <textarea
+              id="brief"
+              name="brief"
+              rows="7"
+              maxlength="4000"
+              placeholder="e.g. RBI cuts the repo rate by 50bp"
+              aria-describedby="brief-help"
+              required
+            ></textarea>
+          </div>
+
+          <div class="field-group">
+            <label for="mode">Research depth</label>
+            <select id="mode" name="mode">
+              <option value="quick">Quick · up to 20 sources</option>
+              <option value="deep">Deep · up to 40 sources</option>
+            </select>
+          </div>
+
+          <button class="submit-button" type="submit">
+            <span class="button-label">Build scenario map</span>
+            <span class="button-arrow" aria-hidden="true">→</span>
+          </button>
+        </form>
+
+        {% if not has_api_key %}
+          <div class="notice notice-key" role="status">
+            No Gemini API key found. Add <code>GEMINI_API_KEY</code> and restart the server.
+          </div>
+        {% endif %}
+
+        <section id="progress-panel" class="progress-panel" aria-live="polite" hidden>
+          <div class="progress-heading">
+            <span>Analysis progress</span>
+            <span class="progress-pulse" aria-hidden="true"></span>
+          </div>
+          <ol id="progress-list" class="progress-list"></ol>
+        </section>
+
+        <section id="run-cost" class="run-cost" aria-live="polite" hidden>
+          <div class="run-cost-topline">
+            <span>Estimated run cost</span>
+            <span class="run-cost-status">Live</span>
+          </div>
+          <strong id="run-cost-inr">₹0.00</strong>
+          <div class="run-cost-facts">
+            <span><b id="run-call-count">0</b> Gemini calls</span>
+            <span><b id="run-token-count">0</b> tokens</span>
+          </div>
+          <p id="run-cost-note">Paid-tier estimate; actual billing may differ.</p>
+        </section>
+        <div id="form-error" class="notice notice-error" role="alert" hidden></div>
+      </aside>
+
+      <main class="workspace">
+        <header class="page-header">
+          <div>
+            <p class="page-context">Causal scenario engine</p>
+            <h1>What If</h1>
+          </div>
+          <div class="header-rule" aria-hidden="true"></div>
+          <p class="header-meta">4 scenarios · 2 uncertainties · 1 causal model</p>
+        </header>
+
+        <div id="results" class="results-region">
+          {% if last_completed %}
+            {% include "partials/result.html" %}
+          {% else %}
+            <section class="empty-result">
+              <p>Enter a situation and run the analysis.</p>
+            </section>
+          {% endif %}
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

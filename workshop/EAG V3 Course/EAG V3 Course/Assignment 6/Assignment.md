@@ -1,0 +1,28 @@
+Assignment
+Code:
+
+mcp_server.py, needs .env file and must install ddgs, crawl4ai and tavily
+llm_gatewayV3
+Build an agent that passes all four target queries. The architecture is described above; the implementation is the student's task.
+
+Required.
+
+Four code modules with clear separation of concerns: memory.py, perception.py, decision.py, action.py. Plus an agent6.py (or any name) that wires them together in a loop. Plus a schemas.py containing the Pydantic models. Plus the MCP server from earlier sessions.
+All four target queries must produce correct final answers. The expected answers and iteration counts are documented above. Queries that exceed twice the expected iteration count are not considered passing; tune the prompts and the contracts until convergence is within bounds.
+Memory must persist across runs in a file under state/. Query C requires the durable-memory behaviour: run 1 records the fact, run 2 reads it.
+The four cognitive layers must each be backed by typed Pydantic contracts on their inputs and outputs. No free-form dict passing between roles. No regex on LLM output.
+The LLM gateway V3 must be the substrate for every LLM call. No direct calls to provider SDKs.
+The state/ directory must be cleanable between assignment attempts.
+Constraints.
+
+Pydantic v2 on every boundary.
+uv for Python dependency management and execution. No manual virtualenv activation.
+MCP server stdio transport for tool calls. No reimplementing tool dispatch.
+No third-party agentic frameworks (LangGraph, LangChain, CrewAI). The architecture and the contracts are the assignment.
+Deliverables.
+
+A GitHub repository containing the code, the state/ directory excluded by .gitignore, and a README that documents how to run each of the four queries.
+The README must include the actual terminal output of each of the four queries, captured from a clean state on the student's own machine.
+A YouTube link demonstrating runs of all four queries end to end.
+Perception and Decision Prompt and Validation JSON of PoP
+Excluded. The assignment is not a summariser, a stock or crypto analyser, or any toy that completes in a single tool call. The four target queries are the assignment.

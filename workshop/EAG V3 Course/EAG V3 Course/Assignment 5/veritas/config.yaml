@@ -1,0 +1,84 @@
+# Veritas skill catalogue.
+# Adding a skill = a yaml entry + a prompt file. No orchestrator edit.
+
+model:
+  # Provider is auto-detected from whichever API key is present.
+  # ANTHROPIC_API_KEY -> anthropic (preferred), else OPENAI_API_KEY -> openai.
+  anthropic: claude-opus-4-8
+  openai: gpt-4o
+  # Thinking and response share this budget on adaptive-thinking models, and
+  # `compose` targets a 600-1000 word essay — 8000 risked truncating it.
+  max_tokens: 16000
+
+pipeline:
+  max_rounds: 2          # verify -> search retry loop bound
+  max_sources_per_query: 4
+  max_total_sources: 24
+
+skills:
+  decompose:
+    kind: llm
+    prompt: prompts/decompose.md
+    depends_on: []
+
+  search:
+    kind: llm
+    prompt: prompts/search.md
+    depends_on: [decompose]
+
+  fetch:
+    kind: deterministic     # pure code — no LLM call, no hallucination surface
+    handler: sources.fetch_all
+    depends_on: [search]
+
+  extract:
+    kind: llm
+    prompt: prompts/extract.md
+    depends_on: [fetch]
+    parallel_over: sub_claims   # fan-out: one call per sub-claim
+
+  grade:
+    kind: llm
+    prompt: prompts/grade.md
+    depends_on: [extract]
+
+  synthesize:
+    kind: llm
+    prompt: prompts/synthesize.md
+    depends_on: [grade]
+
+  verify:
+    kind: llm
+    prompt: prompts/verify.md
+    depends_on: [synthesize]
+    can_reroute_to: search      # the retry edge that makes this a loop, not a line
+
+  compose:
+    kind: llm
+    prompt: prompts/compose.md
+    depends_on: [verify]        # claim-mode essay: verdict folded into prose
+
+  # -- topic-exploration pipeline (separate from claim verification above) --
+  # Reuses search / fetch / extract / grade unchanged; only scope and
+  # compose_topic are topic-specific.
+
+  scope:
+    kind: llm
+    prompt: prompts/scope.md
+    depends_on: []               # topic-mode counterpart to decompose
+
+  compose_topic:
+    kind: llm
+    prompt: prompts/compose_topic.md
+    depends_on: [grade]          # topic-mode essay: no verdict, just synthesis
+
+sources:
+  pubmed:
+    enabled: true
+    base: https://eutils.ncbi.nlm.nih.gov/entrez/eutils
+  arxiv:
+    enabled: true
+    base: http://export.arxiv.org/api/query
+  crossref:
+    enabled: false            # metadata only, no abstracts — off by default
+    base: https://api.crossref.org/works

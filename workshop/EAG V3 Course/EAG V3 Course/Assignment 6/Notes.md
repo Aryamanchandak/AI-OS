@@ -1,0 +1,1 @@
+there is an AI Agent module in the AI OS, in the workshops folder in the ai code. that is an advanced version of this, make it and we will use it here and then use it for the ai os

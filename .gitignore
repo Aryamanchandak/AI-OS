@@ -36,3 +36,7 @@ dist/
 
 # Build output
 gateway/build/
+
+# Workshop: zips and audio are too big for GitHub (100 MB limit); kept on the Mac only
+/workshop/**/*.zip
+/workshop/**/*.mp3

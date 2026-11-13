@@ -1,0 +1,2 @@
+- [Per-file .explained.md docs (2026-08-23)](project__per-file-explained-md-docs-2026-08-23.md) — naming convention & scope for the per-file doc set, not the deep-dive/ template
+- [Known bug: apply_patch broken import (2026-08-23)](project__known-bug-apply-patch-import-2026-08-23.md) — graph/__init__.py can't add/update assumptions or estimates via patch, fails silently

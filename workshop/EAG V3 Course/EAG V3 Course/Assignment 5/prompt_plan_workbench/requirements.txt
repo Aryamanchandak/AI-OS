@@ -1,0 +1,6 @@
+streamlit>=1.36,<2
+openai>=1.40
+# >=0.122.0: engine.py passes `thinking={"type": "adaptive"}`, which the old
+# 0.40 floor predates — a fresh install on that floor could not run the code.
+anthropic>=0.122.0
+

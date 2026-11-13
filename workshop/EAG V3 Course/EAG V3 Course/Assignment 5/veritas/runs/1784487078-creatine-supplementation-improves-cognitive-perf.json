@@ -1,0 +1,675 @@
+{
+  "claim": "Creatine supplementation improves cognitive performance in sleep-deprived adults",
+  "wall_clock_seconds": 71.7,
+  "tokens": {
+    "input": 41010,
+    "output": 5741
+  },
+  "steps": [
+    {
+      "skill": "decompose",
+      "round": 1,
+      "seconds": 5.84,
+      "reasoning": "[LOOKUP] The claim involves one population (sleep-deprived adults), one intervention (creatine supplementation), and one outcome (cognitive performance improvement). [DEDUCTIVE] An effective decomposition should separate these into atomic sub-claims, each focusing on a distinct aspect to be independently verified. [DEDUCTIVE] Since the claim is specific regarding the population and outcome, there are no major ambiguities to address.",
+      "output": {
+        "status": "ok",
+        "normalized_claim": "Creatine supplementation in sleep-deprived adults improves cognitive performance",
+        "falsifier": "Studies showing that creatine supplementation does not improve or worsens cognitive performance in sleep-deprived adults would refute the claim.",
+        "interpretations": [],
+        "sub_claims": [
+          {
+            "id": "SC1",
+            "text": "Creatine supplementation improves working memory in sleep-deprived adults",
+            "population": "Sleep-deprived adults",
+            "intervention": "Creatine supplementation",
+            "outcome": "Improvement in working memory",
+            "priority": "core"
+          },
+          {
+            "id": "SC2",
+            "text": "Creatine supplementation improves reaction time in sleep-deprived adults",
+            "population": "Sleep-deprived adults",
+            "intervention": "Creatine supplementation",
+            "outcome": "Improvement in reaction time",
+            "priority": "core"
+          },
+          {
+            "id": "SC3",
+            "text": "Creatine supplementation improves attention span in sleep-deprived adults",
+            "population": "Sleep-deprived adults",
+            "intervention": "Creatine supplementation",
+            "outcome": "Improvement in attention span",
+            "priority": "supporting"
+          }
+        ],
+        "notes": "Sub-claims target specific cognitive domains for verification."
+      }
+    },
+    {
+      "skill": "search",
+      "round": 1,
+      "seconds": 6.2,
+      "reasoning": "[LOOKUP] I need to generate search queries that can cover confirming, disconfirming, and baseline literature for each of the specified cognitive domains: working memory, reaction time, and attention span, all within the context of creatine supplementation and sleep deprivation.",
+      "output": {
+        "status": "ok",
+        "queries": [
+          {
+            "sub_claim_id": "SC1",
+            "stance": "confirming",
+            "query": "creatine supplementation working memory sleep deprivation",
+            "rationale": "This should surface studies showing positive effects of creatine on working memory in sleep-deprived adults."
+          },
+          {
+            "sub_claim_id": "SC1",
+            "stance": "disconfirming",
+            "query": "no effect creatine working memory sleep deprivation",
+            "rationale": "This should surface studies showing no effect of creatine on working memory in sleep-deprived adults."
+          },
+          {
+            "sub_claim_id": "SC1",
+            "stance": "baseline",
+            "query": "creatine cognitive performance sleep deprivation",
+            "rationale": "This general query should surface studies on cognitive performance effects of creatine in sleep deprivation, regardless of specific cognitive functions."
+          },
+          {
+            "sub_claim_id": "SC2",
+            "stance": "confirming",
+            "query": "creatine supplementation reaction time sleep deprivation",
+            "rationale": "This should surface studies showing positive effects of creatine on reaction time in sleep-deprived adults."
+          },
+          {
+            "sub_claim_id": "SC2",
+            "stance": "disconfirming",
+            "query": "no effect creatine reaction time sleep deprivation",
+            "rationale": "This should surface studies showing no effect of creatine on reaction time in sleep-deprived adults."
+          },
+          {
+            "sub_claim_id": "SC2",
+            "stance": "baseline",
+            "query": "creatine psychological performance sleep deprivation",
+            "rationale": "This broad query should surface studies on psychological performance effects of creatine in sleep deprivation, which includes reaction time."
+          },
+          {
+            "sub_claim_id": "SC3",
+            "stance": "confirming",
+            "query": "creatine supplementation attention span sleep deprivation",
+            "rationale": "This should surface studies showing positive effects of creatine on attention span in sleep-deprived adults."
+          },
+          {
+            "sub_claim_id": "SC3",
+            "stance": "disconfirming",
+            "query": "no effect creatine attention span sleep deprivation",
+            "rationale": "This should surface studies showing no effect of creatine on attention span in sleep-deprived adults."
+          },
+          {
+            "sub_claim_id": "SC3",
+            "stance": "baseline",
+            "query": "creatine effects sleep deprivation cognitive tasks",
+            "rationale": "This query should surface general literature on the effects of creatine on cognitive tasks in sleep-deprived individuals."
+          }
+        ]
+      }
+    },
+    {
+      "skill": "extract",
+      "round": 1,
+      "seconds": 4.84,
+      "reasoning": "[LOOKUP] Reviewing the sources provided to determine if any directly address the sub-claim about creatine's effect on attention span in sleep-deprived adults. I will classify each source based on its relevance and direction towards the sub-claim.",
+      "output": {
+        "status": "ok",
+        "findings": [
+          {
+            "source_id": "arXiv:2606.26506v1",
+            "sub_claim_id": "SC3",
+            "direction": "irrelevant",
+            "claim_of_paper": "This paper focuses on classification of EEG data for sleep condition and eye state.",
+            "study_design": "preprint",
+            "population": null,
+            "sample_size": 35,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "Sleep deprivation impairs vigilance and cognitive function, yet jointly identifying the sleep condition (normal vs deprived) and the eye state (open vs closed) from electroencephalography (EEG) remains underexplored."
+          },
+          {
+            "source_id": "PMID:21394604",
+            "sub_claim_id": "SC3",
+            "direction": "supports",
+            "claim_of_paper": "Creatine supplementation has shown improvements in cognitive processing impaired by sleep deprivation or aging.",
+            "study_design": "review",
+            "population": "young and older adults",
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "Subsequent studies have demonstrated that cognitive processing, that is either experimentally (following sleep deprivation) or naturally (due to aging) impaired, can be improved with creatine supplementation."
+          },
+          {
+            "source_id": "PMID:42075005",
+            "sub_claim_id": "SC3",
+            "direction": "supports",
+            "claim_of_paper": "A single dose of creatine reduces cognitive performance deterioration during sleep deprivation.",
+            "study_design": "RCT",
+            "population": "healthy subjects",
+            "sample_size": 29,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "The results show a mitigating effect of creatine on sleep deprivation-induced deterioration in logical and numerical tasks, language-related processing speed, and the Psychomotor Vigilance Test (PVT)."
+          }
+        ],
+        "unusable_sources": []
+      }
+    },
+    {
+      "skill": "extract",
+      "round": 1,
+      "seconds": 7.89,
+      "reasoning": "[LOOKUP] We are tasked with extracting evidence related to the sub-claim 'Creatine supplementation improves reaction time in sleep-deprived adults'. We will evaluate the provided sources based on their relevance to this sub-claim and extract any pertinent details about study design, population, sample size, effect sizes, and statistical significance, marking direction towards the sub-claim.",
+      "output": {
+        "status": "ok",
+        "findings": [
+          {
+            "source_id": "PMID:18579168",
+            "sub_claim_id": "SC2",
+            "direction": "contradicts",
+            "claim_of_paper": "Six weeks of creatine supplementation does not improve cognitive processing in non-sleep-deprived young adults.",
+            "study_design": "RCT",
+            "population": "Non-sleep-deprived young adults",
+            "sample_size": 22,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": ">0.05",
+            "quoted_support": "There were no significant effects of group, no significant effects of time, and no significant group by time interactions for RT."
+          },
+          {
+            "source_id": "arXiv:2504.13171v1",
+            "sub_claim_id": "SC2",
+            "direction": "irrelevant",
+            "claim_of_paper": "Introduces the concept of sleep-time compute for LLMs to optimize test-time efficiency.",
+            "study_design": "preprint",
+            "population": null,
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": null
+          },
+          {
+            "source_id": "arXiv:2405.02802v1",
+            "sub_claim_id": "SC2",
+            "direction": "irrelevant",
+            "claim_of_paper": "Study on time irreversibility of sleep EEGs across different sleep stages.",
+            "study_design": "preprint",
+            "population": "EEG data, sleep stages",
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": null
+          },
+          {
+            "source_id": "PMID:31493480",
+            "sub_claim_id": "SC2",
+            "direction": "irrelevant",
+            "claim_of_paper": "Examines the effect of sleep deprivation on muscle injury recovery in a mouse model.",
+            "study_design": "animal",
+            "population": "mice",
+            "sample_size": 28,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": null
+          },
+          {
+            "source_id": "PMID:3892628",
+            "sub_claim_id": "SC2",
+            "direction": "irrelevant",
+            "claim_of_paper": "Critical review of perceived exertion rating scales.",
+            "study_design": "systematic-review",
+            "population": null,
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": null
+          },
+          {
+            "source_id": "PMID:42082255",
+            "sub_claim_id": "SC2",
+            "direction": "irrelevant",
+            "claim_of_paper": "Evaluates stress markers in military conscripts undergoing training.",
+            "study_design": "cohort",
+            "population": "young military conscripts",
+            "sample_size": 49,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": null
+          }
+        ],
+        "unusable_sources": []
+      }
+    },
+    {
+      "skill": "extract",
+      "round": 1,
+      "seconds": 11.07,
+      "reasoning": "[LOOKUP] Evaluating each source to determine its relevance to the sub-claim and extract structured evidence based on provided abstracts. [DEDUCTIVE] Using direct statements or lack of relevant data to categorize the direction of each source.",
+      "output": {
+        "status": "ok",
+        "findings": [
+          {
+            "source_id": "PMID:17046034",
+            "sub_claim_id": "SC1",
+            "direction": "supports",
+            "claim_of_paper": "Creatine supplementation improved performance on complex central executive tasks after sleep deprivation.",
+            "study_design": "RCT",
+            "population": "Adults undergoing sleep deprivation with moderate-intensity exercise",
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": "p < 0.05",
+            "quoted_support": "the creatine group performed significantly (p < 0.05) better than the placebo group on the central executive task but only at 36 h."
+          },
+          {
+            "source_id": "arXiv:2506.21828v2",
+            "sub_claim_id": "SC1",
+            "direction": "irrelevant",
+            "claim_of_paper": "This review integrates research on fetal sleep physiology.",
+            "study_design": "systematic-review",
+            "population": null,
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "This is the first review to integrate more than seven decades of research into a unified, cross-species synthesis of fetal sleep."
+          },
+          {
+            "source_id": "arXiv:1809.09846v2",
+            "sub_claim_id": "SC1",
+            "direction": "irrelevant",
+            "claim_of_paper": "This study explores workplace-based wellness programs for sleep deprivation.",
+            "study_design": "cross-sectional",
+            "population": "Employees in a workplace setting",
+            "sample_size": 9,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "This study adopted a three-stage design process with nine participants from a local manufacturing company."
+          },
+          {
+            "source_id": "arXiv:2310.18647v1",
+            "sub_claim_id": "SC1",
+            "direction": "irrelevant",
+            "claim_of_paper": "Explores the separation of awake and sleep phases in an algorithm.",
+            "study_design": "unclear",
+            "population": null,
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "the size of the gap between the sleep and awake phase influences the learning capabilities of the algorithm."
+          },
+          {
+            "source_id": "arXiv:1805.02544v1",
+            "sub_claim_id": "SC1",
+            "direction": "irrelevant",
+            "claim_of_paper": "Examines the impact of sleep deprivation on novice developers' performance.",
+            "study_design": "quasi-experiment",
+            "population": "Novice software developers",
+            "sample_size": 45,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "A single night of sleep deprivation leads to a reduction of 50% in the quality of the implementations."
+          },
+          {
+            "source_id": "PMID:38418482",
+            "sub_claim_id": "SC1",
+            "direction": "supports",
+            "claim_of_paper": "A single dose of creatine improves cognitive performance during sleep deprivation.",
+            "study_design": "RCT",
+            "population": "Adults during 21h sleep deprivation",
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "improves cognitive performance and processing speed."
+          },
+          {
+            "source_id": "PMID:16416332",
+            "sub_claim_id": "SC1",
+            "direction": "supports",
+            "claim_of_paper": "Creatine supplementation improved mood state and tasks stressing prefrontal cortex after sleep deprivation.",
+            "study_design": "RCT",
+            "population": "Adults undergoing sleep deprivation with mild exercise",
+            "sample_size": 19,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": "p < 0.05",
+            "quoted_support": "creatine supplementation had a positive effect on mood state and tasks that place a heavy stress on the prefrontal cortex."
+          },
+          {
+            "source_id": "PMID:33578876",
+            "sub_claim_id": "SC1",
+            "direction": "supports",
+            "claim_of_paper": "Creatine may improve cognitive processing under stressors like sleep deprivation.",
+            "study_design": "review",
+            "population": null,
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "creatine may also be beneficial to brain health (e.g., cognitive processing, brain function)."
+          },
+          {
+            "source_id": "PMID:30086660",
+            "sub_claim_id": "SC1",
+            "direction": "supports",
+            "claim_of_paper": "Brain creatine responsive to supplementation, beneficial during cognitive stress.",
+            "study_design": "review",
+            "population": null,
+            "sample_size": null,
+            "effect_size": null,
+            "confidence_interval": null,
+            "p_value": null,
+            "quoted_support": "creatine is most likely to exert an influence in situations whereby cognitive processes are stressed."
+          }
+        ],
+        "unusable_sources": []
+      }
+    },
+    {
+      "skill": "grade",
+      "round": 1,
+      "seconds": 7.93,
+      "reasoning": "[LOOKUP] The claims from the sources indicate RCT designs for the most part, with certain reviews that provide overviews but do not contribute original data. Sample sizes are often not disclosed, which limits the power assessment. The studies are predominantly adult populations under sleep deprivation, maintaining good directness. Independence ratings are mostly high, given the peer-reviewed and non-industry funded nature of these studies. [INDUCTIVE] Grades are determined using known schemas for various dimensions, adapting where necessary to omissions like sample sizes.",
+      "output": {
+        "status": "ok",
+        "grades": [
+          {
+            "source_id": "PMID:17046034",
+            "design": 2,
+            "power": 0,
+            "directness": 3,
+            "independence": 2,
+            "weight": 1.8,
+            "caveat": "Sample size not reported"
+          },
+          {
+            "source_id": "PMID:38418482",
+            "design": 2,
+            "power": 0,
+            "directness": 3,
+            "independence": 2,
+            "weight": 1.8,
+            "caveat": "Sample size not reported"
+          },
+          {
+            "source_id": "PMID:16416332",
+            "design": 2,
+            "power": 1,
+            "directness": 3,
+            "independence": 2,
+            "weight": 2.0,
+            "caveat": "Small sample size"
+          },
+          {
+            "source_id": "PMID:33578876",
+            "design": 0,
+            "power": 0,
+            "directness": 1,
+            "independence": 2,
+            "weight": 0.8,
+            "caveat": "Review, not original research"
+          },
+          {
+            "source_id": "PMID:30086660",
+            "design": 0,
+            "power": 0,
+            "directness": 1,
+            "independence": 2,
+            "weight": 0.8,
+            "caveat": "Review, not original research"
+          },
+          {
+            "source_id": "PMID:18579168",
+            "design": 2,
+            "power": 0,
+            "directness": 0,
+            "independence": 2,
+            "weight": 1.0,
+            "caveat": "Non-sleep-deprived population"
+          },
+          {
+            "source_id": "PMID:21394604",
+            "design": 0,
+            "power": 0,
+            "directness": 1,
+            "independence": 2,
+            "weight": 0.8,
+            "caveat": "Review, not original research"
+          },
+          {
+            "source_id": "PMID:42075005",
+            "design": 2,
+            "power": 1,
+            "directness": 2,
+            "independence": 2,
+            "weight": 1.8,
+            "caveat": "Moderate sample size"
+          }
+        ],
+        "strongest_source_id": "PMID:16416332",
+        "weakest_source_id": "PMID:33578876"
+      }
+    },
+    {
+      "skill": "synthesize",
+      "round": 1,
+      "seconds": 7.24,
+      "reasoning": "[LOOKUP] The findings for SC1 show several studies supporting the claim that creatine improves working memory in sleep-deprived adults (PMID:17046034, PMID:38418482, PMID:16416332). These studies include randomized controlled trials, though some lack reported sample sizes and have small sample sizes, affecting their weight. [LOOKUP] For SC2, there is a contradiction. The only study (PMID:18579168) does not support cognitive performance improvements in non-sleep-deprived individuals, indirectly impacting the core claim for sleep-deprived adults. [LOOKUP] For SC3, two sources (PMID:21394604, PMID:42075005) support the improvement of attention span with moderate evidence. However, they are considered supporting, not core. [INDUCTIVE] The collective weight of evidence overall supports some improvement in cognitive domains from creatine, but the contradiction in SC2 and the reliance on some lower-weight sources makes a definitive conclusion challenging.",
+      "output": {
+        "status": "ok",
+        "verdict": "mixed",
+        "confidence": "medium",
+        "verdict_rationale": "For SC1, several studies support the notion that creatine supplementation improves working memory in sleep-deprived adults, but issues like small and unreported sample sizes exist (PMID:17046034, PMID:16416332, PMID:38418482). SC2 faces a contradiction because available evidence from non-sleep-deprived adults suggests no improvement (PMID:18579168), undermining confidence in similar gains for sleep-deprived adults' reaction times. SC3 stands supported with moderate evidence for improved attention span (PMID:42075005), though it is classified as non-core. Thus, current evidence is inconclusive about reaction time but generally positive for other cognitive areas, leading to a 'mixed' verdict.",
+        "sub_claim_verdicts": [
+          {
+            "sub_claim_id": "SC1",
+            "verdict": "supported",
+            "basis": "PMID:17046034, PMID:16416332, PMID:38418482 show improvement despite some limitations in power."
+          },
+          {
+            "sub_claim_id": "SC2",
+            "verdict": "insufficient_evidence",
+            "basis": "PMID:18579168 contradicts improvement in non-sleep-deprived persons."
+          },
+          {
+            "sub_claim_id": "SC3",
+            "verdict": "supported",
+            "basis": "PMID:42075005 supports improvement in attention span but it is considered supporting."
+          }
+        ],
+        "supporting_evidence": [
+          {
+            "source_id": "PMID:17046034",
+            "point": "Creatine improves complex task performance in sleep-deprived adults."
+          },
+          {
+            "source_id": "PMID:16416332",
+            "point": "Creatine supplementation had positive effects on cognitive tasks under sleep deprivation."
+          },
+          {
+            "source_id": "PMID:38418482",
+            "point": "Single dose of creatine improves cognitive performance during sleep deprivation."
+          },
+          {
+            "source_id": "PMID:42075005",
+            "point": "Reduction of cognitive deterioration during sleep deprivation."
+          }
+        ],
+        "contradicting_evidence": [
+          {
+            "source_id": "PMID:18579168",
+            "point": "No cognitive improvement observed in reaction time in non-sleep-deprived adults."
+          }
+        ],
+        "open_gaps": [
+          "Evidence specifically examining reaction time improvements in sleep-deprived adults due to creatine supplementation."
+        ],
+        "one_line_answer": "Creatine's effects on cognitive performance in sleep-deprived adults are mixed, supporting improvements in some domains but not conclusively for all."
+      }
+    },
+    {
+      "skill": "verify",
+      "round": 1,
+      "seconds": 5.06,
+      "reasoning": "[LOOKUP] The synthesis cites all sources present in the findings list, confirming citation_integrity (C1). [LOOKUP] Source_ids are present with each claim in the verdict rationale, confirming traceability (C2). [LOOKUP] The synthesis makes no unsupported inference beyond what the sources state; it correctly avoids claiming general improvement in reaction time, addressing no_unsupported_inference (C3). [LOOKUP] The synthesis acknowledges the contradiction from PMID:18579168 regarding reaction time, satisfying contradiction_handling (C4). [LOOKUP] The synthesis assigns medium confidence based on the moderate weight of supporting evidence for SC1 and SC3, which seems justified given the mix of evidence qualities, satisfying confidence_calibration (C5). [LOOKUP] The synthesis highlights the need for evidence focusing on SC2, the reaction time component, thus falsifier_addressed (C6) is managed by stating the gap in reaction time improvements specifically in sleep-deprived adults.",
+      "output": {
+        "status": "ok",
+        "verdict": "approved",
+        "checks": [
+          {
+            "id": "C1",
+            "name": "citation_integrity",
+            "result": "pass",
+            "reason": "All source_ids are present in findings."
+          },
+          {
+            "id": "C2",
+            "name": "traceability",
+            "result": "pass",
+            "reason": "All empirical claims are cited appropriately."
+          },
+          {
+            "id": "C3",
+            "name": "no_unsupported_inference",
+            "result": "pass",
+            "reason": "No inference beyond cited studies made."
+          },
+          {
+            "id": "C4",
+            "name": "contradiction_handling",
+            "result": "pass",
+            "reason": "Contradictory evidence on reaction time is engaged."
+          },
+          {
+            "id": "C5",
+            "name": "confidence_calibration",
+            "result": "pass",
+            "reason": "Medium confidence aligns with evidence weight."
+          },
+          {
+            "id": "C6",
+            "name": "falsifier_addressed",
+            "result": "pass",
+            "reason": "Reaction time improvement in sleep-deprived not excluded."
+          }
+        ],
+        "weakest_link": "The weakest link is the lack of direct evidence for reaction time improvements in sleep-deprived adults due to creatine.",
+        "gaps_to_search": [],
+        "required_changes": []
+      }
+    }
+  ],
+  "result": {
+    "status": "ok",
+    "verdict": "mixed",
+    "confidence": "medium",
+    "verdict_rationale": "For SC1, several studies support the notion that creatine supplementation improves working memory in sleep-deprived adults, but issues like small and unreported sample sizes exist (PMID:17046034, PMID:16416332, PMID:38418482). SC2 faces a contradiction because available evidence from non-sleep-deprived adults suggests no improvement (PMID:18579168), undermining confidence in similar gains for sleep-deprived adults' reaction times. SC3 stands supported with moderate evidence for improved attention span (PMID:42075005), though it is classified as non-core. Thus, current evidence is inconclusive about reaction time but generally positive for other cognitive areas, leading to a 'mixed' verdict.",
+    "sub_claim_verdicts": [
+      {
+        "sub_claim_id": "SC1",
+        "verdict": "supported",
+        "basis": "PMID:17046034, PMID:16416332, PMID:38418482 show improvement despite some limitations in power."
+      },
+      {
+        "sub_claim_id": "SC2",
+        "verdict": "insufficient_evidence",
+        "basis": "PMID:18579168 contradicts improvement in non-sleep-deprived persons."
+      },
+      {
+        "sub_claim_id": "SC3",
+        "verdict": "supported",
+        "basis": "PMID:42075005 supports improvement in attention span but it is considered supporting."
+      }
+    ],
+    "supporting_evidence": [
+      {
+        "source_id": "PMID:17046034",
+        "point": "Creatine improves complex task performance in sleep-deprived adults."
+      },
+      {
+        "source_id": "PMID:16416332",
+        "point": "Creatine supplementation had positive effects on cognitive tasks under sleep deprivation."
+      },
+      {
+        "source_id": "PMID:38418482",
+        "point": "Single dose of creatine improves cognitive performance during sleep deprivation."
+      },
+      {
+        "source_id": "PMID:42075005",
+        "point": "Reduction of cognitive deterioration during sleep deprivation."
+      }
+    ],
+    "contradicting_evidence": [
+      {
+        "source_id": "PMID:18579168",
+        "point": "No cognitive improvement observed in reaction time in non-sleep-deprived adults."
+      }
+    ],
+    "open_gaps": [
+      "Evidence specifically examining reaction time improvements in sleep-deprived adults due to creatine supplementation."
+    ],
+    "one_line_answer": "Creatine's effects on cognitive performance in sleep-deprived adults are mixed, supporting improvements in some domains but not conclusively for all.",
+    "audit": {
+      "status": "ok",
+      "verdict": "approved",
+      "checks": [
+        {
+          "id": "C1",
+          "name": "citation_integrity",
+          "result": "pass",
+          "reason": "All source_ids are present in findings."
+        },
+        {
+          "id": "C2",
+          "name": "traceability",
+          "result": "pass",
+          "reason": "All empirical claims are cited appropriately."
+        },
+        {
+          "id": "C3",
+          "name": "no_unsupported_inference",
+          "result": "pass",
+          "reason": "No inference beyond cited studies made."
+        },
+        {
+          "id": "C4",
+          "name": "contradiction_handling",
+          "result": "pass",
+          "reason": "Contradictory evidence on reaction time is engaged."
+        },
+        {
+          "id": "C5",
+          "name": "confidence_calibration",
+          "result": "pass",
+          "reason": "Medium confidence aligns with evidence weight."
+        },
+        {
+          "id": "C6",
+          "name": "falsifier_addressed",
+          "result": "pass",
+          "reason": "Reaction time improvement in sleep-deprived not excluded."
+        }
+      ],
+      "weakest_link": "The weakest link is the lack of direct evidence for reaction time improvements in sleep-deprived adults due to creatine.",
+      "gaps_to_search": [],
+      "required_changes": []
+    },
+    "sources_examined": 18,
+    "rounds": 1
+  }
+}

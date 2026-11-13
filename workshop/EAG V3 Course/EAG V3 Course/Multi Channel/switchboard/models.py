@@ -1,0 +1,189 @@
+"""Core domain types.
+
+`NormalizedMessage` is the contract every channel adapter emits. Nothing
+downstream of the adapter layer knows what a channel is.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+from enum import StrEnum
+from typing import Any, ClassVar, Literal
+
+from pydantic import BaseModel, Field
+
+
+class Channel(StrEnum):
+    GMAIL = "gmail"
+    TELEGRAM = "telegram"
+    SLACK = "slack"
+    WHATSAPP = "whatsapp"
+    SMS = "sms"
+
+
+class MessageState(StrEnum):
+    """Persisted per message. This is what stops reprocessing on restart."""
+
+    NEW = "new"
+    DUPLICATE = "duplicate"
+    PREFILTERED = "prefiltered"
+    IGNORED = "ignored"
+    TRIAGED = "triaged"
+    DRAFTED = "drafted"
+    PENDING_APPROVAL = "pending_approval"
+    SNOOZED = "snoozed"
+    SENT = "sent"
+    DISMISSED = "dismissed"
+    FAILED = "failed"
+
+
+class Contact(BaseModel):
+    handle: str  # email address, phone number, slack user id, telegram id
+    display_name: str | None = None
+    person_id: str | None = None  # resolved via the identity map
+
+
+class Attachment(BaseModel):
+    filename: str | None = None
+    mime_type: str | None = None
+    size_bytes: int | None = None
+    channel_ref: str | None = None  # how to fetch it back from the channel
+
+
+class NormalizedMessage(BaseModel):
+    """The single internal shape for an inbound message on any channel."""
+
+    channel: Channel
+    channel_msg_id: str
+    thread_id: str | None = None
+
+    # Everything the originating adapter needs to reply *in thread*.
+    # Gmail: message_id / references / threadId. Slack: thread_ts.
+    # Telegram: reply_to_message_id. WhatsApp/SMS: conversation id.
+    reply_anchor: dict[str, Any] = Field(default_factory=dict)
+
+    sender: Contact
+    recipients: list[Contact] = Field(default_factory=list)
+    subject: str | None = None
+    body: str = ""
+    attachments: list[Attachment] = Field(default_factory=list)
+    sent_at: datetime  # always UTC
+    raw: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def idempotency_key(self) -> str:
+        return f"{self.channel}:{self.channel_msg_id}"
+
+
+# --------------------------------------------------------------------------
+# Triage
+# --------------------------------------------------------------------------
+
+
+class Extraction(BaseModel):
+    """Structured facts pulled from the body. Untrusted — validate before use."""
+
+    dates: list[str] = Field(default_factory=list)
+    action_items: list[str] = Field(default_factory=list)
+    people: list[str] = Field(default_factory=list)
+    deadline: str | None = None
+    location: str | None = None
+
+
+class Triage(BaseModel):
+    needs_reply: bool
+    urgency: Literal["low", "normal", "high"]
+    intent: Literal[
+        "question", "scheduling", "task_request", "fyi", "newsletter", "spam", "social"
+    ]
+    confidence: float = Field(ge=0.0, le=1.0)
+    reasoning: str  # one line, shown on the approval card
+    extracted: Extraction = Field(default_factory=Extraction)
+
+    # Below this, never notify — it goes to the daily digest instead.
+    # ClassVar, not a field: a bare annotation here would make it model input.
+    CONFIDENCE_FLOOR: ClassVar[float] = 0.6
+
+    @property
+    def is_confident(self) -> bool:
+        return self.confidence >= self.CONFIDENCE_FLOOR
+
+
+# --------------------------------------------------------------------------
+# Actions — the "multi-agent" layer is a router emitting these
+# --------------------------------------------------------------------------
+
+
+class ActionType(StrEnum):
+    PROPOSE_REPLY = "propose_reply"
+    CREATE_CALENDAR_EVENT = "create_calendar_event"
+    CREATE_TASK = "create_task"
+    SET_REMINDER = "set_reminder"
+    DRAFT_DOCUMENT = "draft_document"
+
+
+class Action(BaseModel):
+    """Base for all actions. Idempotent on (message_id, action_type)."""
+
+    type: ActionType
+    message_id: str
+
+    @property
+    def idempotency_key(self) -> str:
+        return f"{self.message_id}:{self.type}"
+
+
+class ProposeReply(Action):
+    type: Literal[ActionType.PROPOSE_REPLY] = ActionType.PROPOSE_REPLY
+    draft_body: str
+    draft_subject: str | None = None
+
+
+class CreateCalendarEvent(Action):
+    type: Literal[ActionType.CREATE_CALENDAR_EVENT] = ActionType.CREATE_CALENDAR_EVENT
+    title: str
+    starts_at: datetime  # UTC
+    ends_at: datetime
+    attendees: list[str] = Field(default_factory=list)
+    location: str | None = None
+    description: str | None = None
+
+
+class CreateTask(Action):
+    type: Literal[ActionType.CREATE_TASK] = ActionType.CREATE_TASK
+    title: str
+    due_at: datetime | None = None
+    notes: str | None = None
+
+
+class SetReminder(Action):
+    type: Literal[ActionType.SET_REMINDER] = ActionType.SET_REMINDER
+    text: str
+    remind_at: datetime
+
+
+class DraftDocument(Action):
+    type: Literal[ActionType.DRAFT_DOCUMENT] = ActionType.DRAFT_DOCUMENT
+    title: str
+    brief: str  # what to write; the doc itself is generated by the handler
+
+
+AnyAction = (
+    ProposeReply | CreateCalendarEvent | CreateTask | SetReminder | DraftDocument
+)
+
+
+def requires_approval(action: Action) -> bool:
+    """The security boundary.
+
+    Inbound text is written by strangers, so any action that is visible to
+    other people or hard to undo needs a human tap. Cheap, private, reversible
+    actions run automatically. See DESIGN.md 2.5.
+    """
+    match action:
+        case ProposeReply():
+            return True  # always — nothing is ever sent unattended
+        case CreateCalendarEvent(attendees=attendees):
+            return bool(attendees)  # mails invites to real people
+        case _:
+            return False
