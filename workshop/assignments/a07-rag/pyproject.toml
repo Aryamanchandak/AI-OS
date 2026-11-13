@@ -1,0 +1,29 @@
+[project]
+name = "a07-rag"
+version = "0.1.0"
+description = "EAG V3 Session 7: the Session 6 agent plus vector memory, document indexing and a 50-item corpus."
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]<2",
+    "httpx",
+    "ddgs",
+    "tavily-python",
+    "crawl4ai",
+    "python-dotenv",
+    "pydantic>=2.13.4",
+    "faiss-cpu>=1.8.0",
+    "numpy>=1.26",
+]
+
+[dependency-groups]
+dev = ["pytest", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+    "network: needs internet access",
+    "live: makes real (paid) model calls through the gateway",
+]
+addopts = "-m 'not live and not network'"

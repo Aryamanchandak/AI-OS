@@ -1,0 +1,13 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+state/
+usage.json
+*.db
+*.log
+# the sandbox is scratch space, except the documents the agent indexes
+sandbox/*
+!sandbox/papers/
+!sandbox/corpus/
+state_empty/

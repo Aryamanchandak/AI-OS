@@ -1,0 +1,58 @@
+Bond duration
+Yield to maturity
+Bond convexity
+Yield curve
+Credit default swap
+Capital asset pricing model
+Efficient-market hypothesis
+Modern portfolio theory
+Sharpe ratio
+Value at risk
+Discounted cash flow
+Net present value
+Internal rate of return
+Weighted average cost of capital
+Dividend discount model
+Black–Scholes model
+Put–call parity
+Arbitrage pricing theory
+Fama–French three-factor model
+Price–earnings ratio
+Free cash flow
+Working capital
+DuPont analysis
+Altman Z-score
+Beneish M-score
+Leverage (finance)
+Liquidity risk
+Credit rating
+Securitization
+Interest rate swap
+Monetary policy
+Purchasing power parity
+Quantitative easing
+Confirmation bias
+Anchoring effect
+Availability heuristic
+Survivorship bias
+Hindsight bias
+Loss aversion
+Sunk cost
+Base rate fallacy
+Dunning–Kruger effect
+Overconfidence effect
+Prospect theory
+Bayes' theorem
+Regression toward the mean
+Simpson's paradox
+Goodhart's law
+Occam's razor
+Falsifiability
+Brier score
+Spaced repetition
+Testing effect
+Forgetting curve
+Illusion of explanatory depth
+Motivated reasoning
+Gambler's fallacy
+Straw man

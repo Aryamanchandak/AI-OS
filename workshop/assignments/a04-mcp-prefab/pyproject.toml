@@ -1,0 +1,21 @@
+[project]
+name = "a04-mcp-prefab"
+version = "0.1.0"
+description = "EAG V3 Session 4: an MCP server with an internet tool, a file CRUD tool and a Prefab UI tool."
+requires-python = ">=3.11"
+dependencies = [
+    "fastmcp[apps]>=3",
+    "prefab-ui",
+    "httpx",
+]
+
+[dependency-groups]
+dev = ["pytest", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = ["network: needs internet access"]
+addopts = "-m 'not network'"
