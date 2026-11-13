@@ -1,0 +1,31 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+state/
+usage.json
+*.db
+*.log
+# the sandbox is scratch space, except the documents the agent indexes
+sandbox/*
+!sandbox/papers/
+!sandbox/corpus/
+state_empty/
+
+# added for the standalone assignment repo
+.git-standalone/
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.uv-cache/
+.DS_Store
+.claude/
+node_modules/
+*.zip
+*.db
+*.mp3

@@ -18,3 +18,21 @@ llm_gatewayV9/*.db
 
 # the original hand-outs
 *.zip
+
+# added for the standalone assignment repo
+.git-standalone/
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.uv-cache/
+.DS_Store
+.claude/
+node_modules/
+*.zip
+*.db
+*.mp3
