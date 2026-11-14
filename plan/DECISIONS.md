@@ -1,5 +1,7 @@
 # Decisions
 
+**Moved 15 Nov 2026:** the live copy of this file is in `~/Documents/Personal AI/plan/` (repo `personal-ai`). This copy is history; do not edit it.
+
 - 2026-11-02 — The capstone is still live; anything it needs can't be delayed. Why: hard deadline; smaller stages cover it, no dates set yet.
 - 2026-11-02 — The gateway gets a one-hour push to work end to end and becomes the model node for Stage 0. Why: it should serve real calls, not stay frozen.
 - 2026-11-02 — Claude and Codex may build in parallel, judged case by case on whether the code works. Why: AI time is cheap; human review is the bottleneck.

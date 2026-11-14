@@ -1,5 +1,7 @@
 # Capstone MVP: due Sunday 22 Nov 2026, end of day
 
+**Moved 15 Nov 2026:** the live copy of this file is in `~/Documents/Personal AI/plan/` (repo `personal-ai`). This copy is history; do not edit it.
+
 ## Status
 
 Version 4, 14 Nov 2026, updated after the AI OS review (`plan/ai-os-review.md`). You approved version 2 and asked for the later updates the same day; four items at the bottom are still open. This replaces the dates and the "frozen" scope in `stages.md` until submission.
