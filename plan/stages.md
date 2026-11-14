@@ -1,6 +1,6 @@
 # Stages
 
-**Proposed 13 Nov 2026, awaiting your approval:** `capstone-mvp.md` cuts this plan down to what can be submitted by Sunday 22 Nov. Until you approve it, everything below stands as written.
+**Superseded 14 Nov 2026 until submission:** `capstone-mvp.md` is the plan for Sunday 22 Nov, and `ai-os-review.md` proposes what follows. Everything below is kept for reference and is not the current plan.
 
 **How a stage is built.** A node joins a stage only if the stage's done-when can't be shown without it. Anything else is delayed, with its reason written down. Stages run in dependency order. Only the next stage is detailed; the later ones are outlines.
 

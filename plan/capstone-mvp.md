@@ -2,9 +2,9 @@
 
 ## Status
 
-Version 3, 14 Nov 2026. You approved version 2 and asked for the version 3 updates the same day; four items at the bottom are still open. This replaces the dates and the "frozen" scope in `stages.md` until submission.
+Version 4, 14 Nov 2026, updated after the AI OS review (`plan/ai-os-review.md`). You approved version 2 and asked for the later updates the same day; four items at the bottom are still open. This replaces the dates and the "frozen" scope in `stages.md` until submission.
 
-The main change from version 1: the five asks now come from your pitch deck, and the plan is built around one learning loop. The prediction and calendar asks are gone. Version 3 adds the charter and playbooks the course expects, a higher test count, the questioner by name, and steelman as a stretch.
+The main change from version 1: the five asks now come from your pitch deck, and the plan is built around one learning loop. The prediction and calendar asks are gone. Version 3 adds the charter and playbooks the course expects, a higher test count, the questioner by name, and steelman as a stretch. Version 4 makes the store the start of your lifelong record and names what follows after Sunday.
 
 A copy you can comment on is at https://claude.ai/artifact/4mBVSLMM3w6fT3wZsdGGZp. This file is the source of truth.
 
@@ -63,7 +63,7 @@ The folder `ingestion/` already holds PDF, Obsidian and vector code from earlier
 
 ## The spine
 
-The trunk is five small files. `core/llm.py` is the only door to a model, using the any-llm library with a key. `core/store.py` is one SQLite file for sources, cards, answers and mistakes, plus the vector index. `core/registry.py` is the list of tools the loop may call. `core/loop.py` is the hand-written agent loop from your Assignment 4 and 6 code, with the PDMA and ReAct loops as you asked. `core/web.py` serves `/health` and a token-guarded `/ask` page.
+The trunk is five small files. `core/llm.py` is the only door to a model, using the any-llm library with a key. `core/store.py` is one SQLite file for sources, passages, cards, answers and mistakes, plus the vector index. Every row keeps its date and where it came from, because this file is the start of your lifelong record. `core/registry.py` is the list of tools the loop may call. `core/loop.py` is the hand-written agent loop from your Assignment 4 and 6 code, with the PDMA and ReAct loops as you asked. `core/web.py` serves `/health` and a token-guarded `/ask` page.
 
 Libraries are used everywhere except the loop, which stays hand-written because the course requires it. Each library sits behind one thin adapter file.
 
@@ -90,9 +90,11 @@ The course brief sets the same bar for your route as for the others: an agent wi
 
 ## What is cut until after Sunday
 
-Audio, video and on-screen reading of video, live Reader or Obsidian sync, the knowledge graph (a store of facts linked to each other), WhatsApp and Telegram, spaced-repetition scheduling, the prediction tracker, the calendar and task ranker, the morning push, Langfuse traces and database backup.
+Audio, video and on-screen reading of video, live Reader or Obsidian sync, the knowledge graph (a store of facts linked to each other, to be built with Graphiti), WhatsApp and Telegram, spaced-repetition scheduling, the prediction tracker, the calendar and task ranker, the morning push, Langfuse traces, database backup, the source watcher, the follow-up agent and research delegated to Claude Code or Codex.
 
 The reason is the same for each: the three checks can be shown without it. Each one is a new leaf or a new surface later, so cutting it now removes no foundation.
+
+**After Sunday.** The AI OS review sets the order: two weeks of real use, then the source watcher, then the follow-up agent, then the graph with Graphiti. Each is a new leaf on this same record, so nothing built this week is thrown away.
 
 ## The days
 
@@ -139,12 +141,13 @@ Never cut: the deployment, the learning loop, ask 3, the router and the three ho
 - The calendar ask is removed.
 - Claude writes the capstone parts now; there is no slippage allowance.
 - You state what needs doing and what done means; Claude takes it forward.
+- The gateway is dropped for good, and the knowledge graph waits for Graphiti after the capstone.
 
 ## Still open
 
 **Who writes the tests.** Your comment says Claude takes it forward from your definition of done. The course brief says a test written by Claude or Codex scores zero. The one-line test sentences above are my proposed middle: you write what correct looks like, Claude writes the code that checks it. Say if you want to take the risk and have Claude write them all.
 
-**The ingestion list.** I cut audio, video, live sync and the knowledge graph. You asked for them. Confirm the cut or move items back in, knowing each one costs roughly a day.
+**The ingestion list.** I cut audio, video and live sync until after Sunday. The knowledge graph is settled: Graphiti, after the capstone. Confirm the rest of the cut or move items back in, knowing each one costs roughly a day.
 
 **New libraries.** A vector database and a PDF reader are needed. I will test the existing `ingestion/` code first, then bring you one list of libraries to approve before adding any.
 
