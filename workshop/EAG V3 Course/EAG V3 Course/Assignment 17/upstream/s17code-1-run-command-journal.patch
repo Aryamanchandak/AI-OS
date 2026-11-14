@@ -1,0 +1,72 @@
+diff --git a/s17code/workers/coding.py b/s17code/workers/coding.py
+index b3d0f8a..fb8f4f2 100644
+--- a/s17code/workers/coding.py
++++ b/s17code/workers/coding.py
+@@ -61,8 +61,9 @@ async def grep_code_worker(ctx: RunContext, task: TaskSpec) -> dict[str, Any]:
+ 
+ 
+ async def run_command_worker(ctx: RunContext, task: TaskSpec) -> dict[str, Any]:
++    # The journal is JSON: hand it the result's dict, not the CommandResult itself.
+     return run_command(ctx.workspace(), task.input["command"],
+-                       timeout=int(task.input.get("timeout", 120)))
++                       timeout=int(task.input.get("timeout", 120))).as_dict()
+ 
+ 
+ async def git_diff_worker(ctx: RunContext, task: TaskSpec) -> dict[str, Any]:  # noqa: ARG001
+diff --git a/tests/test_run_command_through_the_runtime.py b/tests/test_run_command_through_the_runtime.py
+new file mode 100644
+index 0000000..aff6209
+--- /dev/null
++++ b/tests/test_run_command_through_the_runtime.py
+@@ -0,0 +1,51 @@
++"""The judge has to be able to report its verdict.
++
++`coding.run_command` returns a `CommandResult`, and the worker handed that object
++straight to the graph. The journal is JSON, so recording the outcome raised
++`TypeError: Object of type CommandResult is not JSON serializable` and every
++command the agent ran was journalled as a *failed task* with no exit code.
++
++The command runner was tested directly and the planner was tested with
++hand-built nodes, so nothing ran a command through the runtime. A coding loop
++that cannot read an exit code cannot tell red from green.
++"""
++from __future__ import annotations
++
++import json
++
++import s17code.routes as agent_route
++from s17code.core.memory.embeddings import DeterministicEmbedder
++
++
++def test_a_command_run_by_the_agent_is_journalled_with_its_exit_code(app_client, monkeypatch, tmp_path):
++    workspace = tmp_path / "workspace"
++    workspace.mkdir()
++    monkeypatch.setenv("S17_WORKSPACE", str(workspace))
++    monkeypatch.setenv("S17_ALLOWED_COMMANDS", "python")
++    app_client.app.state.runtime.memory.embedder = DeterministicEmbedder(128)
++
++    async def fake_gateway(_app, prompt: str, system: str):
++        if "evidence-readiness critic" in system:
++            return {"text": json.dumps({"ready": True, "missing": [], "reason": "the command ran"})}
++        if "decision core of a live-graph agent" in system:
++            nodes = {node["id"] for node in json.loads(prompt)["graph"]["nodes"]}
++            if "version" not in nodes:
++                patch = {"add": [{"id": "version", "capability": "run_command",
++                                  "arguments": {"command": "python --version"}, "depends_on": []}]}
++            else:
++                patch = {"add": [{"id": "answer", "capability": "answer_with_evidence",
++                                  "arguments": {"query": "Report it."}, "depends_on": ["version"]}]}
++            return {"text": json.dumps({**patch, "cancel": [], "finish": False, "reason": "next step"})}
++        return {"text": "It ran."}
++
++    monkeypatch.setattr(agent_route, "gateway_text_llm", fake_gateway)
++    response = app_client.post("/v1/agent/runs", json={
++        "tenant_id": "acme", "project_id": "code", "user_id": "rohan",
++        "prompt": "Report the Python version.", "allowed_side_effects": ["run_command"]})
++
++    assert response.status_code == 200
++    node = response.json()["graph"]["nodes"]["version"]
++    assert node["state"] == "succeeded", node["result"]
++    assert node["result"]["exit_code"] == 0
++    assert "Python" in node["result"]["stdout"] + node["result"]["stderr"]
++    assert response.json()["status"] == "completed"

@@ -1,0 +1,133 @@
+diff --git a/s17code/routes.py b/s17code/routes.py
+index f81636a..816528e 100644
+--- a/s17code/routes.py
++++ b/s17code/routes.py
+@@ -44,6 +44,10 @@ class RunBody(ScopeBody):
+     budget: float | None = Field(default=None, gt=0)
+     principal: str | None = Field(default=None, max_length=200)
+     allowed_side_effects: list[str] = Field(default_factory=list, max_length=20)
++    # This route answers only when the run has finished, so an id minted inside
++    # the runtime reaches the caller too late to open the live event stream.
++    # A caller that wants to watch chooses the id, subscribes, then starts.
++    run_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
+ 
+ 
+ class ResumeBody(BaseModel):
+@@ -186,8 +190,17 @@ async def _resume_channel_approval(request: Request, body: ChannelMessageBody):
+ @router.post("/runs", dependencies=[Depends(require_control)])
+ async def run(body: RunBody, request: Request):
+     runtime = request.app.state.runtime
++    if body.run_id is not None:
++        # GraphStore.start() quietly declines to overwrite an existing run, and
++        # the executor would then carry on inside it. A reused id is a conflict.
++        try:
++            runtime.graph.snapshot(body.run_id)
++        except KeyError:
++            pass
++        else:
++            raise HTTPException(409, f"run {body.run_id} already exists; choose a new run_id")
+     try:
+-        return await runtime.run(prompt=body.prompt, scope=body.scope(),
++        return await runtime.run(prompt=body.prompt, scope=body.scope(), run_id=body.run_id,
+                                  llm=lambda prompt, system: gateway_text_llm(request.app, prompt, system),
+                                  source_uri="api://agent/runs", source_author=body.user_id or "api-user",
+                                  respond_as=body.respond_as, budget=body.budget, principal=body.principal,
+diff --git a/tests/test_run_id_is_known_before_the_run_ends.py b/tests/test_run_id_is_known_before_the_run_ends.py
+new file mode 100644
+index 0000000..0424593
+--- /dev/null
++++ b/tests/test_run_id_is_known_before_the_run_ends.py
+@@ -0,0 +1,93 @@
++"""A run you cannot name is a run you cannot watch.
++
++`POST /v1/agent/runs` blocks until the run has finished, and the run id was
++minted inside the runtime, so the caller learned it only from the final
++response. `GET /v1/runs/{id}/events` is the live stream, but nobody who started
++a run could open it while the run was live: the id arrived with the result.
++
++The caller may therefore choose the id. It can open the stream first and start
++the run second, and every node appears as it happens.
++"""
++from __future__ import annotations
++
++import json
++
++import s17code.routes as agent_route
++from s17code.core.memory.embeddings import DeterministicEmbedder
++
++SCOPE = {"tenant_id": "acme", "project_id": "watch", "user_id": "rohan"}
++
++
++def _scripted_gateway(seen_mid_run: list[bool], app_client, run_id: str):
++    async def fake_gateway(_app, prompt: str, system: str):
++        if "evidence-readiness critic" in system:
++            return {"text": json.dumps({"ready": True, "missing": [], "reason": "complete"})}
++        if "decision core of a live-graph agent" in system:
++            # The run is in flight right now. Is the journal that
++            # GET /v1/agent/runs/{id} serves already there under the id the
++            # client supplied? (Read in-process: the test client cannot re-enter
++            # the event loop it is already running on.)
++            try:
++                journal = agent_route._journal(app_client.app.state.runtime, run_id)
++                seen_mid_run.append(not journal["finished"])
++            except Exception:
++                seen_mid_run.append(False)
++            goal = json.loads(prompt)["goal"]
++            return {"text": json.dumps({"add": [{"id": "answer", "capability": "answer_with_evidence",
++                                                 "arguments": {"query": goal}, "depends_on": []}],
++                                        "cancel": [], "finish": False, "reason": "no tools needed"})}
++        return {"text": "done"}
++
++    return fake_gateway
++
++
++def test_a_caller_supplied_run_id_is_used_and_is_readable_while_the_run_is_live(app_client, monkeypatch):
++    app_client.app.state.runtime.memory.embedder = DeterministicEmbedder(128)
++    seen_mid_run: list[bool] = []
++    monkeypatch.setattr(agent_route, "gateway_text_llm",
++                        _scripted_gateway(seen_mid_run, app_client, "run-chosen-by-client"))
++
++    response = app_client.post("/v1/agent/runs",
++                               json={**SCOPE, "prompt": "Say done.", "run_id": "run-chosen-by-client"})
++
++    assert response.status_code == 200
++    assert response.json()["run_id"] == "run-chosen-by-client"
++    assert response.json()["status"] == "completed"
++    assert seen_mid_run and all(seen_mid_run)
++
++
++def test_reusing_a_run_id_is_refused_rather_than_merged_into_the_old_run(app_client, monkeypatch):
++    app_client.app.state.runtime.memory.embedder = DeterministicEmbedder(128)
++    monkeypatch.setattr(agent_route, "gateway_text_llm",
++                        _scripted_gateway([], app_client, "run-twice"))
++    body = {**SCOPE, "prompt": "Say done.", "run_id": "run-twice"}
++
++    assert app_client.post("/v1/agent/runs", json=body).status_code == 200
++    second = app_client.post("/v1/agent/runs", json=body)
++
++    assert second.status_code == 409
++    assert "run-twice" in second.json()["detail"]
++
++
++def test_a_run_id_that_is_not_a_plain_identifier_is_rejected(app_client):
++    response = app_client.post("/v1/agent/runs",
++                               json={**SCOPE, "prompt": "Say done.", "run_id": "../escape"})
++    assert response.status_code == 422
++
++
++def test_omitting_run_id_still_mints_one(app_client, monkeypatch):
++    app_client.app.state.runtime.memory.embedder = DeterministicEmbedder(128)
++
++    async def fake_gateway(_app, prompt: str, system: str):
++        if "evidence-readiness critic" in system:
++            return {"text": json.dumps({"ready": True, "missing": [], "reason": "complete"})}
++        if "decision core of a live-graph agent" in system:
++            return {"text": json.dumps({"add": [{"id": "answer", "capability": "answer_with_evidence",
++                                                 "arguments": {"query": "x"}, "depends_on": []}],
++                                        "cancel": [], "finish": False, "reason": "no tools needed"})}
++        return {"text": "done"}
++
++    monkeypatch.setattr(agent_route, "gateway_text_llm", fake_gateway)
++    response = app_client.post("/v1/agent/runs", json={**SCOPE, "prompt": "Say done."})
++    assert response.status_code == 200
++    assert response.json()["run_id"].startswith("run-")

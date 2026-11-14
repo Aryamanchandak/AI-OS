@@ -1,0 +1,18 @@
+{
+  "note": "PLACEHOLDER known answers worked by hand by Claude. Assumes: selling allowed, fractional units allowed, no fees, all new cash invested. Aryaman to replace with a real portfolio.",
+  "tolerance": 0.005,
+  "cases": [
+    {"name": "three holdings, 1,000 new cash, selling allowed",
+     "input": {"new_cash": 1000,
+               "holdings": [{"name": "A", "units": 10, "price": 100, "target_weight": 50},
+                            {"name": "B", "units": 20, "price": 50, "target_weight": 30},
+                            {"name": "C", "units": 0, "price": 200, "target_weight": 20}]},
+     "expected": {"total_value": 3000, "cash_left": 0,
+                  "trades": [{"name": "A", "action": "buy", "units": 5, "value": 500},
+                             {"name": "B", "action": "sell", "units": 2, "value": 100},
+                             {"name": "C", "action": "buy", "units": 3, "value": 600}],
+                  "resulting": [{"name": "A", "value": 1500, "weight": 50},
+                                {"name": "B", "value": 900, "weight": 30},
+                                {"name": "C", "value": 600, "weight": 20}]}}
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "note": "PLACEHOLDER known answers worked by hand by Claude from fee_schedule.md. Aryaman to replace with real ones.",
+  "tolerance": 0.005,
+  "cases": [
+    {"name": "AUM 3,000,000: two tiers, above the minimum",
+     "input": {"aum": 3000000},
+     "expected": {"annual_fee": 25000, "quarterly_fee": 6250, "minimum_applied": false}},
+    {"name": "AUM 500,000: the quarterly minimum applies",
+     "input": {"aum": 500000},
+     "expected": {"annual_fee": 5000, "quarterly_fee": 2500, "minimum_applied": true}},
+    {"name": "AUM 8,000,000: all three tiers",
+     "input": {"aum": 8000000},
+     "expected": {"annual_fee": 55000, "quarterly_fee": 13750, "minimum_applied": false}}
+  ]
+}

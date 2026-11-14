@@ -15,3 +15,10 @@ node_modules/
 *.zip
 *.db
 *.mp3
+
+# Financial Tool Builder runtime folders
+workspace/
+data/
+# Course repos are cloned beside the app, not committed here (see README)
+S17Code/
+glc_v5/

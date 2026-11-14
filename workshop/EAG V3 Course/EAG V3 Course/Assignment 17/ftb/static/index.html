@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Financial Tool Builder</title>
+<style>
+  /* Local font stacks on purpose: this app runs offline and calls no outside service. */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #f5f1e8; --sheet: #fffdf8; --sunk: #ece6d9; --rule: #d9d1c0; --rule-strong: #b9ae97;
+    --ink: #16202e; --ink-2: #47515f; --ink-3: #7b8290;
+    --copper: #a8481a; --copper-soft: #f3e2d6;
+    --green: #1f6b45; --green-soft: #dfeee4; --red: #a3271f; --red-soft: #f6dedb; --amber: #8a5a00; --amber-soft: #f6ead0;
+    --display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --body: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", sans-serif;
+    --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    --r: 6px;
+  }
+  html, body { height: 100%; }
+  body { background: var(--paper); color: var(--ink); font: 15px/1.6 var(--body); overflow-x: hidden; }
+  button, input, textarea, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--copper); outline-offset: 2px; }
+
+  header { display: flex; align-items: baseline; gap: 16px; padding: 18px 28px 14px; border-bottom: 1px solid var(--rule-strong); flex-wrap: wrap; }
+  header h1 { font: 600 26px/1.1 var(--display); letter-spacing: -0.02em; }
+  header p { color: var(--ink-2); font-size: 14px; }
+  .status { margin-left: auto; font: 12px var(--mono); padding: 4px 10px; border-radius: 99px; border: 1px solid var(--rule-strong); background: var(--sheet); max-width: 100%; }
+  .status.ok { color: var(--green); border-color: var(--green); background: var(--green-soft); }
+  .status.bad { color: var(--red); border-color: var(--red); background: var(--red-soft); }
+
+  main { display: grid; grid-template-columns: minmax(340px, 5fr) minmax(320px, 5fr) minmax(280px, 3.4fr); gap: 0; min-height: calc(100vh - 66px); }
+  main.quiet { grid-template-columns: minmax(340px, 5fr) minmax(320px, 6fr) 46px; }
+  section.col { padding: 22px 24px 60px; border-right: 1px solid var(--rule); min-width: 0; }
+  section.col:last-child { border-right: 0; background: var(--sunk); }
+  @media (max-width: 1100px) { main, main.quiet { grid-template-columns: 1fr; } section.col { border-right: 0; border-bottom: 1px solid var(--rule); } }
+
+  .eyebrow { font: 600 11px var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--copper); margin-bottom: 6px; }
+  h2 { font: 600 21px/1.2 var(--display); letter-spacing: -0.01em; margin-bottom: 12px; }
+  h3 { font: 600 13px var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+  p.note { color: var(--ink-2); font-size: 13.5px; margin-bottom: 12px; }
+  .hidden { display: none !important; }
+
+  textarea, input[type=text] { width: 100%; background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: var(--r); padding: 9px 11px; resize: vertical; }
+  textarea.code { font: 12.5px/1.5 var(--mono); }
+  .btn { border: 1px solid var(--ink); background: var(--ink); color: var(--sheet); padding: 8px 16px; border-radius: var(--r); cursor: pointer; font-weight: 600; transition: transform .15s, background .15s; }
+  .btn:hover:not(:disabled) { background: #263449; transform: translateY(-1px); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule-strong); font-weight: 500; }
+  .btn.ghost:hover:not(:disabled) { background: var(--sheet); }
+  .btn.go { background: var(--copper); border-color: var(--copper); }
+  .btn.go:hover:not(:disabled) { background: #8f3b12; }
+  .btn.small { padding: 3px 10px; font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+  .tabs { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: var(--r); overflow: hidden; margin-bottom: 12px; }
+  .tabs button { border: 0; background: var(--sheet); padding: 7px 14px; cursor: pointer; }
+  .tabs button.on { background: var(--ink); color: var(--sheet); }
+
+  .error { background: var(--red-soft); color: var(--red); border-left: 3px solid var(--red); padding: 9px 12px; border-radius: var(--r); margin: 10px 0; font-size: 14px; white-space: pre-wrap; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .chip { font: 12px var(--mono); background: var(--sunk); border: 1px solid var(--rule); border-radius: 4px; padding: 2px 7px; }
+
+  .card { background: var(--sheet); border: 1px solid var(--rule); border-left: 3px solid var(--rule-strong); border-radius: var(--r); padding: 11px 13px; margin-bottom: 9px; animation: rise .3s ease-out both; }
+  .card.ok { border-left-color: var(--green); } .card.warn { border-left-color: var(--amber); background: #fffaf0; } .card.bad { border-left-color: var(--red); }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  .card .meta { display: flex; gap: 10px; align-items: center; font-size: 12.5px; color: var(--ink-3); margin-bottom: 6px; flex-wrap: wrap; }
+  .card .meta .id { font-family: var(--mono); }
+  .card label.tick { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; color: var(--ink); cursor: pointer; }
+  .quote { font-size: 13px; color: var(--ink-2); border-left: 2px solid var(--rule-strong); padding-left: 9px; margin-top: 7px; font-style: italic; cursor: pointer; }
+  .quote.missing { color: var(--red); border-left-color: var(--red); font-style: normal; cursor: default; }
+  .was { text-decoration: line-through; color: var(--ink-3); }
+  ul.blockers { list-style: none; margin: 8px 0 12px; }
+  ul.blockers li { font-size: 13.5px; color: var(--amber); padding: 3px 0 3px 18px; position: relative; }
+  ul.blockers li::before { content: "•"; position: absolute; left: 4px; }
+  pre.doc { background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--r); padding: 12px; font: 12.5px/1.55 var(--mono); white-space: pre-wrap; max-height: 300px; overflow: auto; }
+  pre.doc mark { background: #ffe08a; color: inherit; padding: 1px 0; }
+
+  .frame { background: var(--sheet); border: 1px solid var(--rule-strong); border-radius: var(--r); min-height: 420px; overflow: hidden; display: flex; }
+  .frame iframe { border: 0; width: 100%; min-height: 560px; background: #fff; }
+  .frame .empty { margin: auto; color: var(--ink-3); text-align: center; padding: 40px 24px; max-width: 320px; }
+  .verdict { font: 12.5px/1.5 var(--mono); white-space: pre-wrap; background: var(--sheet); border: 1px solid var(--rule); border-radius: var(--r); padding: 10px 12px; margin-top: 10px; max-height: 220px; overflow: auto; }
+  .banner { padding: 10px 13px; border-radius: var(--r); margin-bottom: 12px; font-size: 14px; white-space: pre-wrap; }
+  .banner.ok { background: var(--green-soft); color: var(--green); } .banner.bad { background: var(--red-soft); color: var(--red); } .banner.run { background: var(--copper-soft); color: var(--copper); }
+
+  .panelhead { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .panelhead h2 { margin: 0; flex: 1; }
+  main.quiet #activityCol > *:not(.panelhead) { display: none; }
+  main.quiet #activityCol { padding: 22px 6px; } main.quiet #activityCol h2, main.quiet #activityCol .eyebrow { display: none; }
+  ol.log { list-style: none; }
+  ol.log li { border-left: 2px solid var(--rule-strong); padding: 2px 0 10px 12px; margin-left: 5px; position: relative; font-size: 13.5px; animation: rise .25s ease-out both; }
+  ol.log li::before { content: ""; position: absolute; left: -6px; top: 7px; width: 10px; height: 10px; border-radius: 50%; background: var(--rule-strong); border: 2px solid var(--sunk); }
+  ol.log li.ok::before { background: var(--green); } ol.log li.bad::before { background: var(--red); } ol.log li.warn::before { background: var(--amber); }
+  ol.log li.bad .t { color: var(--red); font-weight: 600; } ol.log li.ok .t { color: var(--green); }
+  ol.log .seq { font: 11px var(--mono); color: var(--ink-3); margin-right: 6px; }
+  ol.log pre { font: 11.5px/1.45 var(--mono); white-space: pre-wrap; word-break: break-word; color: var(--ink-2); background: var(--sheet); border-radius: 4px; padding: 6px 8px; margin-top: 4px; max-height: 190px; overflow: auto; }
+  .history button { display: block; width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px solid var(--rule); padding: 7px 2px; cursor: pointer; font-size: 13px; }
+  .history button:hover { background: var(--sheet); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; background: var(--amber); }
+  .dot.passed { background: var(--green); } .dot.failed { background: var(--red); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Financial Tool Builder</h1>
+  <p>Describe a calculation, agree the rules, get a tested calculator.</p>
+  <span class="status" id="status">checking engine…</span>
+</header>
+
+<main id="main">
+  <section class="col" id="rulesCol">
+    <div id="start">
+      <div class="eyebrow">Step 1</div>
+      <h2>What should the tool calculate?</h2>
+      <div class="tabs" role="tablist">
+        <button id="tabPrompt" class="on" type="button">Describe it</button>
+        <button id="tabDocument" type="button">From a document</button>
+      </div>
+      <textarea id="request" rows="6" placeholder="Describe the inputs, the calculation and the result you want."></textarea>
+      <div id="docBox" class="hidden">
+        <p class="note" style="margin-top:10px">Paste the document, or choose a .txt or .md file. Its text is treated as data: it can supply rules for you to confirm, nothing else.</p>
+        <textarea id="document" rows="10" class="code" placeholder="Paste the fee schedule or rule document here."></textarea>
+        <div class="row"><input type="file" id="file" accept=".txt,.md,text/plain,text/markdown"></div>
+      </div>
+      <div class="row">
+        <button class="btn go" id="interpret" type="button">Interpret</button>
+        <span id="exampleButtons"></span>
+      </div>
+      <p class="note" id="caseNote"></p>
+      <div id="startError"></div>
+      <div id="projects"></div>
+    </div>
+
+    <div id="review" class="hidden">
+      <div class="eyebrow">Step 2 · agree the rules</div>
+      <h2 id="title"></h2>
+      <p class="note" id="summary"></p>
+      <div class="chips" id="inputs"></div>
+      <div class="chips" id="outputs"></div>
+
+      <h3>Rules</h3>
+      <div id="rules"></div>
+      <div class="row"><input type="text" id="newRule" placeholder="Add a rule of your own"><button class="btn ghost small" id="tickAll" type="button">Tick every rule</button></div>
+
+      <div id="questionsBox"><h3>Questions that need your answer</h3><div id="questions"></div></div>
+
+      <h3>Examples with known answers</h3>
+      <p class="note">These become the check the generated tool must pass. Confirm only numbers you have verified yourself.</p>
+      <div id="examples"></div>
+      <button class="btn ghost small" id="addExample" type="button">Add an example</button>
+
+      <div id="docView" class="hidden"><h3>Source document</h3><pre class="doc" id="doc"></pre></div>
+
+      <h3>Ready to build?</h3>
+      <ul class="blockers" id="blockers"></ul>
+      <div id="reviewError"></div>
+      <div class="row">
+        <button class="btn" id="save" type="button">Save my decisions</button>
+        <button class="btn go" id="build" type="button" disabled>Build the tool</button>
+        <button class="btn ghost" id="restart" type="button">Start over</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="col">
+    <div class="eyebrow">Step 3</div>
+    <h2>Your tool</h2>
+    <div id="buildBanner"></div>
+    <div class="frame" id="frame"><div class="empty">The calculator appears here once a build passes its check.</div></div>
+    <div class="row hidden" id="toolActions">
+      <a class="btn" id="download" href="#">Download the HTML file</a>
+      <span class="note" id="versionNote" style="margin:0"></span>
+    </div>
+    <div id="followBox" class="hidden">
+      <h3>Change it</h3>
+      <textarea id="followText" rows="3" placeholder="Say what should be different, for example: add a flat 10 fee per trade."></textarea>
+      <div class="row"><button class="btn" id="follow" type="button">Propose the change</button></div>
+      <p class="note">Changes arrive as proposals in Step 2. Rules you agreed stay unless you accept their removal.</p>
+      <div id="followError"></div>
+    </div>
+    <div id="verdictBox" class="hidden"><h3>The app's own check of the result</h3><div class="verdict" id="verdict"></div></div>
+  </section>
+
+  <section class="col" id="activityCol">
+    <div class="panelhead">
+      <div style="flex:1"><div class="eyebrow">Live from S17Code</div><h2>Activity</h2></div>
+      <button class="btn ghost small" id="togglePanel" type="button" aria-expanded="true" title="Collapse or expand">⇔</button>
+    </div>
+    <p class="note" id="activityNote">Every line below is an event the engine recorded. Nothing is shown unless the engine reported it.</p>
+    <ol class="log" id="log"></ol>
+    <div class="history" id="history"></div>
+  </section>
+</main>
+
+<script>
+"use strict";
+// Every value from the server is placed with textContent. Nothing is ever parsed as HTML.
+const $ = id => document.getElementById(id);
+function el(tag, props, ...kids) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (k === "class") node.className = v; else if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else if (k in node) node[k] = v; else node.setAttribute(k, v);
+  }
+  for (const kid of kids.flat()) if (kid != null) node.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return node;
+}
+async function api(path, body) {
+  let response;
+  try {
+    response = await fetch(path, body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch (e) { throw new Error("This app's own server is not answering. Is it still running?"); }
+  const data = await response.json().catch(() => ({ error: "unreadable reply" }));
+  if (!response.ok) throw new Error(data.error || ("HTTP " + response.status));
+  return data;
+}
+const showError = (id, message) => { $(id).replaceChildren(message ? el("div", { class: "error" }, message) : ""); };
+
+let route = "prompt", project = null, suppliedCases = [], engineOk = false, watching = null, draftExamples = [];
+
+// ---------------------------------------------------------------- engine status
+async function refreshStatus() {
+  try {
+    const s = await api("/api/status");
+    engineOk = s.engine.ok;
+    $("status").className = "status " + (engineOk ? "ok" : "bad");
+    $("status").textContent = engineOk ? "engine connected" + (s.busy ? " · building" : "") : "engine not connected";
+    $("status").title = s.engine.detail;
+    $("activityNote").textContent = engineOk
+      ? "Every line below is an event the engine recorded. Nothing is shown unless the engine reported it."
+      : "Engine not connected: " + s.engine.detail + " — builds cannot start, and no progress will be shown.";
+  } catch (e) { engineOk = false; $("status").className = "status bad"; $("status").textContent = e.message; }
+  updateBuildButton();
+}
+
+// ---------------------------------------------------------------- step 1
+function setRoute(next) {
+  route = next;
+  $("tabPrompt").classList.toggle("on", route === "prompt");
+  $("tabDocument").classList.toggle("on", route === "document");
+  $("docBox").classList.toggle("hidden", route !== "document");
+}
+$("tabPrompt").onclick = () => setRoute("prompt");
+$("tabDocument").onclick = () => setRoute("document");
+$("file").onchange = async e => { const f = e.target.files[0]; if (f) $("document").value = await f.text(); };
+
+async function loadStart() {
+  const examples = await api("/api/examples");
+  $("exampleButtons").replaceChildren(...examples.map(x => el("button", { class: "btn ghost small", type: "button", onclick: () => {
+    setRoute(x.route); $("request").value = x.request.trim(); $("document").value = x.document || ""; suppliedCases = x.cases;
+    $("caseNote").textContent = `Example loaded with ${x.cases.length} known answer(s). You will still confirm each one.`;
+  } }, "Load example: " + x.label)));
+  const list = await api("/api/projects");
+  $("projects").replaceChildren(list.length ? el("h3", {}, "Earlier tools") : "", ...list.map(p =>
+    el("div", { class: "history" }, el("button", { type: "button", onclick: () => openProject(p.id) },
+      `${p.title} · ${p.versions} version(s) · ${p.created.replace("T", " ")}`))));
+}
+$("interpret").onclick = async () => {
+  showError("startError", ""); $("interpret").disabled = true; $("interpret").textContent = "Interpreting…";
+  try {
+    show(await api("/api/projects", { route, request: $("request").value, document: route === "document" ? $("document").value : null, cases: suppliedCases }));
+  } catch (e) { showError("startError", e.message); }
+  $("interpret").disabled = false; $("interpret").textContent = "Interpret";
+};
+async function openProject(id) { show(await api("/api/projects/" + id)); }
+$("restart").onclick = () => { project = null; suppliedCases = []; draftExamples = []; $("review").classList.add("hidden"); $("start").classList.remove("hidden"); showTool(); renderHistory(); $("log").replaceChildren(); loadStart(); };
+
+// ---------------------------------------------------------------- step 2
+function show(next) {
+  project = next; draftExamples = [];
+  const s = project.sheet;
+  $("start").classList.add("hidden"); $("review").classList.remove("hidden");
+  $("title").textContent = s.title; $("summary").textContent = s.summary;
+  const chip = (label, f) => el("span", { class: "chip", title: f.label }, `${label} ${f.key}: ${f.type}`);
+  $("inputs").replaceChildren(...s.inputs.map(f => chip("in", f)));
+  $("outputs").replaceChildren(...s.outputs.map(f => chip("out", f)));
+  $("rules").replaceChildren(...s.rules.map(ruleCard));
+  $("questionsBox").classList.toggle("hidden", !s.questions.length);
+  $("questions").replaceChildren(...s.questions.map(questionCard));
+  renderExamples();
+  $("docView").classList.toggle("hidden", s.route !== "document");
+  if (s.route === "document") $("doc").textContent = s.document;
+  $("blockers").replaceChildren(...project.blockers.map(b => el("li", {}, b)));
+  if (!project.blockers.length) $("blockers").replaceChildren(el("li", { style: "color:var(--green)" }, "Everything is agreed."));
+  showError("reviewError", ""); updateBuildButton(); showTool(); renderHistory();
+}
+function ruleCard(rule) {
+  const card = el("div", { class: "card " + (rule.pending ? "warn" : rule.status === "confirmed" ? "ok" : "") });
+  card.dataset.id = rule.id;
+  const origin = { model: "proposed by the model", user: "written by you", answer: "from your answer", followup: "from your change request" }[rule.origin];
+  if (rule.pending) {
+    card.append(el("div", { class: "meta" }, el("span", { class: "id" }, rule.id),
+      rule.pending === "remove" ? "The follow-up proposes REMOVING this agreed rule" : "The follow-up proposes REWORDING this agreed rule"));
+    card.append(el("div", { class: rule.pending === "remove" ? "" : "was" }, rule.text));
+    if (rule.pending === "change") card.append(el("div", {}, rule.proposed_text));
+    const name = "pend-" + rule.id;
+    card.append(el("div", { class: "row" },
+      el("label", { class: "tick" }, el("input", { type: "radio", name, value: "accept" }), "Accept"),
+      el("label", { class: "tick" }, el("input", { type: "radio", name, value: "reject", checked: true }), "Keep the rule as agreed")));
+    return card;
+  }
+  card.append(el("div", { class: "meta" },
+    el("label", { class: "tick" }, el("input", { type: "checkbox", class: "confirm", checked: rule.status === "confirmed" }), "Confirmed"),
+    el("span", { class: "id" }, rule.id), origin,
+    el("label", { style: "margin-left:auto" }, el("input", { type: "checkbox", class: "remove" }), " remove")));
+  card.append(el("textarea", { class: "text", rows: Math.max(2, Math.ceil(rule.text.length / 62)), value: rule.text }));
+  if (project.sheet.route === "document" && rule.origin === "model") {
+    card.append(rule.span
+      ? el("div", { class: "quote", title: "Show this passage in the document", onclick: () => highlight(rule.span) }, "Source: “" + rule.quote + "”")
+      : el("div", { class: "quote missing" }, "The passage this rule cites is not in the document" + (rule.quote ? ": “" + rule.quote + "”" : ".") + " Reword it yourself or remove it."));
+  }
+  return card;
+}
+function highlight([start, end]) {
+  const text = project.sheet.document, mark = el("mark", {}, text.slice(start, end));
+  $("doc").replaceChildren(text.slice(0, start), mark, text.slice(end));
+  mark.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+function questionCard(q) {
+  const card = el("div", { class: "card " + (q.answer ? "ok" : "warn") });
+  card.dataset.id = q.id;
+  card.append(el("div", {}, el("strong", {}, q.question)), q.why ? el("p", { class: "note", style: "margin:4px 0 8px" }, q.why) : "");
+  if (q.answer) { card.append(el("div", {}, "Your answer: " + q.answer)); return card; }
+  const input = el("input", { type: "text", class: "answer", placeholder: "Your answer" });
+  card.append(el("div", { class: "row" }, ...q.options.map(o => el("button", { class: "btn ghost small", type: "button", onclick: () => { input.value = o; } }, o))), input);
+  return card;
+}
+function exampleCard(example, isDraft) {
+  const card = el("div", { class: "card " + (example.confirmed ? "ok" : "") });
+  card.dataset.id = example.id || ""; card.dataset.draft = isDraft ? "1" : "";
+  card.append(el("div", { class: "meta" },
+    el("label", { class: "tick" }, el("input", { type: "checkbox", class: "confirm", checked: !!example.confirmed }), "I have checked these numbers"),
+    isDraft ? "new" : (example.origin === "model" ? "worked by the model — verify before confirming" : "supplied by you"),
+    el("label", { style: "margin-left:auto" }, el("input", { type: "checkbox", class: "remove" }), " remove")));
+  card.append(isDraft ? el("input", { type: "text", class: "name", placeholder: "Name of this example", value: "" }) : el("strong", {}, example.name));
+  card.append(el("div", { class: "note", style: "margin:6px 0 2px" }, "Inputs"), el("textarea", { class: "code input", rows: 4, value: JSON.stringify(example.input, null, 1) }));
+  card.append(el("div", { class: "note", style: "margin:6px 0 2px" }, "Expected results"), el("textarea", { class: "code expected", rows: 4, value: JSON.stringify(example.expected, null, 1) }));
+  if (example.working) card.append(el("div", { class: "quote", style: "cursor:default" }, example.working));
+  return card;
+}
+function renderExamples() {
+  $("examples").replaceChildren(...project.sheet.examples.map(e => exampleCard(e, false)), ...draftExamples.map(e => exampleCard(e, true)));
+}
+$("addExample").onclick = () => {
+  const blank = fields => Object.fromEntries(fields.map(f => [f.key, f.type === "table" ? [] : f.type === "number" ? 0 : ""]));
+  draftExamples.push({ input: blank(project.sheet.inputs), expected: blank(project.sheet.outputs), confirmed: true }); renderExamples();
+};
+$("tickAll").onclick = () => document.querySelectorAll("#rules .confirm").forEach(box => { box.checked = true; });
+
+function collectReview() {
+  const review = { rules: [], answers: {}, examples: [], new_rules: [], new_examples: [] };
+  for (const card of $("rules").children) {
+    const pending = card.querySelector("input[type=radio]:checked");
+    review.rules.push(pending ? { id: card.dataset.id, accept_pending: pending.value === "accept" }
+      : { id: card.dataset.id, confirmed: card.querySelector(".confirm").checked, remove: card.querySelector(".remove").checked, text: card.querySelector(".text").value });
+  }
+  if ($("newRule").value.trim()) review.new_rules.push($("newRule").value.trim());
+  for (const card of $("questions").children) { const a = card.querySelector(".answer"); if (a && a.value.trim()) review.answers[card.dataset.id] = a.value.trim(); }
+  for (const card of $("examples").children) {
+    const item = { confirmed: card.querySelector(".confirm").checked, remove: card.querySelector(".remove").checked,
+                   input: card.querySelector(".input").value, expected: card.querySelector(".expected").value };
+    if (card.dataset.draft) { if (!item.remove) review.new_examples.push({ ...item, name: card.querySelector(".name").value }); }
+    else review.examples.push({ ...item, id: card.dataset.id });
+  }
+  return review;
+}
+async function saveReview() {
+  showError("reviewError", "");
+  try { $("newRule").value = (show(await api(`/api/projects/${project.id}/review`, collectReview())), ""); return true; }
+  catch (e) { showError("reviewError", e.message); return false; }
+}
+$("save").onclick = saveReview;
+function updateBuildButton() {
+  const ready = project && !project.blockers.length && engineOk && !watching;
+  $("build").disabled = !ready;
+  $("build").title = !project ? "" : project.blockers.length ? "Resolve the items above first" : !engineOk ? "The engine is not connected" : "";
+}
+
+// ---------------------------------------------------------------- step 3
+$("build").onclick = async () => {
+  if (!(await saveReview()) || project.blockers.length) return;
+  try { const { build_id } = await api(`/api/projects/${project.id}/build`, {}); watch(build_id, true); }
+  catch (e) { showError("reviewError", e.message); refreshStatus(); }
+};
+function logLine(line) {
+  const item = el("li", { class: line.tone }, el("span", { class: "seq" }, line.seq == null ? "app" : "#" + line.seq), el("span", { class: "t" }, line.title));
+  if (line.detail) item.append(el("pre", {}, line.detail));
+  return item;
+}
+async function watch(buildId, live) {
+  const mine = watching = live ? buildId : null; let after = 0;
+  $("log").replaceChildren(); $("main").classList.remove("quiet"); updateBuildButton();
+  for (;;) {
+    let p;
+    try { p = await api(`/api/projects/${project.id}/builds/${buildId}?after=${after}`); }
+    catch (e) { $("log").append(logLine({ seq: null, tone: "bad", title: e.message })); break; }
+    after = p.next; $("log").append(...p.activity.map(logLine));
+    if (p.activity.length) $("log").lastElementChild.scrollIntoView({ block: "nearest" });
+    banner(p);
+    if (p.status !== "running" || !live) break;
+    await new Promise(r => setTimeout(r, 600));
+    if (watching !== mine) return;
+  }
+  if (live) { watching = null; project = await api("/api/projects/" + project.id); showTool(); renderHistory(); refreshStatus(); }
+}
+function banner(p) {
+  const text = p.status === "running" ? `Building (${p.kind})… engine run ${p.run_id}`
+    : p.status === "passed" ? `Passed. Version ${p.version} is ready.\n${p.reason}` : `This build failed.\n${p.reason}`;
+  $("buildBanner").replaceChildren(el("div", { class: "banner " + ({ running: "run", passed: "ok", failed: "bad" }[p.status]) }, text));
+  $("verdictBox").classList.toggle("hidden", !p.verification);
+  if (p.verification) $("verdict").textContent = `$ ${p.verification.command}\n${p.verification.output || p.verification.reason}\n` +
+    (p.verification.exit_code == null ? "" : `exit ${p.verification.exit_code}`);
+}
+function showTool() {
+  const versions = project ? project.versions : [];
+  $("toolActions").classList.toggle("hidden", !versions.length); $("followBox").classList.toggle("hidden", !versions.length);
+  if (!project) { $("buildBanner").replaceChildren(); $("verdictBox").classList.add("hidden"); }
+  if (!versions.length) { $("frame").replaceChildren(el("div", { class: "empty" }, "The calculator appears here once a build passes its check.")); return; }
+  const n = versions[versions.length - 1].number, url = `/tools/${project.id}/${n}.html`;
+  // The generated page runs in a sandbox with its own origin: it cannot reach this app or the network.
+  $("frame").replaceChildren(el("iframe", { src: url, sandbox: "allow-scripts", title: "Generated tool, version " + n }));
+  $("download").href = url + "?download=1";
+  $("versionNote").textContent = `Version ${n} of ${versions.length}. One self-contained file; opens without this app.`;
+}
+$("follow").onclick = async () => {
+  showError("followError", ""); $("follow").disabled = true; $("follow").textContent = "Working out the change…";
+  try { show(await api(`/api/projects/${project.id}/followup`, { text: $("followText").value })); $("followText").value = ""; $("rulesCol").scrollIntoView({ behavior: "smooth" }); }
+  catch (e) { showError("followError", e.message); }
+  $("follow").disabled = false; $("follow").textContent = "Propose the change";
+};
+function renderHistory() {
+  const builds = project ? project.builds.slice().reverse() : [];
+  $("history").replaceChildren(builds.length ? el("h3", {}, "Build history") : "", ...builds.map(b =>
+    el("button", { type: "button", title: b.reason, onclick: () => { if (!watching) watch(b.id, false); } },
+      el("span", { class: "dot " + b.status }), `${b.started.replace("T", " ")} · ${b.kind} · ${b.status}` + (b.version ? ` · v${b.version}` : ""))));
+}
+$("togglePanel").onclick = () => { const quiet = $("main").classList.toggle("quiet"); $("togglePanel").setAttribute("aria-expanded", String(!quiet)); };
+
+refreshStatus(); setInterval(refreshStatus, 5000);
+loadStart().catch(e => showError("startError", e.message));
+</script>
+</body>
+</html>

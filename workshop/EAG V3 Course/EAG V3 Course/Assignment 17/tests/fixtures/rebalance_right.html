@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Rebalancing reference</title></head>
+<body>
+<h1>Rebalancing reference calculator</h1>
+<label>New cash <input id="new_cash" type="number" value="1000"></label>
+<pre id="out"></pre>
+<script id="calc">
+function calculate(input) {
+  var holdings = input.holdings || [];
+  var cash = Number(input.new_cash) || 0;
+  var round = function (x, places) { var f = Math.pow(10, places); return Math.round((x + Number.EPSILON) * f) / f; };
+  var total = cash;
+  holdings.forEach(function (h) { total += Number(h.units) * Number(h.price); });
+  var trades = [], resulting = [], spent = 0;
+  holdings.forEach(function (h) {
+    var current = Number(h.units) * Number(h.price);
+    var target = total * Number(h.target_weight) / 100;
+    var delta = target - current;
+    spent += delta;
+    trades.push({ name: h.name, action: delta > 0 ? "buy" : (delta < 0 ? "sell" : "hold"),
+                  units: round(Math.abs(delta) / Number(h.price), 4), value: round(Math.abs(delta), 2) });
+    resulting.push({ name: h.name, value: round(target, 2), weight: round(total ? target / total * 100 : 0, 2) });
+  });
+  return { total_value: round(total, 2), cash_left: round(cash - spent, 2), trades: trades, resulting: resulting };
+}
+</script>
+<script>
+document.getElementById("out").textContent = JSON.stringify(calculate({
+  new_cash: document.getElementById("new_cash").value,
+  holdings: [{ name: "A", units: 10, price: 100, target_weight: 50 }] }), null, 2);
+</script>
+</body>
+</html>

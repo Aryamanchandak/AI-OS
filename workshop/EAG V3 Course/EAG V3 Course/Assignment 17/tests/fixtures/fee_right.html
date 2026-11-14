@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Advisory fee calculator</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 520px; margin: 32px auto; padding: 0 16px; }
+  label { display: block; margin: 12px 0 4px; font-weight: 600; }
+  input { width: 100%; padding: 8px; font-size: 16px; box-sizing: border-box; }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  td { padding: 8px; border-bottom: 1px solid #ddd; }
+  td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<h1>Advisory fee calculator</h1>
+<label for="aum">Assets under management</label>
+<input id="aum" type="number" min="0" step="1000" value="3000000">
+<table>
+  <tr><td>Annual fee</td><td id="annual_fee"></td></tr>
+  <tr><td>Quarterly fee</td><td id="quarterly_fee"></td></tr>
+  <tr><td>Minimum applied</td><td id="minimum_applied"></td></tr>
+</table>
+<script id="calc">
+function calculate(input) {
+  var aum = Math.max(0, Number(input.aum) || 0);
+  var round2 = function (x) { return Math.round((x + Number.EPSILON) * 100) / 100; };
+  var annual = Math.min(aum, 1000000) * 0.01
+             + Math.max(0, Math.min(aum, 5000000) - 1000000) * 0.0075
+             + Math.max(0, aum - 5000000) * 0.005;
+  var quarterly = annual / 4;
+  var minimumApplied = quarterly < 2500;
+  return { annual_fee: round2(annual),
+           quarterly_fee: round2(minimumApplied ? 2500 : quarterly),
+           minimum_applied: minimumApplied };
+}
+</script>
+<script>
+(function () {
+  var field = document.getElementById("aum");
+  function show() {
+    var r = calculate({ aum: field.value });
+    document.getElementById("annual_fee").textContent = r.annual_fee.toFixed(2);
+    document.getElementById("quarterly_fee").textContent = r.quarterly_fee.toFixed(2);
+    document.getElementById("minimum_applied").textContent = r.minimum_applied ? "Yes" : "No";
+  }
+  field.addEventListener("input", show);
+  show();
+})();
+</script>
+</body>
+</html>

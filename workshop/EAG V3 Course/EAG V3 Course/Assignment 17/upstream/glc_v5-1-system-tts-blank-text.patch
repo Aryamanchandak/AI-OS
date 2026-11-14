@@ -1,0 +1,106 @@
+diff --git a/glc/voice/tts/providers/system_fallback/adapter.py b/glc/voice/tts/providers/system_fallback/adapter.py
+index 2998d81..fdc6a23 100644
+--- a/glc/voice/tts/providers/system_fallback/adapter.py
++++ b/glc/voice/tts/providers/system_fallback/adapter.py
+@@ -17,6 +17,16 @@ from pathlib import Path
+ 
+ from glc.voice.tts.base import SynthesizeResult, TTSError, TTSProvider
+ 
++# A well-formed AIFF holding zero sample frames: mono, 16-bit, 22050 Hz
++# (the rate is an 80-bit extended float, as the format requires).
++_EMPTY_AIFF = (
++    b"FORM" + (46).to_bytes(4, "big") + b"AIFF"
++    + b"COMM" + (18).to_bytes(4, "big")
++    + (1).to_bytes(2, "big") + (0).to_bytes(4, "big") + (16).to_bytes(2, "big")
++    + bytes.fromhex("400dac44000000000000")
++    + b"SSND" + (8).to_bytes(4, "big") + bytes(8)
++)
++
+ 
+ class Provider(TTSProvider):
+     name = "system_fallback"
+@@ -29,13 +39,21 @@ class Provider(TTSProvider):
+ 
+     @staticmethod
+     def _macos_say(text: str) -> SynthesizeResult:
+-        with tempfile.NamedTemporaryFile(suffix=".aiff", delete=False) as f:
+-            out = Path(f.name)
+-        try:
+-            subprocess.run(["say", "-o", str(out), text], check=True)
+-            data = out.read_bytes()
+-        finally:
+-            out.unlink(missing_ok=True)
++        if not text.strip():
++            # `say` given nothing to speak is killed by current macOS rather
++            # than writing an empty file. Silence needs no subprocess.
++            data = _EMPTY_AIFF
++        else:
++            with tempfile.NamedTemporaryFile(suffix=".aiff", delete=False) as f:
++                out = Path(f.name)
++            try:
++                subprocess.run(["say", "-o", str(out), text], check=True)
++                data = out.read_bytes()
++            except (subprocess.CalledProcessError, OSError) as e:
++                # The route reports TTSError; anything else is an unhandled 500.
++                raise TTSError(f"macOS `say` failed: {e}") from e
++            finally:
++                out.unlink(missing_ok=True)
+         return SynthesizeResult(
+             audio_b64=base64.b64encode(data).decode("ascii"),
+             mime="audio/aiff",
+diff --git a/tests/test_system_tts_blank_text.py b/tests/test_system_tts_blank_text.py
+new file mode 100644
+index 0000000..30e965b
+--- /dev/null
++++ b/tests/test_system_tts_blank_text.py
+@@ -0,0 +1,50 @@
++"""Nothing to say is silence, not a crash.
++
++On current macOS `say -o out.aiff ''` is killed by the OS (SIGKILL), so
++`subprocess.run(check=True)` raised `CalledProcessError`. That is not a
++`TTSError`, so `/v1/speak` let it through as an unhandled 500 from the one
++provider documented as "always works".
++
++These tests replace `subprocess.run`, so they hold on every platform.
++"""
++
++from __future__ import annotations
++
++import base64
++import subprocess
++
++import pytest
++
++from glc.voice.tts.base import SynthesizeResult, TTSError
++from glc.voice.tts.providers.system_fallback import adapter as sf
++from glc.voice.tts.providers.system_fallback.adapter import Provider
++
++
++def _refuse_to_run(*_args, **_kwargs):
++    raise AssertionError("`say` must not be invoked when there is nothing to say")
++
++
++@pytest.mark.parametrize("text", ["", "   ", "\n\t"])
++def test_blank_text_returns_valid_silence_without_invoking_say(monkeypatch, text):
++    monkeypatch.setattr(sf.subprocess, "run", _refuse_to_run)
++
++    result = Provider._macos_say(text)
++
++    assert isinstance(result, SynthesizeResult)
++    assert result.provider == "system_fallback"
++    assert result.mime == "audio/aiff"
++    audio = base64.b64decode(result.audio_b64)
++    # A well-formed AIFF container holding zero sample frames.
++    assert audio[:4] == b"FORM" and audio[8:12] == b"AIFF"
++    assert int.from_bytes(audio[4:8], "big") == len(audio) - 8
++    assert b"COMM" in audio and b"SSND" in audio
++
++
++def test_a_failing_say_surfaces_as_a_tts_error_the_route_can_report(monkeypatch):
++    def _killed(argv, **_kwargs):
++        raise subprocess.CalledProcessError(-9, argv)
++
++    monkeypatch.setattr(sf.subprocess, "run", _killed)
++
++    with pytest.raises(TTSError):
++        Provider._macos_say("hello")
