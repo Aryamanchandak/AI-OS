@@ -43,3 +43,10 @@ gateway/build/
 
 # each assignment keeps its own standalone history here; not part of this repo
 .git-standalone/
+
+# Local copies and backups of older code; kept on the Mac only, never pushed
+/ingestion/
+/workshop/AI Code/
+/workshop/Old Code/
+/workshop/Original Code/
+/workshop/interview-coach/

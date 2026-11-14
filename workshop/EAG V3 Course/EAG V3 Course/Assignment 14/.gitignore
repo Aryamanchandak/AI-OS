@@ -15,3 +15,6 @@ node_modules/
 *.zip
 *.db
 *.mp3
+# Course repos are cloned beside the notes, each with its own git history; not committed here
+S14Code/
+glc_v3/
