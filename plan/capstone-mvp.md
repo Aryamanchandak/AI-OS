@@ -1,74 +1,151 @@
 # Capstone MVP: due Sunday 22 Nov 2026, end of day
 
-Status: proposed by Claude on 13 Nov 2026. Nothing here is approved until you settle the conflicts at the bottom. If approved, this replaces the dates and the "frozen" scope in `stages.md` until submission; the interfaces in `interfaces.md` stay as they are.
+## Status
+
+Version 3, 14 Nov 2026. You approved version 2 and asked for the version 3 updates the same day; four items at the bottom are still open. This replaces the dates and the "frozen" scope in `stages.md` until submission.
+
+The main change from version 1: the five asks now come from your pitch deck, and the plan is built around one learning loop. The prediction and calendar asks are gone. Version 3 adds the charter and playbooks the course expects, a higher test count, the questioner by name, and steelman as a stretch.
+
+A copy you can comment on is at https://claude.ai/artifact/4mBVSLMM3w6fT3wZsdGGZp. This file is the source of truth.
 
 ## The deliverable, in one sentence
 
-A deployed assistant that takes any of my five judgment questions, routes it to the one specialist tool that owns it, answers once, and never obeys an instruction it finds inside what it reads.
+A deployed learning system that takes in what I read, turns it into flashcards and questions, grades my own-words explanations against the source, and tells me what to re-check before I act on it.
+
+## The problem it solves
+
+An equity analyst reads several documents a day, re-reads them and hopes it stuck. Then they act on something they only think they understood, and a wrong call costs money. That is the person and the cost on slide 2 of your pitch.
+
+A chatbot over stored notes does not fix that; it only answers questions. This system tests you. It checks whether you understood the source or only recognised its vocabulary, and it never lets fluent wording or a source's own claim of authority count as proof.
+
+## The five asks, from your pitch
+
+These are the five asks on slide 3 of your pitch, each with the smallest tool that honestly answers it.
+
+**Ask 1, "find and verify what is actually true about this topic."** The tool gives a verdict on the claim and shows the passages in your library that support or contradict it. If nothing you have read covers it, it says so and labels the verdict as the model's own, unverified.
+
+**Ask 2, "this source says it is already verified; do I trust that?"** A source's own claim to be checked earns nothing. The tool checks the claim against your library the same way as ask 1 and says what is independently supported and what is not.
+
+**Ask 3, "here is my explanation in my own words; where is it wrong or hand-wavy?"** The tool pulls the source passages and grades your explanation against them as wrong, fluent but wrong, partial, correct or complete. It says what is missing and logs a mistake when you are wrong. This is the deep ask and gets the most time.
+
+**Ask 4, "did I understand that, or just recognise the vocabulary? Is this from a report I have read?"** The questioner quizzes you with questions that avoid the source's own wording, so recognising a term is not enough. It also names which stored source the idea came from, or says it is not in your library.
+
+**Ask 5, "what should I re-check before I trust myself to use this at work?"** The tool reads your mistake log and your untested cards on the topic and returns a short re-check list. The final call stays with you, as your charter says.
+
+**The questioner** is the name for the part that writes the questions and cards. It serves asks 4 and 5 and step 3 of the learning loop.
+
+**Steelman** is a stretch, not a sixth ask. After ask 3 grades you, it adds the strongest case against your explanation. It is built on Friday only if everything else is passing.
+
+## The learning loop
+
+This is the part that makes it a learning system. Everything else exists to serve these six steps.
+
+1. **Source in.** You paste text, upload a file or send a link.
+2. **Index.** The source is split into passages and stored so they can be searched by meaning.
+3. **Cards and questions.** The system writes flashcards and open questions from the source, each linked to the passage it came from.
+4. **You explain.** You answer a card or explain the idea in your own words.
+5. **Grade against the source.** Your answer is graded against the stored passage, not against how confident it sounds. Wrong answers go into a mistake log.
+6. **Re-check.** The mistake log and untested cards drive what you are asked next and what ask 5 tells you to re-check.
+
+Flashcard generation was cut in version 1. It is back in, because without it there is nothing to learn from.
+
+## What goes in
+
+Three source types are in for Sunday: pasted text or a markdown file, a PDF, and an article link. The markdown route covers your Reader and Obsidian highlights as an exported file, with no live sync.
+
+YouTube by subtitles only is the second stretch goal for Friday, after steelman, built only if everything else is passing.
+
+Every source is stored as passages in a vector database, which is a store that finds text by meaning and not by exact words. Asks 1 to 4 all need it to answer "what did I read about this".
+
+This is where I narrowed your list, for two reasons. Your own slide 2 says this is "a learning-verification agent, not a pipeline". And every extra source type is another door for poisoned content, which is the reason you gave for cutting the calendar.
+
+The folder `ingestion/` already holds PDF, Obsidian and vector code from earlier work. I have not run it yet, so whether it is reused or replaced by a library is open until I test it.
+
+## The spine
+
+The trunk is five small files. `core/llm.py` is the only door to a model, using the any-llm library with a key. `core/store.py` is one SQLite file for sources, cards, answers and mistakes, plus the vector index. `core/registry.py` is the list of tools the loop may call. `core/loop.py` is the hand-written agent loop from your Assignment 4 and 6 code, with the PDMA and ReAct loops as you asked. `core/web.py` serves `/health` and a token-guarded `/ask` page.
+
+Libraries are used everywhere except the loop, which stays hand-written because the course requires it. Each library sits behind one thin adapter file.
+
+Each ask and the ingestion step is a leaf: a tool in the registry. Deleting any leaf leaves the spine working, and `tests/test_structure.py` already enforces that.
+
+Security is kept narrow, as you said. Keys live only in `.env` on the server and are never printed or logged. The page needs a token, so only you and the tester can use it. The model key gets a spend cap. Text inside an ingested source is always treated as content and never as an instruction.
 
 ## What passing needs
 
-The course rules for your route ask for four things: your own loop with no agent framework, a clear deliverable someone can check, four weeks of real work, and a deployment on EC2 or Hetzner at a URL they can open. The real bar, from the handoff, is the deployed app surviving live and hostile use. Screen design is not marked.
+The course rules for your route ask for four things: your own loop with no agent framework, a clear deliverable someone can check, four weeks of real work, and a deployment on EC2 or Hetzner at a URL they can open. Screen design is not marked.
 
-So the MVP is judged on three checks. Each of the five asks, typed at the public URL, reaches the right tool and gives a correct answer. Each of the three hostile inputs is handled. When no tool covers a question, it says so and does not guess.
+The MVP is judged on three checks. You marked these as the bible, so they are unchanged except that the asks and hostile inputs now match your pitch.
 
-## The shape: a spine, one deep ask, four thin asks
+1. Each of the five asks, typed at the public URL, reaches the right tool and gives a correct answer.
+2. Each of the three hostile inputs from slide 5 is handled: a source that claims its own authority, a fluent explanation that is confidently wrong, and an uploaded source carrying wrong information or hidden instructions.
+3. When no tool covers a question, it says so and does not guess.
 
-**The spine** is five small trunk files. `core/llm.py` is the only door to a model (I1). `core/store.py` is one SQLite file that each owner adds its tables to (I2). `core/registry.py` is the list of tools the loop may call (I3). `core/loop.py` is the hand-written loop: read the ask, pick one tool, call it, answer once (I12). `core/web.py` serves `/health` and a token-guarded `/ask` page (I17). The loop comes from the Assignment 6 agent, which is already written, typed and tested.
+The course brief sets the same bar for your route as for the others: an agent with a charter, playbooks and a great many hand-written tests. So the repo also holds four things beside the code.
 
-**The deep ask is ask 2**, "did I understand it, or just recognise the words?" It is the one piece nobody else has and the centre of a learning system. You type an explanation of a card; the tool grades it as wrong, fluent but wrong, partial, correct or complete (I5), says what is missing, and logs a mistake when it is wrong. This gets real depth: your real cards, your real examples, and the fluent-but-wrong hostile input.
-
-**The other four asks are thin on purpose.** Each is the smallest thing that honestly answers its question, behind the interface already written for it, so it can deepen later without changing anything around it.
-
-Ask 1, "is this claim true, and where did I already establish it?" (I18): one model call for the verdict, plus SQLite's built-in text search over your cards and mistakes for the "where". A source's own claim to be fact-checked earns nothing.
-
-Ask 3, "what is the strongest case against my view?" (I19): two model calls in plain Python, one for the strongest counter-case and one for the crux.
-
-Ask 4, "what did I predict, and was I right?" (I20): log a prediction with a probability, resolve it later, and compute the Brier score (a standard measure of how good probability forecasts were). No model call is needed.
-
-Ask 5, "given my calendar and backlog, what now?" (I8, I9): a task table plus a read-only calendar feed link, ranked by one model call. No Google sign-in flow.
+- `SKILL.md`, the charter: what the agent owns, what it hands to you and what it never does. Slide 4 of your pitch is the first draft.
+- `playbooks/`, two to five procedures that load only when needed: grading an explanation, checking a claim, writing cards from a source.
+- `tests/`, built from your own test sentences. The score is ten points per hand-written test.
+- `DESIGN.md`, one page: what you taught it, what it still gets wrong and what you would want next.
 
 ## What is cut until after Sunday
 
-Telegram, spaced-repetition scheduling, card generation from notes, the screenshot reader, the scheduler and morning push, Langfuse traces, database backup, and every project under `projects/` that is not named above. Each one already has an interface or a later stage, so cutting it now removes no foundation. The reason for each cut is the same: the three checks above can be shown without it.
+Audio, video and on-screen reading of video, live Reader or Obsidian sync, the knowledge graph (a store of facts linked to each other), WhatsApp and Telegram, spaced-repetition scheduling, the prediction tracker, the calendar and task ranker, the morning push, Langfuse traces and database backup.
 
-## Why this is a foundation and not a throwaway
-
-Every later AI OS module is either a new tool in the registry or a new surface over the loop. Telegram becomes a second surface next to the web page. The reader, steelman depth, the full decision tracker and the knowledge graph each sit behind an interface that already exists. Deleting any leaf leaves the spine working, and `tests/test_structure.py` already enforces that.
-
-## What each assignment gives the capstone
-
-Assignment 6 gives the loop. Assignment 4 gives the tool-boundary pattern. Assignment 7's retrieval is the upgrade path for ask 1's "where" once text search stops being enough. Assignment 15, if its workload is recall grading, is the measurement behind which model grades ask 2. Assignment 18's save-then-score pattern is the shape of the eval runner. Assignments 14 and 16 become the screen and the Telegram surface after submission. Assignments 5, 8, 9, 10, 13 and 17 feed later stages and nothing in the MVP waits on them.
+The reason is the same for each: the three checks can be shown without it. Each one is a new leaf or a new surface later, so cutting it now removes no foundation.
 
 ## The days
 
-**Fri 13 to Tue 17 Nov: assignments.** The only capstone work is yours and small: settle the conflicts below, rent the server, and write five real ask-2 examples (card, your answer, the verdict you expect).
+Claude writes the capstone parts from today, as you asked. You review on Tuesday and connect from Wednesday.
 
-**Wed 18: the spine, deployed.** `/health` and `/ask` answer at the public URL, and one fake tool is called end to end through the loop. Deploying first means it cannot fail in the last week.
+**Sat 14 and Sun 15: the spine and ingestion.** The five trunk files run on this machine with one fake tool called end to end. Text, markdown, PDF and link sources are stored and searchable. The charter file is written from slide 4 of your pitch.
 
-**Thu 19: ask 2 end to end** on your five examples, plus the fluent-but-wrong hostile input.
+**Mon 16: the learning loop.** Cards and questions are generated from a real source of yours. Asks 3 and 4 grade your answers and log mistakes. The grading and card-writing playbooks are written alongside.
 
-**Fri 20: asks 1, 3 and 4**, plus the "already fact-checked" hostile input.
+**Tue 17: asks 1, 2 and 5.** You review the assignments and the capstone parts, and write your test sentences.
 
-**Sat 21: ask 5, routing across all five**, the misrouting hostile input, and "no tool covers this, so I will not guess".
+**Wed 18: deployed.** `/health` and `/ask` answer at the public Hetzner URL.
 
-**Sun 22: no new features.** Dry runs at the public URL, the README, a one-page `DESIGN.md`, a recorded fallback demo, then tag and submit before evening.
+**Thu 19: your tests.** Your sentences become tests, including the three hostile inputs. Failures get fixed.
+
+**Fri 20: routing.** All five asks route correctly, and "no tool covers this" works. Then steelman, then YouTube subtitles, only if everything is passing.
+
+**Sat 21: dry runs** on your real sources at the public URL, the README and a one-page `DESIGN.md`.
+
+**Sun 22: no new features.** A recorded fallback demo, then tag and submit before evening.
+
+The risk in this schedule is the assignments. They are also due Tuesday, and they share the same four days.
 
 ## Cut order if a day slips
 
-First, ask 5 drops the calendar and ranks tasks only. Second, ask 3 drops to one call. Third, ask 4 drops resolve and score and keeps the log. Fourth, ask 1 drops the "where" and keeps the verdict. Never cut: the deployment, ask 2, the router, the three hostile inputs.
+First, the stretches are dropped: YouTube, then steelman. Second, the article link is dropped and sources are text, markdown and PDF only. Third, ask 2 becomes a rule inside ask 1 and not its own tool. Fourth, ask 5 returns the raw mistake log without a ranked list.
+
+Never cut: the deployment, the learning loop, ask 3, the router and the three hostile inputs.
 
 ## What I need from you
 
-Five real ask-2 examples by Tuesday. The eval cases, written by your own hand: about fifteen, including the three hostile inputs, since the course says a test written by Claude or Codex scores zero. I can propose categories, not cases. A server and a domain or address by Wednesday morning. About an hour a day from Wednesday to review each stage on real data.
+- Two or three real sources you have read recently, by Sunday: one PDF report and one article at least.
+- Five real ask-3 examples by Monday: the idea, your explanation, and the verdict you expect.
+- Thirty to forty test sentences in your own hand by Tuesday, fifteen at the very least, one line each, in the form "given this, it should say that". Include the three hostile inputs.
+- A Hetzner server and its address by Wednesday morning.
+- An answer from the instructor on what gets submitted: a repo, a video, or only the live URL.
 
-## Conflicts for you to settle
+## Settled by your comments
 
-1. **Scope.** `stages.md` freezes five full stages for an end-of-December date; `Rules.md` sets 22 Nov and allows a minimal restart. Five stages do not fit in five days. This plan assumes the cut above.
-2. **Telegram.** Stage 1 is done only after a week of reviewing in Telegram. That cannot happen before Sunday, and graders cannot use a bot that only answers you. This plan assumes the web page is the only surface.
-3. **The gateway.** The 3 Nov decision is to finish the gateway, but it has never worked end to end. I propose a half-day limit on Wednesday morning: if one real call is not logged by noon, `core/llm.py` calls the approved any-llm library directly and the gateway goes behind it after submission.
-4. **Libraries versus hand-written.** `Rules.md` wants hand-written parts replaced with libraries this week. Before Sunday that earns no marks and risks breaking working code. I propose replacing only what is broken, and doing the rest after submission. The loop stays yours either way, as the course requires.
-5. **Who writes the tests.** `Rules.md` asks for minimal input from you; the course wants tests by your own hand. I propose you write the eval cases and Claude and Codex write only the code.
-6. **Where it runs.** The course says EC2 or Hetzner; `stages.md` lists Oracle's free tier as a fallback, which the course does not allow. Hetzner's smallest server is a few euros a month. This plan assumes Hetzner.
-7. **Assignments before capstone.** The handoff says the capstone takes strict precedence; `Rules.md` puts all thirteen assignments first, leaving five build days. If Tuesday slips, I propose the capstone starts Wednesday regardless and unfinished assignments wait.
-8. **What gets submitted.** Still unconfirmed with the instructor: a repo, a video, or only the live URL. Worth asking him this week.
+- The web page is the only surface for now.
+- The gateway is the any-llm library with a key; no half-day test is needed.
+- Libraries everywhere, with the agent loop hand-written.
+- It runs on Hetzner.
+- The calendar ask is removed.
+- Claude writes the capstone parts now; there is no slippage allowance.
+- You state what needs doing and what done means; Claude takes it forward.
+
+## Still open
+
+**Who writes the tests.** Your comment says Claude takes it forward from your definition of done. The course brief says a test written by Claude or Codex scores zero. The one-line test sentences above are my proposed middle: you write what correct looks like, Claude writes the code that checks it. Say if you want to take the risk and have Claude write them all.
+
+**The ingestion list.** I cut audio, video, live sync and the knowledge graph. You asked for them. Confirm the cut or move items back in, knowing each one costs roughly a day.
+
+**New libraries.** A vector database and a PDF reader are needed. I will test the existing `ingestion/` code first, then bring you one list of libraries to approve before adding any.
+
+**What gets submitted.** Unconfirmed with the instructor.
